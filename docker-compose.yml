@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:16
+    container_name: threedmanager-db
+    environment:
+      POSTGRES_DB: threedmanager
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: apppass
+    ports:
+      - "5436:5432"
+    volumes:
+      - threedmanager_pgdata:/var/lib/postgresql/data
+
+volumes:
+  threedmanager_pgdata:
