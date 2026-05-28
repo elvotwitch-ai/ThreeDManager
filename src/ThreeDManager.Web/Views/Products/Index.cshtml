@@ -1,0 +1,85 @@
+@model IEnumerable<ThreeDManager.Domain.Entities.Product>
+
+@{
+    ViewData["Title"] = "Produtos";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1>Produtos</h1>
+        <p class="text-muted">Cadastro de produtos comerciais do ThreeDManager.</p>
+    </div>
+
+    <a asp-action="Create" class="btn btn-primary">Novo produto</a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        Nenhum produto cadastrado ainda.
+    </div>
+}
+else
+{
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>SKU</th>
+                <th>Categoria</th>
+                <th>Preço de venda</th>
+                <th>Status</th>
+                <th class="text-end">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var product in Model)
+            {
+                <tr>
+                    <td>@product.Name</td>
+                    <td>@product.Sku</td>
+                    <td>@product.Category</td>
+                    <td>
+                        @if (product.SalePrice.HasValue)
+                        {
+                            @product.SalePrice.Value.ToString("C")
+                        }
+                        else
+                        {
+                            <span class="text-muted">Não informado</span>
+                        }
+                    </td>
+                    <td>
+                        @if (product.IsActive)
+                        {
+                            <span class="badge bg-success">Ativo</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Inativo</span>
+                        }
+                    </td>
+                    <td class="text-end">
+                        <a asp-action="Details" asp-route-id="@product.Id" class="btn btn-sm btn-outline-secondary">Detalhes</a>
+                        <a asp-action="Edit" asp-route-id="@product.Id" class="btn btn-sm btn-outline-primary">Editar</a>
+
+                        @if (product.IsActive)
+                        {
+                            <form asp-action="Deactivate" asp-route-id="@product.Id" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Desativar</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <form asp-action="Activate" asp-route-id="@product.Id" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-outline-success">Ativar</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

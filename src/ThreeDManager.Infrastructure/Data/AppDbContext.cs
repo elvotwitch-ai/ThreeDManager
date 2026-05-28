@@ -9,7 +9,7 @@ public class AppDbContext : DbContext
         : base(options)
     {
     }
-    public DbSet<Product> products => Set<Product>();
+    public DbSet<Product> Products => Set<Product>();
     public DbSet<Printer> Printers => Set<Printer>();
     public DbSet<Material> Materials => Set<Material>();
     public DbSet<PrintImport> printImports => Set<PrintImport>();
