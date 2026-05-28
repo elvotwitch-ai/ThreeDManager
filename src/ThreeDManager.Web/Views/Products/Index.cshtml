@@ -12,7 +12,19 @@
 
     <a asp-action="Create" class="btn btn-primary">Novo produto</a>
 </div>
+@if (TempData["SuccessMessage"] is not null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
 
+    @if (TempData["ErrorMessage"] is not null)
+    {
+        <div class="alert alert-danger">
+            @TempData["ErrorMessage"]
+        </div>
+    }
 @if (!Model.Any())
 {
     <div class="alert alert-info">
@@ -62,7 +74,8 @@ else
                     <td class="text-end">
                         <a asp-action="Details" asp-route-id="@product.Id" class="btn btn-sm btn-outline-secondary">Detalhes</a>
                         <a asp-action="Edit" asp-route-id="@product.Id" class="btn btn-sm btn-outline-primary">Editar</a>
-
+                        <a asp-action="Delete" asp-route-id="@product.Id" class="btn btn-sm btn-outline-dark">Remover</a>
+                        
                         @if (product.IsActive)
                         {
                             <form asp-action="Deactivate" asp-route-id="@product.Id" method="post" class="d-inline">

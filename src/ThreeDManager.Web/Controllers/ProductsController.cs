@@ -148,4 +148,48 @@ public class ProductsController : Controller
 
         return RedirectToAction(nameof(Index));
     }
+    public async Task<IActionResult> Delete(Guid? id)
+    {
+        if (id is null)
+        {
+            return NotFound();
+        }
+
+        var product = await _context.Products
+            .FirstOrDefaultAsync(product => product.Id == id);
+
+        if (product is null)
+        {
+            return NotFound();
+        }
+
+        return View(product);
+    }
+
+    [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(Guid id)
+    {
+        var product = await _context.Products.FindAsync(id);
+
+        if (product is null)
+        {
+            return NotFound();
+        }
+
+        var hasPrintJobs = await _context.PrintJobs
+            .AnyAsync(printJob => printJob.ProductId == id);
+
+        if (hasPrintJobs)
+        {
+            TempData["ErrorMessage"] = "Este produto não pode ser removido porque possui produções vinculadas. Desative o produto em vez de removê-lo.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        _context.Products.Remove(product);
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = "Produto removido com sucesso.";
+        return RedirectToAction(nameof(Index));
+    }
 }

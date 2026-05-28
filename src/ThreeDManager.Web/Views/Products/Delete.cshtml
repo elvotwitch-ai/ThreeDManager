@@ -1,0 +1,61 @@
+@model ThreeDManager.Domain.Entities.Product
+
+@{
+    ViewData["Title"] = "Remover produto";
+}
+
+<h1>Remover produto</h1>
+
+<div class="alert alert-warning">
+    Tem certeza que deseja remover este produto? Esta ação não deve ser usada para produtos que já possuem histórico de produção.
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-3">Nome</dt>
+            <dd class="col-sm-9">@Model.Name</dd>
+
+            <dt class="col-sm-3">SKU</dt>
+            <dd class="col-sm-9">@Model.Sku</dd>
+
+            <dt class="col-sm-3">Categoria</dt>
+            <dd class="col-sm-9">@Model.Category</dd>
+
+            <dt class="col-sm-3">Preço de venda</dt>
+            <dd class="col-sm-9">
+                @if (Model.SalePrice.HasValue)
+                {
+                    @Model.SalePrice.Value.ToString("C")
+                }
+                else
+                {
+                    <span class="text-muted">Não informado</span>
+                }
+            </dd>
+
+            <dt class="col-sm-3">Status</dt>
+            <dd class="col-sm-9">
+                @if (Model.IsActive)
+                {
+                    <span class="badge bg-success">Ativo</span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary">Inativo</span>
+                }
+            </dd>
+        </dl>
+    </div>
+</div>
+
+<form asp-action="Delete" method="post" class="mt-3">
+    @Html.AntiForgeryToken()
+
+    <input type="hidden" asp-for="Id" />
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-danger">Confirmar remoção</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+</form>
