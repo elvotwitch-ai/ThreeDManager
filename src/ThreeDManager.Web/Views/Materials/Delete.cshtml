@@ -1,16 +1,16 @@
-@model ThreeDManager.Domain.Entities.Product
+@model ThreeDManager.Domain.Entities.Material
 
 @{
-    ViewData["Title"] = "Remover produto";
+    ViewData["Title"] = "Remover material";
 }
 
 <div class="mb-4">
-    <h1 class="mb-1">Remover produto</h1>
+    <h1 class="mb-1">Remover material</h1>
     <p class="text-muted mb-0">Confirme a exclusão somente se tiver certeza.</p>
 </div>
 
 <div class="alert alert-warning" role="alert">
-    Tem certeza que deseja remover este produto? Esta ação não deve ser usada para produtos que já possuem histórico de produção.
+    Tem certeza que deseja remover este material? Materiais com histórico de produção não poderão ser removidos.
 </div>
 
 <div class="card">
@@ -19,17 +19,20 @@
             <dt class="col-sm-3">Nome</dt>
             <dd class="col-sm-9">@Model.Name</dd>
 
-            <dt class="col-sm-3">SKU</dt>
-            <dd class="col-sm-9">@(Model.Sku ?? "-")</dd>
+            <dt class="col-sm-3">Tipo</dt>
+            <dd class="col-sm-9">@(Model.Type ?? "-")</dd>
 
-            <dt class="col-sm-3">Categoria</dt>
-            <dd class="col-sm-9">@(Model.Category ?? "-")</dd>
+            <dt class="col-sm-3">Marca</dt>
+            <dd class="col-sm-9">@(Model.Brand ?? "-")</dd>
 
-            <dt class="col-sm-3">Preço de venda</dt>
+            <dt class="col-sm-3">Cor</dt>
+            <dd class="col-sm-9">@(Model.Color ?? "-")</dd>
+
+            <dt class="col-sm-3">Custo por kg</dt>
             <dd class="col-sm-9">
-                @if (Model.SalePrice.HasValue)
+                @if (Model.CostPerKg.HasValue)
                 {
-                    <span>@Model.SalePrice.Value.ToString("C")</span>
+                    <span>@Model.CostPerKg.Value.ToString("C")</span>
                 }
                 else
                 {
@@ -37,15 +40,15 @@
                 }
             </dd>
 
-            <dt class="col-sm-3">Status</dt>
+            <dt class="col-sm-3">Estoque atual</dt>
             <dd class="col-sm-9">
-                @if (Model.IsActive)
+                @if (Model.CurrentStockGrams.HasValue)
                 {
-                    <span class="badge bg-success">Ativo</span>
+                    <span>@Model.CurrentStockGrams.Value.ToString("N2") g</span>
                 }
                 else
                 {
-                    <span class="badge bg-secondary">Inativo</span>
+                    <span class="text-muted">Não informado</span>
                 }
             </dd>
         </dl>

@@ -6,93 +6,100 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h1>Produtos</h1>
-        <p class="text-muted">Cadastro de produtos comerciais do ThreeDManager.</p>
+        <h1 class="mb-1">Produtos</h1>
+        <p class="text-muted mb-0">Cadastro de produtos comerciais do ThreeDManager.</p>
     </div>
 
     <a asp-action="Create" class="btn btn-primary">Novo produto</a>
 </div>
-@if (TempData["SuccessMessage"] is not null)
-    {
-        <div class="alert alert-success">
-            @TempData["SuccessMessage"]
-        </div>
-    }
 
-    @if (TempData["ErrorMessage"] is not null)
-    {
-        <div class="alert alert-danger">
-            @TempData["ErrorMessage"]
-        </div>
-    }
+@if (TempData["SuccessMessage"] is not null)
+{
+    <div class="alert alert-success" role="alert">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (TempData["ErrorMessage"] is not null)
+{
+    <div class="alert alert-danger" role="alert">
+        @TempData["ErrorMessage"]
+    </div>
+}
+
 @if (!Model.Any())
 {
-    <div class="alert alert-info">
-        Nenhum produto cadastrado ainda.
+    <div class="alert alert-info" role="alert">
+        Nenhum produto cadastrado ainda. Clique em "Novo produto" para começar.
     </div>
 }
 else
 {
-    <table class="table table-striped table-hover">
-        <thead>
-            <tr>
-                <th>Nome</th>
-                <th>SKU</th>
-                <th>Categoria</th>
-                <th>Preço de venda</th>
-                <th>Status</th>
-                <th class="text-end">Ações</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var product in Model)
-            {
+    <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle">
+            <thead>
                 <tr>
-                    <td>@product.Name</td>
-                    <td>@product.Sku</td>
-                    <td>@product.Category</td>
-                    <td>
-                        @if (product.SalePrice.HasValue)
-                        {
-                            @product.SalePrice.Value.ToString("C")
-                        }
-                        else
-                        {
-                            <span class="text-muted">Não informado</span>
-                        }
-                    </td>
-                    <td>
-                        @if (product.IsActive)
-                        {
-                            <span class="badge bg-success">Ativo</span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-secondary">Inativo</span>
-                        }
-                    </td>
-                    <td class="text-end">
-                        <a asp-action="Details" asp-route-id="@product.Id" class="btn btn-sm btn-outline-secondary">Detalhes</a>
-                        <a asp-action="Edit" asp-route-id="@product.Id" class="btn btn-sm btn-outline-primary">Editar</a>
-                        <a asp-action="Delete" asp-route-id="@product.Id" class="btn btn-sm btn-outline-dark">Remover</a>
-                        
-                        @if (product.IsActive)
-                        {
-                            <form asp-action="Deactivate" asp-route-id="@product.Id" method="post" class="d-inline">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-sm btn-outline-danger">Desativar</button>
-                            </form>
-                        }
-                        else
-                        {
-                            <form asp-action="Activate" asp-route-id="@product.Id" method="post" class="d-inline">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-sm btn-outline-success">Ativar</button>
-                            </form>
-                        }
-                    </td>
+                    <th>Nome</th>
+                    <th>SKU</th>
+                    <th>Categoria</th>
+                    <th>Preço de venda</th>
+                    <th>Status</th>
+                    <th class="text-end">Ações</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var product in Model)
+                {
+                    <tr>
+                        <td class="fw-semibold">@product.Name</td>
+                        <td>@(product.Sku ?? "-")</td>
+                        <td>@(product.Category ?? "-")</td>
+                        <td>
+                            @if (product.SalePrice.HasValue)
+                            {
+                                <span>@product.SalePrice.Value.ToString("C")</span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-light">Não informado</span>
+                            }
+                        </td>
+                        <td>
+                            @if (product.IsActive)
+                            {
+                                <span class="badge bg-success">Ativo</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Inativo</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm" role="group" aria-label="Ações do produto">
+                                <a asp-action="Details" asp-route-id="@product.Id" class="btn btn-outline-secondary">Detalhes</a>
+                                <a asp-action="Edit" asp-route-id="@product.Id" class="btn btn-outline-primary">Editar</a>
+                                <a asp-action="Delete" asp-route-id="@product.Id" class="btn btn-outline-danger">Remover</a>
+                            </div>
+                            <div class="btn-group btn-group-sm mt-2" role="group" aria-label="Estado do produto">
+                                @if (product.IsActive)
+                                {
+                                    <form asp-action="Deactivate" asp-route-id="@product.Id" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-outline-danger">Desativar</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form asp-action="Activate" asp-route-id="@product.Id" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-outline-success">Ativar</button>
+                                    </form>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 }

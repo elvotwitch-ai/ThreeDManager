@@ -1,6 +1,21 @@
-﻿@{
-    ViewData["Title"] = "Privacy Policy";
+@{
+    ViewData["Title"] = "Privacidade";
 }
-<h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+<div class="mb-4">
+    <h1 class="mb-1">Privacidade</h1>
+    <p class="text-muted mb-0">Página informativa sobre o uso dos dados no ThreeDManager.</p>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <p class="mb-3">
+            Esta aplicação armazena apenas os dados necessários para controlar produtos, materiais e processos de produção.
+        </p>
+        <p class="mb-3">
+            Se você precisar transformar esta página em uma política formal de privacidade, podemos adicionar as seções de coleta,
+            retenção, compartilhamento e contato do responsável.
+        </p>
+        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">Voltar para o início</a>
+    </div>
+</div>

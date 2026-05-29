@@ -40,7 +40,7 @@ namespace ThreeDmanager.Infrastructure.Data.Migrations
                     b.Property<decimal?>("CostPerKg")
                         .HasColumnType("numeric");
 
-                    b.Property<DateTime>("CreatedAT")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<decimal?>("CurrentStockGrams")

@@ -22,7 +22,7 @@ namespace ThreeDmanager.Infrastructure.Data.Migrations
                     Color = table.Column<string>(type: "text", nullable: true),
                     CostPerKg = table.Column<decimal>(type: "numeric", nullable: true),
                     CurrentStockGrams = table.Column<decimal>(type: "numeric", nullable: true),
-                    CreatedAT = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {

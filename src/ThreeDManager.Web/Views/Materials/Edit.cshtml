@@ -1,11 +1,11 @@
-@model ThreeDManager.Domain.Entities.Product
+@model ThreeDManager.Domain.Entities.Material
 
 @{
-    ViewData["Title"] = "Editar produto";
+    ViewData["Title"] = "Editar material";
 }
 
 <div class="mb-4">
-    <h1 class="mb-1">Editar produto</h1>
+    <h1 class="mb-1">Editar material</h1>
     <p class="text-muted mb-0">Atualize as informações cadastradas.</p>
 </div>
 
@@ -26,28 +26,28 @@
             </div>
 
             <div class="mb-3">
-                <label asp-for="Sku" class="form-label">SKU</label>
-                <input asp-for="Sku" class="form-control" />
+                <label asp-for="Type" class="form-label">Tipo</label>
+                <input asp-for="Type" class="form-control" />
             </div>
 
             <div class="mb-3">
-                <label asp-for="Category" class="form-label">Categoria</label>
-                <input asp-for="Category" class="form-control" />
+                <label asp-for="Brand" class="form-label">Marca</label>
+                <input asp-for="Brand" class="form-control" />
             </div>
 
             <div class="mb-3">
-                <label asp-for="SalePrice" class="form-label">Preço de venda</label>
-                <input asp-for="SalePrice" class="form-control" type="number" step="0.01" min="0" />
+                <label asp-for="Color" class="form-label">Cor</label>
+                <input asp-for="Color" class="form-control" />
             </div>
 
             <div class="mb-3">
-                <label asp-for="Description" class="form-label">Descrição</label>
-                <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                <label asp-for="CostPerKg" class="form-label">Custo por kg</label>
+                <input asp-for="CostPerKg" class="form-control" type="number" step="0.01" min="0" />
             </div>
 
-            <div class="form-check mb-3">
-                <input asp-for="IsActive" class="form-check-input" />
-                <label asp-for="IsActive" class="form-check-label">Produto ativo</label>
+            <div class="mb-3">
+                <label asp-for="CurrentStockGrams" class="form-label">Estoque atual em gramas</label>
+                <input asp-for="CurrentStockGrams" class="form-control" type="number" step="0.01" min="0" />
             </div>
 
             <div class="d-flex gap-2">

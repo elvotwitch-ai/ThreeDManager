@@ -4,43 +4,51 @@
     ViewData["Title"] = "Novo produto";
 }
 
-<h1>Novo produto</h1>
-<p class="text-muted">Cadastre um produto comercial que poderá ser vinculado às produções 3D.</p>
+<div class="mb-4">
+    <h1 class="mb-1">Novo produto</h1>
+    <p class="text-muted mb-0">Cadastre um produto comercial que poderá ser vinculado às produções 3D.</p>
+</div>
 
-<form asp-action="Create" method="post">
-    @Html.AntiForgeryToken()
+<div class="card">
+    <div class="card-body">
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
 
-    <div class="mb-3">
-        <label asp-for="Name" class="form-label">Nome</label>
-        <input asp-for="Name" class="form-control" />
-        <span asp-validation-for="Name" class="text-danger"></span>
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label">Nome</label>
+                <input asp-for="Name" class="form-control" placeholder="Ex: Porta-copos personalizado" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Sku" class="form-label">SKU</label>
+                <input asp-for="Sku" class="form-control" placeholder="Ex: PRT-001" />
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Category" class="form-label">Categoria</label>
+                <input asp-for="Category" class="form-control" placeholder="Ex: Brindes, Peças técnicas" />
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="SalePrice" class="form-label">Preço de venda</label>
+                <input asp-for="SalePrice" class="form-control" type="number" step="0.01" min="0" />
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label">Descrição</label>
+                <textarea asp-for="Description" class="form-control" rows="4" placeholder="Descreva o produto e possíveis variações"></textarea>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Salvar</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
     </div>
-
-    <div class="mb-3">
-        <label asp-for="Sku" class="form-label">SKU</label>
-        <input asp-for="Sku" class="form-control" />
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="Category" class="form-label">Categoria</label>
-        <input asp-for="Category" class="form-control" />
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="SalePrice" class="form-label">Preço de venda</label>
-        <input asp-for="SalePrice" class="form-control" type="number" step="0.01" />
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="Description" class="form-label">Descrição</label>
-        <textarea asp-for="Description" class="form-control" rows="4"></textarea>
-    </div>
-
-    <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-primary">Salvar</button>
-        <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
-    </div>
-</form>
+</div>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}

@@ -1,8 +1,52 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@{
+    ViewData["Title"] = "Início";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="p-4 p-md-5 mb-4 rounded-4 bg-light border">
+    <div class="col-lg-8 px-0">
+        <h1 class="display-5 fw-semibold">ThreeDManager</h1>
+        <p class="lead mb-4">
+            Centralize o cadastro de produtos, materiais e informações essenciais da operação de impressão 3D.
+        </p>
+        <div class="d-flex flex-wrap gap-2">
+            <a asp-controller="Products" asp-action="Index" class="btn btn-primary btn-lg">Gerenciar produtos</a>
+            <a asp-controller="Materials" asp-action="Index" class="btn btn-outline-secondary btn-lg">Gerenciar materiais</a>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h5 card-title">Produtos</h2>
+                <p class="card-text">
+                    Cadastre itens comerciais, acompanhe preço, categoria e status de disponibilidade.
+                </p>
+                <a asp-controller="Products" asp-action="Index" class="btn btn-sm btn-outline-primary">Abrir produtos</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h5 card-title">Materiais</h2>
+                <p class="card-text">
+                    Organize filamentos, resinas e estoque atual para evitar rupturas na produção.
+                </p>
+                <a asp-controller="Materials" asp-action="Index" class="btn btn-sm btn-outline-primary">Abrir materiais</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h5 card-title">Operação</h2>
+                <p class="card-text">
+                    Use a base do sistema para crescer com controle sobre o que entra na produção.
+                </p>
+                <a asp-controller="Home" asp-action="Privacy" class="btn btn-sm btn-outline-secondary">Ver informações</a>
+            </div>
+        </div>
+    </div>
 </div>
