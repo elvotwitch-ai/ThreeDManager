@@ -38,10 +38,12 @@
             </div>
 
             <div class="mb-3">
-                <label asp-for="CostPerKg" class="form-label">Custo por kg</label>
-                <input asp-for="CostPerKg" class="form-control" type="number" step="0.01" min="0" />
+               <label asp-for="CostPerKg" class="form-label">Custo por kg (R$)</label>
+                <input asp-for="CostPerKg" class="form-control" type="number" step="0.01" placeholder="Ex: 85,00 para 1kg" />
+                <div class="form-text">
+                    Informe o valor pago por 1kg de material. Exemplo: rolo de PLA 1kg por R$ 85,00.
+                </div>
             </div>
-
             <div class="mb-3">
                 <label asp-for="CurrentStockGrams" class="form-label">Estoque atual em gramas</label>
                 <input asp-for="CurrentStockGrams" class="form-control" type="number" step="0.01" min="0" />

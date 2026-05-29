@@ -1,0 +1,67 @@
+@model IEnumerable<ThreeDManager.Domain.Entities.Printer>
+
+@{
+    ViewData["Title"] = "Impressoras";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1>Impressoras</h1>
+        <p class="text-muted">Cadastro das impressoras usadas na produção 3D.</p>
+    </div>
+
+    <a asp-action="Create" class="btn btn-primary">Nova impressora</a>
+</div>
+
+@if (TempData["SuccessMessage"] is not null)
+{
+    <div class="alert alert-success">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (TempData["ErrorMessage"] is not null)
+{
+    <div class="alert alert-danger">
+        @TempData["ErrorMessage"]
+    </div>
+}
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        Nenhuma impressora cadastrada ainda.
+    </div>
+}
+else
+{
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Marca</th>
+                <th>Modelo</th>
+                <th>Observações</th>
+                <th class="text-end">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var printer in Model)
+            {
+                <tr>
+                    <td>@printer.Name</td>
+                    <td>@printer.Brand</td>
+                    <td>@printer.Model</td>
+                    <td>@printer.Notes</td>
+                    <td class="text-end">
+                        <div class="d-flex justify-content-end gap-1">
+                            <a asp-action="Details" asp-route-id="@printer.Id" class="btn btn-sm btn-outline-secondary">Detalhes</a>
+                            <a asp-action="Edit" asp-route-id="@printer.Id" class="btn btn-sm btn-outline-primary">Editar</a>
+                            <a asp-action="Delete" asp-route-id="@printer.Id" class="btn btn-sm btn-outline-danger">Remover</a>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
