@@ -12,7 +12,7 @@ public class AppDbContext : DbContext
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Printer> Printers => Set<Printer>();
     public DbSet<Material> Materials => Set<Material>();
-    public DbSet<PrintImport> printImports => Set<PrintImport>();
+    public DbSet<PrintImport> PrintImports => Set<PrintImport>();
     public DbSet<PrintJob> PrintJobs => Set<PrintJob>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

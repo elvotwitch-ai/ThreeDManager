@@ -1,0 +1,33 @@
+@{
+    ViewData["Title"] = "Importar arquivo";
+}
+
+<h1>Importar arquivo</h1>
+
+<p class="text-muted">
+    Importe um arquivo .gcode exportado pelo slicer, como o Creality Print 7.1.
+    Nesta etapa, o sistema salva o conteúdo bruto para análise futura.
+</p>
+
+<form asp-action="Create" method="post" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+
+    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+    <div class="mb-3">
+        <label for="printFile" class="form-label">Arquivo .gcode</label>
+        <input id="printFile" name="printFile" type="file" class="form-control" accept=".gcode,.g" />
+        <div class="form-text">
+            Aceitos por enquanto: .gcode e .g. Limite: 20 MB.
+        </div>
+    </div>
+
+    <div class="alert alert-warning">
+        O arquivo será salvo em formato bruto. A interpretação dos dados será feita pelo parser em uma próxima etapa.
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Importar</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+</form>
