@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ThreeDManager.Domain.Entities;
 using ThreeDManager.Infrastructure.Data;
+using System.Text.Json;
+using ThreeDManager.Application.Interfaces;
 
 namespace ThreeDManager.Web.Controllers;
 
@@ -11,10 +13,12 @@ public class PrintImportsController : Controller
     private const long MaxFileSizeBytes = 20 * 1024 * 1024; // 20 MB
 
     private readonly AppDbContext _context;
+    private readonly IPrintFileParser _parser;
 
-    public PrintImportsController(AppDbContext context)
+    public PrintImportsController(AppDbContext context, IPrintFileParser parser)
     {
         _context = context;
+        _parser = parser;
     }
 
     public async Task<IActionResult> Index()
@@ -98,6 +102,73 @@ public class PrintImportsController : Controller
 
         TempData["SuccessMessage"] = "Arquivo importado com sucesso.";
         return RedirectToAction(nameof(Details), new { id = import.Id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Process(Guid id)
+    {
+        var printImport = await _context.PrintImports.FindAsync(id);
+
+        if (printImport is null)
+        {
+            return NotFound();
+        }
+
+        if (string.IsNullOrWhiteSpace(printImport.RawContent))
+        {
+            printImport.Status = "Error";
+            printImport.ErrorMessage = "A importação não possui conteúdo bruto para processar.";
+
+            await _context.SaveChangesAsync();
+
+            TempData["ErrorMessage"] = "Não foi possível processar: conteúdo bruto vazio.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        if (!_parser.CanParse(printImport.FileName, printImport.RawContent))
+        {
+            printImport.Status = "Error";
+            printImport.ErrorMessage = "Nenhum parser disponível para este arquivo.";
+
+            await _context.SaveChangesAsync();
+
+            TempData["ErrorMessage"] = "Nenhum parser disponível para este arquivo.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        try
+        {
+            var parsedMetadata = _parser.Parse(printImport.FileName, printImport.RawContent);
+
+            printImport.ParsedDataJson = JsonSerializer.Serialize(
+                parsedMetadata,
+                new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                });
+
+            printImport.Status = "Parsed";
+
+            printImport.ErrorMessage = parsedMetadata.Warnings.Any()
+                ? string.Join(" | ", parsedMetadata.Warnings)
+                : null;
+
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Arquivo processado com sucesso.";
+        }
+        catch (Exception exception)
+        {
+            printImport.Status = "Error";
+            printImport.ErrorMessage = exception.Message;
+
+            await _context.SaveChangesAsync();
+
+            TempData["ErrorMessage"] = "Erro ao processar o arquivo.";
+        }
+
+        return RedirectToAction(nameof(Details), new { id });
     }
 
     public async Task<IActionResult> Delete(Guid? id)

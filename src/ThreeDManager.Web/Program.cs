@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using ThreeDManager.Infrastructure.Data;
+using ThreeDManager.Application.Interfaces;
+using ThreeDManager.Infrastructure.Parsers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +10,8 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+
+builder.Services.AddScoped<IPrintFileParser, GCodePrintFileParser>();
 
 var app = builder.Build();
 
