@@ -5,6 +5,9 @@ using ThreeDManager.Domain.Entities;
 using ThreeDManager.Infrastructure.Data;
 using System.Text.Json;
 using ThreeDManager.Application.Interfaces;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using ThreeDManager.Application.DTOs;
+using ThreeDManager.Web.ViewModels;
 
 namespace ThreeDManager.Web.Controllers;
 
@@ -169,6 +172,162 @@ public class PrintImportsController : Controller
         }
 
         return RedirectToAction(nameof(Details), new { id });
+    }
+
+    public async Task<IActionResult> CreatePrintJob(Guid id)
+    {
+        var printImport = await _context.PrintImports.FindAsync(id);
+
+        if (printImport is null)
+        {
+            return NotFound();
+        }
+
+        if (string.IsNullOrWhiteSpace(printImport.ParsedDataJson))
+        {
+            TempData["ErrorMessage"] = "Processе o arquivo antes de gerar uma produção.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        var metadata = DeserializeParsedMetadata(printImport);
+
+        if (metadata is null)
+        {
+            TempData["ErrorMessage"] = "Não foi possível ler os dados interpretados da importação.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        var viewModel = new PrintJobFromImportViewModel
+        {
+            ImportId = printImport.Id,
+            FileName = printImport.FileName,
+            FilamentUsedGrams = metadata.FilamentUsedGrams,
+            FilamentUsedMeters = metadata.FilamentUsedMeters,
+            EstimatedTimeMinutes = metadata.EstimatedTimeMinutes,
+            ReportedCost = metadata.ReportedCost,
+            ParsedMaterialType = metadata.MaterialType,
+            Status = "Imported"
+        };
+
+        await PopulatePrintJobOptionsAsync(viewModel, metadata.MaterialType);
+
+        return View(viewModel);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreatePrintJob(PrintJobFromImportViewModel viewModel)
+    {
+        if (!ModelState.IsValid)
+        {
+            await PopulatePrintJobOptionsAsync(viewModel, viewModel.ParsedMaterialType);
+            return View(viewModel);
+        }
+
+        var printImport = await _context.PrintImports.FindAsync(viewModel.ImportId);
+
+        if (printImport is null)
+        {
+            return NotFound();
+        }
+
+        var alreadyHasPrintJob = await _context.PrintJobs
+            .AnyAsync(printJob => printJob.PrintImportId == viewModel.ImportId);
+
+        if (alreadyHasPrintJob)
+        {
+            TempData["ErrorMessage"] = "Esta importação já possui uma produção gerada.";
+            return RedirectToAction(nameof(Details), new { id = viewModel.ImportId });
+        }
+
+        var printJob = new PrintJob
+        {
+            Id = Guid.NewGuid(),
+            ProductId = viewModel.ProductId,
+            PrinterId = viewModel.PrinterId,
+            MaterialId = viewModel.MaterialId,
+            PrintImportId = viewModel.ImportId,
+            SourceFileName = printImport.FileName,
+            FilamentUsedGrams = viewModel.FilamentUsedGrams,
+            FilamentUsedMeters = viewModel.FilamentUsedMeters,
+            EstimatedTimeMinutes = viewModel.EstimatedTimeMinutes,
+            ActualTimeMinutes = viewModel.ActualTimeMinutes,
+            ReportedCost = viewModel.ReportedCost,
+            Status = viewModel.Status,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.PrintJobs.Add(printJob);
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = "Produção gerada com sucesso.";
+
+        return RedirectToAction("Details", "PrintJobs", new { id = printJob.Id });
+    }
+
+    private ParsedPrintMetadata? DeserializeParsedMetadata(PrintImport printImport)
+    {
+        if (string.IsNullOrWhiteSpace(printImport.ParsedDataJson))
+        {
+            return null;
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<ParsedPrintMetadata>(printImport.ParsedDataJson);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private async Task PopulatePrintJobOptionsAsync(PrintJobFromImportViewModel viewModel, string? parsedMaterialType = null)
+    {
+        var products = await _context.Products
+            .Where(product => product.IsActive)
+            .OrderBy(product => product.Name)
+            .ToListAsync();
+
+        var printers = await _context.Printers
+            .OrderBy(printer => printer.Name)
+            .ToListAsync();
+
+        var materials = await _context.Materials
+            .OrderBy(material => material.Name)
+            .ToListAsync();
+
+        viewModel.ProductOptions = products.Select(product => new SelectListItem
+        {
+            Value = product.Id.ToString(),
+            Text = string.IsNullOrWhiteSpace(product.Sku)
+                ? product.Name
+                : $"{product.Name} ({product.Sku})"
+        });
+
+        viewModel.PrinterOptions = printers.Select(printer => new SelectListItem
+        {
+            Value = printer.Id.ToString(),
+            Text = $"{printer.Name} - {printer.Brand} {printer.Model}".Trim()
+        });
+
+        viewModel.MaterialOptions = materials.Select(material => new SelectListItem
+        {
+            Value = material.Id.ToString(),
+            Text = $"{material.Name} - {material.Type} {material.Color}".Trim()
+        });
+
+        if (viewModel.MaterialId is null && !string.IsNullOrWhiteSpace(parsedMaterialType))
+        {
+            var matchedMaterial = materials.FirstOrDefault(material =>
+                string.Equals(material.Type, parsedMaterialType, StringComparison.OrdinalIgnoreCase)
+                || material.Name.Contains(parsedMaterialType, StringComparison.OrdinalIgnoreCase));
+
+            if (matchedMaterial is not null)
+            {
+                viewModel.MaterialId = matchedMaterial.Id;
+            }
+        }
     }
 
     public async Task<IActionResult> Delete(Guid? id)

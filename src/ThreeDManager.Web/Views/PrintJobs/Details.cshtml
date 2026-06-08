@@ -1,0 +1,112 @@
+@model ThreeDManager.Domain.Entities.PrintJob
+
+@{
+    ViewData["Title"] = "Detalhes da produção";
+}
+
+<h1>Detalhes da produção</h1>
+
+@if (TempData["SuccessMessage"] is not null)
+{
+    <div class="alert alert-success">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+<div class="card">
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-3">ID</dt>
+            <dd class="col-sm-9">@Model.Id</dd>
+
+            <dt class="col-sm-3">Produto</dt>
+            <dd class="col-sm-9">@ViewBag.ProductName</dd>
+
+            <dt class="col-sm-3">Material</dt>
+            <dd class="col-sm-9">@ViewBag.MaterialName</dd>
+
+            <dt class="col-sm-3">Impressora</dt>
+            <dd class="col-sm-9">@ViewBag.PrinterName</dd>
+
+            <dt class="col-sm-3">Arquivo origem</dt>
+            <dd class="col-sm-9">@Model.SourceFileName</dd>
+
+            <dt class="col-sm-3">Filamento usado</dt>
+            <dd class="col-sm-9">
+                @if (Model.FilamentUsedGrams.HasValue)
+                {
+                    <span>@Model.FilamentUsedGrams.Value.ToString("N2") g</span>
+                }
+                else
+                {
+                    <span class="text-muted">Não informado</span>
+                }
+            </dd>
+
+            <dt class="col-sm-3">Filamento usado em metros</dt>
+            <dd class="col-sm-9">
+                @if (Model.FilamentUsedMeters.HasValue)
+                {
+                    <span>@Model.FilamentUsedMeters.Value.ToString("N2") m</span>
+                }
+                else
+                {
+                    <span class="text-muted">Não informado</span>
+                }
+            </dd>
+
+            <dt class="col-sm-3">Tempo estimado</dt>
+            <dd class="col-sm-9">
+                @if (Model.EstimatedTimeMinutes.HasValue)
+                {
+                    <span>@Model.EstimatedTimeMinutes min</span>
+                }
+                else
+                {
+                    <span class="text-muted">Não informado</span>
+                }
+            </dd>
+
+            <dt class="col-sm-3">Tempo real</dt>
+            <dd class="col-sm-9">
+                @if (Model.ActualTimeMinutes.HasValue)
+                {
+                    <span>@Model.ActualTimeMinutes min</span>
+                }
+                else
+                {
+                    <span class="text-muted">Não informado</span>
+                }
+            </dd>
+
+            <dt class="col-sm-3">Custo informado</dt>
+            <dd class="col-sm-9">
+                @if (Model.ReportedCost.HasValue)
+                {
+                    @Model.ReportedCost.Value.ToString("C")
+                }
+                else
+                {
+                    <span class="text-muted">Não informado</span>
+                }
+            </dd>
+
+            <dt class="col-sm-3">Status</dt>
+            <dd class="col-sm-9">@Model.Status</dd>
+
+            <dt class="col-sm-3">Criado em</dt>
+            <dd class="col-sm-9">@Model.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+        </dl>
+    </div>
+</div>
+
+<div class="mt-3 d-flex gap-2">
+    <a asp-action="Index" class="btn btn-outline-secondary">Voltar</a>
+
+    @if (Model.PrintImportId.HasValue)
+    {
+        <a asp-controller="PrintImports" asp-action="Details" asp-route-id="@Model.PrintImportId" class="btn btn-outline-primary">
+            Ver importação
+        </a>
+    }
+</div>

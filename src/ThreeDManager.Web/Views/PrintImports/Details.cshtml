@@ -93,6 +93,11 @@
         <button type="submit" class="btn btn-primary">Processar arquivo</button>
     </form>
 
+    @if (Model.Status == "Parsed" && !string.IsNullOrWhiteSpace(Model.ParsedDataJson))
+    {
+        <a asp-action="CreatePrintJob" asp-route-id="@Model.Id" class="btn btn-success">Gerar produção</a>
+    }
+
     <a asp-action="Index" class="btn btn-outline-secondary">Voltar</a>
     <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">Remover</a>
 </div>

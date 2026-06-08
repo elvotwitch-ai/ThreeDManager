@@ -1,0 +1,110 @@
+@model ThreeDManager.Web.ViewModels.PrintJobFromImportViewModel
+
+@{
+    ViewData["Title"] = "Gerar produção";
+}
+
+<h1>Gerar produção</h1>
+
+<p class="text-muted">
+    Confirme os dados extraídos do arquivo e vincule a produção a um produto, material e impressora.
+</p>
+
+<div class="alert alert-info">
+    Arquivo origem: <strong>@Model.FileName</strong>
+</div>
+
+<form asp-action="CreatePrintJob" method="post">
+    @Html.AntiForgeryToken()
+
+    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+    <input type="hidden" asp-for="ImportId" />
+    <input type="hidden" asp-for="FileName" />
+    <input type="hidden" asp-for="ParsedMaterialType" />
+
+    <div class="mb-3">
+        <label asp-for="ProductId" class="form-label">Produto</label>
+        <select asp-for="ProductId" asp-items="Model.ProductOptions" class="form-select">
+            <option value="">Selecione um produto</option>
+        </select>
+        <span asp-validation-for="ProductId" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="PrinterId" class="form-label">Impressora</label>
+        <select asp-for="PrinterId" asp-items="Model.PrinterOptions" class="form-select">
+            <option value="">Selecione uma impressora</option>
+        </select>
+        <span asp-validation-for="PrinterId" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="MaterialId" class="form-label">Material</label>
+        <select asp-for="MaterialId" asp-items="Model.MaterialOptions" class="form-select">
+            <option value="">Selecione um material</option>
+        </select>
+        <span asp-validation-for="MaterialId" class="text-danger"></span>
+
+        @if (!string.IsNullOrWhiteSpace(Model.ParsedMaterialType))
+        {
+            <div class="form-text">
+                Material detectado no arquivo: <strong>@Model.ParsedMaterialType</strong>
+            </div>
+        }
+    </div>
+
+    <hr />
+
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <label asp-for="FilamentUsedGrams" class="form-label">Filamento usado (g)</label>
+            <input asp-for="FilamentUsedGrams" class="form-control" type="number" step="0.01" />
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label asp-for="FilamentUsedMeters" class="form-label">Filamento usado (m)</label>
+            <input asp-for="FilamentUsedMeters" class="form-control" type="number" step="0.01" />
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label asp-for="EstimatedTimeMinutes" class="form-label">Tempo estimado (min)</label>
+            <input asp-for="EstimatedTimeMinutes" class="form-control" type="number" />
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <label asp-for="ActualTimeMinutes" class="form-label">Tempo real (min)</label>
+            <input asp-for="ActualTimeMinutes" class="form-control" type="number" />
+            <div class="form-text">
+                Pode ficar vazio por enquanto.
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label asp-for="ReportedCost" class="form-label">Custo informado pelo arquivo (R$)</label>
+            <input asp-for="ReportedCost" class="form-control" type="number" step="0.01" />
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label asp-for="Status" class="form-label">Status</label>
+            <select asp-for="Status" class="form-select">
+                <option value="Imported">Importada</option>
+                <option value="Planned">Planejada</option>
+                <option value="Completed">Concluída</option>
+                <option value="Failed">Falhou</option>
+                <option value="Canceled">Cancelada</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Gerar produção</button>
+        <a asp-action="Details" asp-route-id="@Model.ImportId" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+</form>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
