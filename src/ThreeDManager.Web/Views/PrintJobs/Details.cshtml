@@ -101,6 +101,7 @@
 </div>
 
 <div class="mt-3 d-flex gap-2">
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Editar</a>
     <a asp-action="Index" class="btn btn-outline-secondary">Voltar</a>
 
     @if (Model.PrintImportId.HasValue)
@@ -109,4 +110,6 @@
             Ver importação
         </a>
     }
+
+    <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">Remover</a>
 </div>

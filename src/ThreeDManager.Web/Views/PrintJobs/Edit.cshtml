@@ -1,0 +1,98 @@
+@model ThreeDManager.Domain.Entities.PrintJob
+
+@{
+    ViewData["Title"] = "Editar produção";
+}
+
+<h1>Editar produção</h1>
+
+<p class="text-muted">
+    Ajuste os dados da produção, status, tempo real e vínculos.
+</p>
+
+<form asp-action="Edit" method="post">
+    @Html.AntiForgeryToken()
+
+    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="PrintImportId" />
+    <input type="hidden" asp-for="SourceFileName" />
+    <input type="hidden" asp-for="CreatedAt" />
+
+    <div class="mb-3">
+        <label asp-for="ProductId" class="form-label">Produto</label>
+        <select asp-for="ProductId" asp-items="ViewBag.ProductOptions" class="form-select">
+            <option value="">Selecione um produto</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="PrinterId" class="form-label">Impressora</label>
+        <select asp-for="PrinterId" asp-items="ViewBag.PrinterOptions" class="form-select">
+            <option value="">Selecione uma impressora</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="MaterialId" class="form-label">Material</label>
+        <select asp-for="MaterialId" asp-items="ViewBag.MaterialOptions" class="form-select">
+            <option value="">Selecione um material</option>
+        </select>
+    </div>
+
+    <hr />
+
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <label asp-for="FilamentUsedGrams" class="form-label">Filamento usado (g)</label>
+            <input asp-for="FilamentUsedGrams" class="form-control" type="number" step="0.01" />
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label asp-for="FilamentUsedMeters" class="form-label">Filamento usado (m)</label>
+            <input asp-for="FilamentUsedMeters" class="form-control" type="number" step="0.01" />
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label asp-for="ReportedCost" class="form-label">Custo informado (R$)</label>
+            <input asp-for="ReportedCost" class="form-control" type="number" step="0.01" />
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <label asp-for="EstimatedTimeMinutes" class="form-label">Tempo estimado (min)</label>
+            <input asp-for="EstimatedTimeMinutes" class="form-control" type="number" />
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label asp-for="ActualTimeMinutes" class="form-label">Tempo real (min)</label>
+            <input asp-for="ActualTimeMinutes" class="form-control" type="number" />
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label asp-for="Status" class="form-label">Status</label>
+            <select asp-for="Status" class="form-select">
+                <option value="Imported">Importada</option>
+                <option value="Planned">Planejada</option>
+                <option value="Completed">Concluída</option>
+                <option value="Failed">Falhou</option>
+                <option value="Canceled">Cancelada</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="alert alert-light border">
+        Arquivo origem: <strong>@Model.SourceFileName</strong>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Salvar alterações</button>
+        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+</form>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -1,0 +1,52 @@
+@model ThreeDManager.Domain.Entities.PrintJob
+
+@{
+    ViewData["Title"] = "Remover produção";
+}
+
+<h1>Remover produção</h1>
+
+<div class="alert alert-warning">
+    Tem certeza que deseja remover esta produção? Esta ação remove apenas o registro de produção, não remove o arquivo importado.
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-3">Produto</dt>
+            <dd class="col-sm-9">@ViewBag.ProductName</dd>
+
+            <dt class="col-sm-3">Arquivo origem</dt>
+            <dd class="col-sm-9">@Model.SourceFileName</dd>
+
+            <dt class="col-sm-3">Status</dt>
+            <dd class="col-sm-9">@Model.Status</dd>
+
+            <dt class="col-sm-3">Filamento usado</dt>
+            <dd class="col-sm-9">
+                @if (Model.FilamentUsedGrams.HasValue)
+                {
+                    <span>@Model.FilamentUsedGrams.Value.ToString("N2") g</span>
+                }
+                else
+                {
+                    <span class="text-muted">Não informado</span>
+                }
+            </dd>
+
+            <dt class="col-sm-3">Criado em</dt>
+            <dd class="col-sm-9">@Model.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+        </dl>
+    </div>
+</div>
+
+<form asp-action="Delete" method="post" class="mt-3">
+    @Html.AntiForgeryToken()
+
+    <input type="hidden" asp-for="Id" />
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-danger">Confirmar remoção</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+</form>
