@@ -1,0 +1,203 @@
+@model ThreeDManager.Web.ViewModels.DashboardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard";
+
+    string FormatMinutes(int minutes)
+    {
+        var hours = minutes / 60;
+        var remainingMinutes = minutes % 60;
+
+        if (hours <= 0)
+        {
+            return $"{remainingMinutes} min";
+        }
+
+        return $"{hours}h {remainingMinutes}min";
+    }
+}
+
+<div class="mb-4">
+    <h1>Dashboard</h1>
+    <p class="text-muted">
+        Visão geral da produção 3D registrada no ThreeDManager.
+    </p>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-primary h-100">
+            <div class="card-body">
+                <h6 class="text-muted">Produções totais</h6>
+                <h2>@Model.TotalPrintJobs</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card border-success h-100">
+            <div class="card-body">
+                <h6 class="text-muted">Concluídas</h6>
+                <h2>@Model.CompletedPrintJobs</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card border-danger h-100">
+            <div class="card-body">
+                <h6 class="text-muted">Falhas</h6>
+                <h2>@Model.FailedPrintJobs</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card border-secondary h-100">
+            <div class="card-body">
+                <h6 class="text-muted">Planejadas/importadas</h6>
+                <h2>@(Model.PlannedPrintJobs + Model.ImportedPrintJobs)</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h6 class="text-muted">Filamento usado</h6>
+                <h3>@Model.TotalFilamentUsedGrams.ToString("N2") g</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h6 class="text-muted">Tempo estimado</h6>
+                <h3>@FormatMinutes(Model.TotalEstimatedTimeMinutes)</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h6 class="text-muted">Tempo real</h6>
+                <h3>@FormatMinutes(Model.TotalActualTimeMinutes)</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h6 class="text-muted">Custo informado</h6>
+                <h3>@Model.TotalReportedCost.ToString("C")</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <strong>Últimas produções</strong>
+        <a asp-controller="PrintJobs" asp-action="Index" class="btn btn-sm btn-outline-primary">Ver todas</a>
+    </div>
+
+    <div class="card-body">
+        @if (!Model.RecentPrintJobs.Any())
+        {
+            <div class="alert alert-info mb-0">
+                Nenhuma produção registrada ainda.
+            </div>
+        }
+        else
+        {
+            <table class="table table-striped table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Material</th>
+                        <th>Impressora</th>
+                        <th>Arquivo</th>
+                        <th>Filamento</th>
+                        <th>Tempo</th>
+                        <th>Custo</th>
+                        <th>Status</th>
+                        <th class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var job in Model.RecentPrintJobs)
+                    {
+                        <tr>
+                            <td>@job.ProductName</td>
+                            <td>@job.MaterialName</td>
+                            <td>@job.PrinterName</td>
+                            <td>@job.SourceFileName</td>
+                            <td>
+                                @if (job.FilamentUsedGrams.HasValue)
+                                {
+                                    <span>@job.FilamentUsedGrams.Value.ToString("N2") g</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Não informado</span>
+                                }
+                            </td>
+                            <td>
+                                @if (job.EstimatedTimeMinutes.HasValue)
+                                {
+                                    <span>@FormatMinutes(job.EstimatedTimeMinutes.Value)</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Não informado</span>
+                                }
+                            </td>
+                            <td>
+                                @if (job.ReportedCost.HasValue)
+                                {
+                                    @job.ReportedCost.Value.ToString("C")
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Não informado</span>
+                                }
+                            </td>
+                            <td>
+                                @if (job.Status == "Completed")
+                                {
+                                    <span class="badge bg-success">Concluída</span>
+                                }
+                                else if (job.Status == "Failed")
+                                {
+                                    <span class="badge bg-danger">Falhou</span>
+                                }
+                                else if (job.Status == "Planned")
+                                {
+                                    <span class="badge bg-primary">Planejada</span>
+                                }
+                                else if (job.Status == "Imported")
+                                {
+                                    <span class="badge bg-secondary">Importada</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">@job.Status</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <a asp-controller="PrintJobs" asp-action="Details" asp-route-id="@job.Id" class="btn btn-sm btn-outline-secondary">
+                                    Detalhes
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
