@@ -16,6 +16,10 @@ public class DashboardController : Controller
 
     public async Task<IActionResult> Index()
     {
+        var printImports = await _context.PrintImports
+            .OrderByDescending(printImport => printImport.ImportedAt)
+            .ToListAsync();
+
         var printJobs = await _context.PrintJobs
             .OrderByDescending(printJob => printJob.CreatedAt)
             .ToListAsync();
@@ -32,11 +36,15 @@ public class DashboardController : Controller
         var viewModel = new DashboardViewModel
         {
             TotalPrintJobs = printJobs.Count,
+            TotalPrintImports = printImports.Count,
 
             CompletedPrintJobs = printJobs.Count(printJob => printJob.Status == "Completed"),
             FailedPrintJobs = printJobs.Count(printJob => printJob.Status == "Failed"),
             PlannedPrintJobs = printJobs.Count(printJob => printJob.Status == "Planned"),
             ImportedPrintJobs = printJobs.Count(printJob => printJob.Status == "Imported"),
+
+            ParsedPrintImports = printImports.Count(printImport => printImport.Status == "Parsed"),
+            FailedPrintImports = printImports.Count(printImport => printImport.Status == "Error"),
 
             TotalFilamentUsedGrams = printJobs.Sum(printJob => printJob.FilamentUsedGrams ?? 0),
             TotalEstimatedTimeMinutes = printJobs.Sum(printJob => printJob.EstimatedTimeMinutes ?? 0),
@@ -67,6 +75,19 @@ public class DashboardController : Controller
                     ReportedCost = printJob.ReportedCost,
                     Status = printJob.Status,
                     CreatedAt = printJob.CreatedAt
+                })
+                .ToList(),
+
+            RecentFailedImports = printImports
+                .Where(printImport => printImport.Status == "Error")
+                .Take(5)
+                .Select(printImport => new DashboardFailedPrintImportViewModel
+                {
+                    Id = printImport.Id,
+                    FileName = printImport.FileName,
+                    Status = printImport.Status,
+                    ErrorMessage = printImport.ErrorMessage,
+                    ImportedAt = printImport.ImportedAt
                 })
                 .ToList()
         };

@@ -4,6 +4,8 @@ public class DashboardViewModel
 {
     public int TotalPrintJobs { get; set; }
 
+    public int TotalPrintImports { get; set; }
+
     public int CompletedPrintJobs { get; set; }
 
     public int FailedPrintJobs { get; set; }
@@ -11,6 +13,10 @@ public class DashboardViewModel
     public int PlannedPrintJobs { get; set; }
 
     public int ImportedPrintJobs { get; set; }
+
+    public int ParsedPrintImports { get; set; }
+
+    public int FailedPrintImports { get; set; }
 
     public decimal TotalFilamentUsedGrams { get; set; }
 
@@ -21,6 +27,8 @@ public class DashboardViewModel
     public decimal TotalReportedCost { get; set; }
 
     public List<DashboardRecentPrintJobViewModel> RecentPrintJobs { get; set; } = new();
+
+    public List<DashboardFailedPrintImportViewModel> RecentFailedImports { get; set; } = new();
 }
 
 public class DashboardRecentPrintJobViewModel
@@ -44,4 +52,17 @@ public class DashboardRecentPrintJobViewModel
     public string Status { get; set; } = string.Empty;
 
     public DateTime CreatedAt { get; set; }
+}
+
+public class DashboardFailedPrintImportViewModel
+{
+    public Guid Id { get; set; }
+
+    public string FileName { get; set; } = string.Empty;
+
+    public string Status { get; set; } = string.Empty;
+
+    public string? ErrorMessage { get; set; }
+
+    public DateTime ImportedAt { get; set; }
 }

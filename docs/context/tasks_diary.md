@@ -21,3 +21,8 @@
 - Validation run: `git diff --check -- docs` passed; no inherited phase terminology remains in the core docs set
 - Blockers: none
 - Next recommended task: move to the next code batch in Phase 1, starting with production failure tracking or import review flow hardening.
+- Summary: Extended the dashboard with import failure tracking and recent failed import visibility so the production core surfaces parse/import issues more clearly.
+- Files changed: `src/ThreeDManager.Web/Controllers/DashboardController.cs`, `src/ThreeDManager.Web/ViewModels/DashboardViewModel.cs`, `src/ThreeDManager.Web/Views/Dashboard/Index.cshtml`, `docs/context/tasks_diary.md`
+- Validation run: `dotnet build ThreeDManager.slnx` passed; `git diff --check` on touched dashboard files passed
+- Blockers: none
+- Next recommended task: continue Phase 1 with either import review flow hardening or explicit failure detail improvements on the import details page.
