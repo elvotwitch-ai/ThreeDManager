@@ -19,3 +19,11 @@ What each doc is for:
 - `docs/context/BACKLOG.md`: phased backlog with current status.
 - `docs/context/tasks_diary.md`: running checkpoint log.
 - `docs/errors/errors.md`: active bugs, blockers, and verification status.
+
+Pre-commit checklist:
+1. Run `dotnet build ThreeDManager.slnx`.
+2. Run `dotnet run --project src/ThreeDManager.Web`.
+3. Open the app and verify the changed flow end-to-end.
+4. Run `git status`.
+5. Run `git add .`.
+6. Run `git commit -m "<message>"`.

@@ -31,3 +31,13 @@
 - Validation run: `dotnet build ThreeDManager.slnx` passed; `dotnet ef migrations add AddCalculatedMaterialCostToPrintJobs` passed
 - Blockers: `dotnet ef database update` could not run because `localhost:5436` is not accepting connections and Docker Desktop is not available in this session
 - Next recommended task: when the database is available, apply the migration and then continue with automatic stock deduction or import review hardening.
+- Summary: Added an explicit agent rule to always `build`, `run`, verify the changed app flow, and only then `git status`/`git add`/`git commit`, so connection/runtime errors are caught before committing.
+- Files changed: `docs/AGENT_CONTEXT.md`, `docs/core/IMPLEMENTATION_POLICY.md`, `docs/context/tasks_diary.md`
+- Validation run: docs-only update; `git diff --check -- docs` should be re-run before commit if you want a fresh hygiene pass
+- Blockers: none
+- Next recommended task: apply the same validation sequence to the next code batch and keep the database running before end-to-end checks.
+- Summary: Added the pre-commit checklist to `docs/INDEX.md` so the validation sequence is visible from the documentation entrypoint.
+- Files changed: `docs/INDEX.md`, `docs/context/tasks_diary.md`
+- Validation run: pending docs hygiene check
+- Blockers: none
+- Next recommended task: keep this checklist in sync with any future harness changes.
