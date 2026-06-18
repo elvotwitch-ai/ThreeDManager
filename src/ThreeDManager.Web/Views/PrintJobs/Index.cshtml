@@ -39,6 +39,7 @@ else
                 <th>Arquivo</th>
                 <th>Filamento</th>
                 <th>Tempo estimado</th>
+                <th>Custo mat.</th>
                 <th>Status</th>
                 <th class="text-end">Ações</th>
             </tr>
@@ -81,6 +82,16 @@ else
                         else
                         {
                             <span class="text-muted">Não informado</span>
+                        }
+                    </td>
+                    <td>
+                        @if (job.CalculatedMaterialCost.HasValue)
+                        {
+                            @job.CalculatedMaterialCost.Value.ToString("C")
+                        }
+                        else
+                        {
+                            <span class="text-muted">Não calc.</span>
                         }
                     </td>
                     <td>

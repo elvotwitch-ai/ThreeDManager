@@ -120,6 +120,9 @@ public class PrintJobsController : Controller
         existingPrintJob.EstimatedTimeMinutes = printJob.EstimatedTimeMinutes;
         existingPrintJob.ActualTimeMinutes = printJob.ActualTimeMinutes;
         existingPrintJob.ReportedCost = printJob.ReportedCost;
+        existingPrintJob.CalculatedMaterialCost = await CalculateMaterialCostAsync(
+            printJob.MaterialId,
+            printJob.FilamentUsedGrams);
         existingPrintJob.Status = printJob.Status;
 
         await _context.SaveChangesAsync();
@@ -191,5 +194,25 @@ public class PrintJobsController : Controller
         ViewBag.ProductOptions = new SelectList(products, "Id", "Name", printJob.ProductId);
         ViewBag.PrinterOptions = new SelectList(printers, "Id", "Name", printJob.PrinterId);
         ViewBag.MaterialOptions = new SelectList(materials, "Id", "Name", printJob.MaterialId);
+    }
+
+    private async Task<decimal?> CalculateMaterialCostAsync(Guid? materialId, decimal? filamentUsedGrams)
+    {
+        if (materialId is null || filamentUsedGrams is null)
+        {
+            return null;
+        }
+
+        var costPerKg = await _context.Materials
+            .Where(material => material.Id == materialId.Value)
+            .Select(material => material.CostPerKg)
+            .FirstOrDefaultAsync();
+
+        if (costPerKg is null)
+        {
+            return null;
+        }
+
+        return Math.Round((filamentUsedGrams.Value / 1000m) * costPerKg.Value, 2);
     }
 }

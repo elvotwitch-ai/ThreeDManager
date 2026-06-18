@@ -50,6 +50,7 @@ public class DashboardController : Controller
             TotalEstimatedTimeMinutes = printJobs.Sum(printJob => printJob.EstimatedTimeMinutes ?? 0),
             TotalActualTimeMinutes = printJobs.Sum(printJob => printJob.ActualTimeMinutes ?? 0),
             TotalReportedCost = printJobs.Sum(printJob => printJob.ReportedCost ?? 0),
+            TotalCalculatedMaterialCost = printJobs.Sum(printJob => printJob.CalculatedMaterialCost ?? 0),
 
             RecentPrintJobs = printJobs
                 .Take(8)
@@ -73,6 +74,7 @@ public class DashboardController : Controller
                     FilamentUsedGrams = printJob.FilamentUsedGrams,
                     EstimatedTimeMinutes = printJob.EstimatedTimeMinutes,
                     ReportedCost = printJob.ReportedCost,
+                    CalculatedMaterialCost = printJob.CalculatedMaterialCost,
                     Status = printJob.Status,
                     CreatedAt = printJob.CreatedAt
                 })

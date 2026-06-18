@@ -91,6 +91,31 @@
                 }
             </dd>
 
+            <dt class="col-sm-3">Custo calculado do material</dt>
+            <dd class="col-sm-9">
+                @if (Model.CalculatedMaterialCost.HasValue)
+                {
+                    @Model.CalculatedMaterialCost.Value.ToString("C")
+                }
+                else
+                {
+                    <span class="text-muted">Não calculado</span>
+                }
+            </dd>
+
+            <dt class="col-sm-3">Diferença de custo</dt>
+            <dd class="col-sm-9">
+                @if (Model.ReportedCost.HasValue && Model.CalculatedMaterialCost.HasValue)
+                {
+                    var difference = Model.ReportedCost.Value - Model.CalculatedMaterialCost.Value;
+                    @difference.ToString("C")
+                }
+                else
+                {
+                    <span class="text-muted">Não disponível</span>
+                }
+            </dd>
+
             <dt class="col-sm-3">Status</dt>
             <dd class="col-sm-9">@Model.Status</dd>
 

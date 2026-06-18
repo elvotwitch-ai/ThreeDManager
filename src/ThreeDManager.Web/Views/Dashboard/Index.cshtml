@@ -133,6 +133,9 @@
             <div class="card-body">
                 <h6 class="text-muted">Custo informado</h6>
                 <h3>@Model.TotalReportedCost.ToString("C")</h3>
+                <div class="text-muted small">
+                    Material calculado: @Model.TotalCalculatedMaterialCost.ToString("C")
+                </div>
             </div>
         </div>
     </div>
@@ -246,11 +249,20 @@
                             <td>
                                 @if (job.ReportedCost.HasValue)
                                 {
-                                    @job.ReportedCost.Value.ToString("C")
+                                    <div>Arquivo: @job.ReportedCost.Value.ToString("C")</div>
                                 }
                                 else
                                 {
-                                    <span class="text-muted">Não informado</span>
+                                    <div class="text-muted">Arquivo: não informado</div>
+                                }
+
+                                @if (job.CalculatedMaterialCost.HasValue)
+                                {
+                                    <div class="text-muted small">Material: @job.CalculatedMaterialCost.Value.ToString("C")</div>
+                                }
+                                else
+                                {
+                                    <div class="text-muted small">Material: não calculado</div>
                                 }
                             </td>
                             <td>

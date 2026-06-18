@@ -253,6 +253,7 @@ public class PrintImportsController : Controller
             EstimatedTimeMinutes = viewModel.EstimatedTimeMinutes,
             ActualTimeMinutes = viewModel.ActualTimeMinutes,
             ReportedCost = viewModel.ReportedCost,
+            CalculatedMaterialCost = await CalculateMaterialCostAsync(viewModel.MaterialId, viewModel.FilamentUsedGrams),
             Status = viewModel.Status,
             CreatedAt = DateTime.UtcNow
         };
@@ -263,6 +264,26 @@ public class PrintImportsController : Controller
         TempData["SuccessMessage"] = "Produção gerada com sucesso.";
 
         return RedirectToAction("Details", "PrintJobs", new { id = printJob.Id });
+    }
+
+    private async Task<decimal?> CalculateMaterialCostAsync(Guid? materialId, decimal? filamentUsedGrams)
+    {
+        if (materialId is null || filamentUsedGrams is null)
+        {
+            return null;
+        }
+
+        var costPerKg = await _context.Materials
+            .Where(material => material.Id == materialId.Value)
+            .Select(material => material.CostPerKg)
+            .FirstOrDefaultAsync();
+
+        if (costPerKg is null)
+        {
+            return null;
+        }
+
+        return Math.Round((filamentUsedGrams.Value / 1000m) * costPerKg.Value, 2);
     }
 
     private ParsedPrintMetadata? DeserializeParsedMetadata(PrintImport printImport)

@@ -26,3 +26,8 @@
 - Validation run: `dotnet build ThreeDManager.slnx` passed; `git diff --check` on touched dashboard files passed
 - Blockers: none
 - Next recommended task: continue Phase 1 with either import review flow hardening or explicit failure detail improvements on the import details page.
+- Summary: Added calculated material cost to print jobs and wired it through import generation, edit flow, details, list, and dashboard; generated the EF migration `AddCalculatedMaterialCostToPrintJobs`.
+- Files changed: `src/ThreeDManager.Domain/Entities/PrintJob.cs`, `src/ThreeDManager.Web/Controllers/PrintImportsController.cs`, `src/ThreeDManager.Web/Controllers/PrintJobsController.cs`, `src/ThreeDManager.Web/ViewModels/DashboardViewModel.cs`, `src/ThreeDManager.Web/Controllers/DashboardController.cs`, `src/ThreeDManager.Web/Views/PrintJobs/Details.cshtml`, `src/ThreeDManager.Web/Views/PrintJobs/Index.cshtml`, `src/ThreeDManager.Web/Views/Dashboard/Index.cshtml`, `src/ThreeDManager.Infrastructure/Data/Migrations/20260618221410_AddCalculatedMaterialCostToPrintJobs.cs`, `src/ThreeDManager.Infrastructure/Data/Migrations/20260618221410_AddCalculatedMaterialCostToPrintJobs.Designer.cs`, `src/ThreeDManager.Infrastructure/Data/Migrations/AppDbContextModelSnapshot.cs`, `docs/context/tasks_diary.md`
+- Validation run: `dotnet build ThreeDManager.slnx` passed; `dotnet ef migrations add AddCalculatedMaterialCostToPrintJobs` passed
+- Blockers: `dotnet ef database update` could not run because `localhost:5436` is not accepting connections and Docker Desktop is not available in this session
+- Next recommended task: when the database is available, apply the migration and then continue with automatic stock deduction or import review hardening.

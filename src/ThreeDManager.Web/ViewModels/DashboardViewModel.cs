@@ -26,6 +26,8 @@ public class DashboardViewModel
 
     public decimal TotalReportedCost { get; set; }
 
+    public decimal TotalCalculatedMaterialCost { get; set; }
+
     public List<DashboardRecentPrintJobViewModel> RecentPrintJobs { get; set; } = new();
 
     public List<DashboardFailedPrintImportViewModel> RecentFailedImports { get; set; } = new();
@@ -48,6 +50,8 @@ public class DashboardRecentPrintJobViewModel
     public int? EstimatedTimeMinutes { get; set; }
 
     public decimal? ReportedCost { get; set; }
+
+    public decimal? CalculatedMaterialCost { get; set; }
 
     public string Status { get; set; } = string.Empty;
 
