@@ -69,3 +69,8 @@
 - Validation run: `dotnet test ThreeDManager.slnx` passed with 4 tests; `dotnet build ThreeDManager.slnx` passed; `git diff --check` passed
 - Blockers: none
 - Next recommended task: use the new test project as the baseline for any future print-job or inventory rule changes.
+- Summary: Added controller integration tests for the import-to-print-job and edit-to-completed flows, and taught the Web host to switch to `EF InMemory` only when running under the `Testing` environment so the test host can seed and verify state without PostgreSQL.
+- Files changed: `src/ThreeDManager.Web/Program.cs`, `src/ThreeDManager.Web/ThreeDManager.Web.csproj`, `tests/ThreeDManager.Tests/ThreeDManager.Tests.csproj`, `tests/ThreeDManager.Tests/ThreeDManagerWebFactory.cs`, `tests/ThreeDManager.Tests/PrintJobControllerIntegrationTests.cs`, `docs/context/tasks_diary.md`
+- Validation run: `dotnet test ThreeDManager.slnx` passed with 6 tests; `dotnet build ThreeDManager.slnx` passed; `git diff --check` passed
+- Blockers: none
+- Next recommended task: add one controller integration test for the failure path when stock is insufficient, so the MVC validation message is covered too.

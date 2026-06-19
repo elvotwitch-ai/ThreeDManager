@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using ThreeDManager.Infrastructure.Data;
 using ThreeDManager.Application.Interfaces;
+using ThreeDManager.Infrastructure.Data;
 using ThreeDManager.Infrastructure.Parsers;
 using ThreeDManager.Infrastructure.Services;
 using ThreeDManager.Web.ModelBinding;
@@ -13,8 +13,17 @@ builder.Services.AddControllersWithViews(options =>
     options.ModelBinderProviders.Insert(0, new FlexibleDecimalModelBinderProvider());
 });
 
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+if (builder.Environment.IsEnvironment("Testing"))
+{
+    var databaseName = builder.Configuration["Testing:DatabaseName"] ?? "ThreeDManager.Tests";
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseInMemoryDatabase(databaseName));
+}
+else
+{
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+}
 
 builder.Services.AddScoped<IPrintFileParser, GCodePrintFileParser>();
 builder.Services.AddScoped<IPrintJobStockService, PrintJobStockService>();
@@ -46,3 +55,5 @@ app.MapControllerRoute(
 
 
 app.Run();
+
+public partial class Program { }
