@@ -71,6 +71,14 @@ public class PrintJobControllerIntegrationTests
         Assert.Equal("Completed", printJob.Status);
         Assert.Equal(12.45m, printJob.StockDeductedGrams);
         Assert.Equal(material.Id, printJob.StockDeductedMaterialId);
+
+        using var detailsClient = factory.CreateTestClient();
+        var detailsResponse = await detailsClient.GetAsync($"/PrintJobs/Details/{printJob.Id}");
+        var detailsHtml = WebUtility.HtmlDecode(await detailsResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        Assert.Contains("Movimentação de estoque vinculada", detailsHtml);
+        Assert.Contains("Baixa automática", detailsHtml);
+        Assert.Contains("Baixa automática de estoque", detailsHtml);
     }
 
     [Fact]

@@ -99,3 +99,8 @@
 - Validation run: `dotnet build ThreeDManager.slnx` passed; `dotnet test ThreeDManager.slnx --no-build` passed with 11 tests; real-app smoke under `ASPNETCORE_ENVIRONMENT=Testing` verified `/Materials/AdjustStock` rejects removals above available stock, keeps the material at `25,00 g`, and leaves no saved movement
 - Blockers: none
 - Next recommended task: if you want another inventory follow-up, add the same movement summary to a second page or continue with a separate domain flow.
+- Summary: Added a compact stock-movement block to `PrintJobs/Details` so the production detail page now shows the latest movement linked to that print job.
+- Files changed: `src/ThreeDManager.Web/Controllers/PrintJobsController.cs`, `src/ThreeDManager.Web/Views/PrintJobs/Details.cshtml`, `tests/ThreeDManager.Tests/PrintJobControllerIntegrationTests.cs`
+- Validation run: `dotnet build ThreeDManager.slnx` passed; `dotnet test ThreeDManager.slnx --no-build` passed with 11 tests; a full real-app smoke was attempted but the ad-hoc multipart upload script for the `.gcode` import did not complete cleanly in this shell session, so the browser/UI-level verification for this page remains backed by automated tests rather than a fresh manual run
+- Blockers: smoke automation for the file-upload path was noisy in this shell session
+- Next recommended task: if you want a fully manual UI smoke for this page, redo the import/upload flow in the browser; otherwise move to the next domain flow.

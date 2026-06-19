@@ -74,6 +74,11 @@ public class PrintJobsController : Controller
                 .FirstOrDefaultAsync()
             : null;
 
+        ViewBag.StockMovement = await _context.MaterialStockMovements
+            .Where(movement => movement.PrintJobId == printJob.Id)
+            .OrderByDescending(movement => movement.CreatedAt)
+            .FirstOrDefaultAsync();
+
         return View(printJob);
     }
     public async Task<IActionResult> Edit(Guid? id)

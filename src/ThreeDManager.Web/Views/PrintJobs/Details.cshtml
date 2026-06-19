@@ -1,7 +1,9 @@
 @model ThreeDManager.Domain.Entities.PrintJob
+@using ThreeDManager.Domain.Entities
 
 @{
     ViewData["Title"] = "Detalhes da produção";
+    var stockMovement = ViewBag.StockMovement as MaterialStockMovement;
 }
 
 <h1>Detalhes da produção</h1>
@@ -134,6 +136,56 @@
             <dt class="col-sm-3">Criado em</dt>
             <dd class="col-sm-9">@Model.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
         </dl>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <strong>Movimentação de estoque vinculada</strong>
+    </div>
+
+    <div class="card-body">
+        @if (stockMovement is null)
+        {
+            <div class="alert alert-info mb-0">
+                Nenhuma movimentação de estoque registrada para esta produção.
+            </div>
+        }
+        else
+        {
+            var movementLabel = stockMovement.MovementType switch
+            {
+                "PrintJobCompleted" => "Baixa automática",
+                "PrintJobStockRestored" => "Devolução automática",
+                "ManualAdjustment" => "Ajuste manual",
+                _ => stockMovement.MovementType
+            };
+
+            <dl class="row mb-0">
+                <dt class="col-sm-3">Tipo</dt>
+                <dd class="col-sm-9">@movementLabel</dd>
+
+                <dt class="col-sm-3">Quantidade</dt>
+                <dd class="col-sm-9">
+                    <span class="@(stockMovement.QuantityGrams < 0 ? "text-danger" : "text-success") fw-semibold">
+                        @(stockMovement.QuantityGrams > 0 ? "+" : string.Empty)@stockMovement.QuantityGrams.ToString("N2") g
+                    </span>
+                </dd>
+
+                <dt class="col-sm-3">Antes</dt>
+                <dd class="col-sm-9">
+                    @(stockMovement.StockBeforeGrams.HasValue ? $"{stockMovement.StockBeforeGrams.Value:N2} g" : "N/A")
+                </dd>
+
+                <dt class="col-sm-3">Depois</dt>
+                <dd class="col-sm-9">
+                    @(stockMovement.StockAfterGrams.HasValue ? $"{stockMovement.StockAfterGrams.Value:N2} g" : "N/A")
+                </dd>
+
+                <dt class="col-sm-3">Observações</dt>
+                <dd class="col-sm-9">@(string.IsNullOrWhiteSpace(stockMovement.Notes) ? "Sem observações" : stockMovement.Notes)</dd>
+            </dl>
+        }
     </div>
 </div>
 
