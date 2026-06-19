@@ -38,6 +38,12 @@ public class MaterialsController : Controller
             return NotFound();
         }
 
+        ViewBag.StockMovements = await _context.MaterialStockMovements
+            .Where(movement => movement.MaterialId == material.Id)
+            .OrderByDescending(movement => movement.CreatedAt)
+            .Take(20)
+            .ToListAsync();
+
         return View(material);
     }
 
@@ -103,12 +109,32 @@ public class MaterialsController : Controller
             return NotFound();
         }
 
+        var currentStockBeforeUpdate = existingMaterial.CurrentStockGrams;
+
         existingMaterial.Name = material.Name;
         existingMaterial.Type = material.Type;
         existingMaterial.Brand = material.Brand;
         existingMaterial.Color = material.Color;
         existingMaterial.CostPerKg = material.CostPerKg;
         existingMaterial.CurrentStockGrams = material.CurrentStockGrams;
+
+        if (currentStockBeforeUpdate != material.CurrentStockGrams)
+        {
+            var stockBefore = currentStockBeforeUpdate ?? 0;
+            var stockAfter = material.CurrentStockGrams ?? 0;
+            var quantity = stockAfter - stockBefore;
+
+            _context.MaterialStockMovements.Add(new MaterialStockMovement
+            {
+                MaterialId = existingMaterial.Id,
+                MovementType = "ManualAdjustment",
+                QuantityGrams = quantity,
+                StockBeforeGrams = currentStockBeforeUpdate,
+                StockAfterGrams = material.CurrentStockGrams,
+                Notes = "Ajuste manual realizado no cadastro do material.",
+                CreatedAt = DateTime.UtcNow
+            });
+        }
 
         await _context.SaveChangesAsync();
 

@@ -24,6 +24,15 @@ public class PrintJobStockServiceTests
         Assert.Equal(material.Id, printJob.StockDeductedMaterialId);
         Assert.Equal(12.45m, printJob.StockDeductedGrams);
         Assert.NotNull(printJob.StockDeductedAt);
+
+        var movement = await context.MaterialStockMovements.SingleAsync();
+        Assert.Equal(material.Id, movement.MaterialId);
+        Assert.Equal(printJob.Id, movement.PrintJobId);
+        Assert.Equal("PrintJobCompleted", movement.MovementType);
+        Assert.Equal(-12.45m, movement.QuantityGrams);
+        Assert.Equal(1000m, movement.StockBeforeGrams);
+        Assert.Equal(987.55m, movement.StockAfterGrams);
+        Assert.Contains("Baixa automática", movement.Notes);
     }
 
     [Fact]
@@ -48,6 +57,13 @@ public class PrintJobStockServiceTests
         Assert.False(printJob.StockDeductedMaterialId.HasValue);
         Assert.False(printJob.StockDeductedGrams.HasValue);
         Assert.False(printJob.StockDeductedAt.HasValue);
+
+        var movements = await context.MaterialStockMovements.OrderBy(movement => movement.CreatedAt).ToListAsync();
+        Assert.Equal(2, movements.Count);
+        Assert.Equal("PrintJobCompleted", movements[0].MovementType);
+        Assert.Equal(-12.45m, movements[0].QuantityGrams);
+        Assert.Equal("PrintJobStockRestored", movements[1].MovementType);
+        Assert.Equal(12.45m, movements[1].QuantityGrams);
     }
 
     [Fact]
@@ -72,6 +88,12 @@ public class PrintJobStockServiceTests
         Assert.Equal(material.Id, printJob.StockDeductedMaterialId);
         Assert.Equal(20m, printJob.StockDeductedGrams);
         Assert.NotNull(printJob.StockDeductedAt);
+
+        var movements = await context.MaterialStockMovements.OrderBy(movement => movement.CreatedAt).ToListAsync();
+        Assert.Equal(3, movements.Count);
+        Assert.Equal(-12.45m, movements[0].QuantityGrams);
+        Assert.Equal(12.45m, movements[1].QuantityGrams);
+        Assert.Equal(-20m, movements[2].QuantityGrams);
     }
 
     [Fact]
@@ -90,6 +112,7 @@ public class PrintJobStockServiceTests
         Assert.False(printJob.StockDeductedAt.HasValue);
         Assert.False(printJob.StockDeductedMaterialId.HasValue);
         Assert.False(printJob.StockDeductedGrams.HasValue);
+        Assert.Empty(await context.MaterialStockMovements.ToListAsync());
     }
 
     private static AppDbContext CreateContext()

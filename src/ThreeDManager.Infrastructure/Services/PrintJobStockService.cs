@@ -54,7 +54,25 @@ public class PrintJobStockService : IPrintJobStockService
 
         if (material is not null)
         {
-            material.CurrentStockGrams = (material.CurrentStockGrams ?? 0) + printJob.StockDeductedGrams.Value;
+            material.CurrentStockGrams ??= 0;
+
+            var stockBefore = material.CurrentStockGrams.Value;
+            var quantity = printJob.StockDeductedGrams.Value;
+            var stockAfter = stockBefore + quantity;
+
+            material.CurrentStockGrams = stockAfter;
+
+            _context.MaterialStockMovements.Add(new MaterialStockMovement
+            {
+                MaterialId = material.Id,
+                PrintJobId = printJob.Id,
+                MovementType = "PrintJobStockRestored",
+                QuantityGrams = quantity,
+                StockBeforeGrams = stockBefore,
+                StockAfterGrams = stockAfter,
+                Notes = $"Devolução automática da produção {printJob.SourceFileName}",
+                CreatedAt = DateTime.UtcNow
+            });
         }
 
         printJob.StockDeductedAt = null;
@@ -111,10 +129,26 @@ public class PrintJobStockService : IPrintJobStockService
                 "Estoque insuficiente para concluir esta produção.");
         }
 
-        material.CurrentStockGrams -= filamentUsedGrams.Value;
+        var stockBefore = material.CurrentStockGrams.Value;
+        var quantity = filamentUsedGrams.Value;
+        var stockAfter = stockBefore - quantity;
+
+        material.CurrentStockGrams = stockAfter;
+        _context.MaterialStockMovements.Add(new MaterialStockMovement
+        {
+            MaterialId = material.Id,
+            PrintJobId = printJob.Id,
+            MovementType = "PrintJobCompleted",
+            QuantityGrams = -quantity,
+            StockBeforeGrams = stockBefore,
+            StockAfterGrams = stockAfter,
+            Notes = $"Baixa automática pela produção {printJob.SourceFileName}",
+            CreatedAt = DateTime.UtcNow
+        });
+
         printJob.StockDeductedAt = DateTime.UtcNow;
         printJob.StockDeductedMaterialId = material.Id;
-        printJob.StockDeductedGrams = filamentUsedGrams.Value;
+        printJob.StockDeductedGrams = quantity;
 
         return PrintJobStockResult.Success;
     }

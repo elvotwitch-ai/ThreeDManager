@@ -135,6 +135,50 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task MaterialsDetails_ShowsStockMovementHistory_AfterManualAdjustment()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+        using var client = factory.CreateTestClient();
+
+        var getResponse = await client.GetAsync($"/Materials/Edit/{ids.MaterialId}");
+        Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+
+        var token = ExtractAntiForgeryToken(await getResponse.Content.ReadAsStringAsync());
+        var postResponse = await client.PostAsync(
+            $"/Materials/Edit/{ids.MaterialId}",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = token,
+                ["Id"] = ids.MaterialId.ToString(),
+                ["Name"] = "PLA Preto",
+                ["Type"] = "PLA",
+                ["Brand"] = "E2E",
+                ["Color"] = "Black",
+                ["CostPerKg"] = "80.00",
+                ["CurrentStockGrams"] = "900.00",
+                ["CreatedAt"] = "2026-06-19T02:00:00Z"
+            }));
+
+        Assert.Equal(HttpStatusCode.Redirect, postResponse.StatusCode);
+
+        var detailsResponse = await client.GetAsync($"/Materials/Details/{ids.MaterialId}");
+        var detailsHtml = WebUtility.HtmlDecode(await detailsResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        Assert.Contains("Ajuste manual", detailsHtml);
+        Assert.Contains("900,00 g", detailsHtml);
+
+        using var verifyScope = factory.Services.CreateScope();
+        var context = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var movement = await context.MaterialStockMovements.SingleAsync(movement => movement.MaterialId == ids.MaterialId);
+
+        Assert.Equal("ManualAdjustment", movement.MovementType);
+        Assert.Equal(-100m, movement.QuantityGrams);
+        Assert.Equal(1000m, movement.StockBeforeGrams);
+        Assert.Equal(900m, movement.StockAfterGrams);
+    }
+
+    [Fact]
     public async Task EditPrintJob_ToCompleted_DeductsStockThroughMvcPipeline()
     {
         using var factory = new ThreeDManagerWebFactory();
