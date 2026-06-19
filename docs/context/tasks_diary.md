@@ -54,3 +54,8 @@
 - Validation run: `dotnet build ThreeDManager.slnx` passed; `dotnet run --project src/ThreeDManager.Web/ThreeDManager.Web.csproj --launch-profile http` started; e2e MVC POST to `PrintJobs/Edit` changed stock from `100.00` to `87.55`, set status to `Completed`, stored deducted grams `12.45`, calculated material cost `1.00`, kept stock at `87.55` on a second save, and `PrintJobs/Details` showed `Baixa de estoque`.
 - Blockers: none
 - Next recommended task: add a focused automated test project around print job completion/stock deduction once the test harness exists, so this e2e scenario is repeatable without manual PowerShell.
+- Summary: Deduplicated the initial entrypoint so the app home and dashboard are the same screen: the default route now opens `Dashboard/Index`, the layout has a single dashboard navigation entry, and the unused `Home/Index` view was removed while keeping `/Home/Index` as a legacy redirect.
+- Files changed: `src/ThreeDManager.Web/Program.cs`, `src/ThreeDManager.Web/Views/Shared/_Layout.cshtml`, `src/ThreeDManager.Web/Views/Home/Privacy.cshtml`, `src/ThreeDManager.Web/Views/Home/Index.cshtml`, `docs/context/tasks_diary.md`
+- Validation run: `dotnet build ThreeDManager.slnx` passed; `dotnet run --project src/ThreeDManager.Web/ThreeDManager.Web.csproj --launch-profile http` started; `/`, `/Dashboard`, `/Home/Index`, and `/Home/Privacy` returned HTTP 200; `/`, `/Dashboard`, and `/Home/Index` rendered the dashboard; the layout rendered one `Dashboard` nav link and no `Home` nav link.
+- Blockers: none
+- Next recommended task: continue with the next small dashboard/production usability improvement and validate the changed flow through the app before committing.
