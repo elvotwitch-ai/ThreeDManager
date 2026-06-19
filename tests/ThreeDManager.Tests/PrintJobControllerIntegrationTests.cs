@@ -74,6 +74,67 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task CreatePrintJob_FromImport_ShowsValidation_WhenStockIsInsufficient()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory, stockGrams: 10m);
+
+        var importId = Guid.NewGuid();
+        await factory.SeedAsync(async context =>
+        {
+            context.PrintImports.Add(new PrintImport
+            {
+                Id = importId,
+                FileName = "sample.gcode",
+                FileType = "gcode",
+                ParsedDataJson = """
+                {"filamentUsedGrams":12.45,"filamentUsedMeters":1.23,"estimatedTimeMinutes":60,"reportedCost":2.5,"materialType":"PLA","warnings":[]}
+                """,
+                Status = "Parsed",
+                ImportedAt = DateTime.UtcNow
+            });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+        var getResponse = await client.GetAsync($"/PrintImports/CreatePrintJob/{importId}");
+        Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+
+        var token = ExtractAntiForgeryToken(await getResponse.Content.ReadAsStringAsync());
+        var response = await client.PostAsync(
+            "/PrintImports/CreatePrintJob",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = token,
+                ["ImportId"] = importId.ToString(),
+                ["FileName"] = "sample.gcode",
+                ["ParsedMaterialType"] = "PLA",
+                ["ProductId"] = ids.ProductId.ToString(),
+                ["PrinterId"] = ids.PrinterId.ToString(),
+                ["MaterialId"] = ids.MaterialId.ToString(),
+                ["FilamentUsedGrams"] = "12.45",
+                ["FilamentUsedMeters"] = "1.23",
+                ["EstimatedTimeMinutes"] = "60",
+                ["ActualTimeMinutes"] = "",
+                ["ReportedCost"] = "2.50",
+                ["Status"] = "Completed"
+            }));
+
+        var responseHtml = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("Estoque insuficiente para concluir esta produção.", responseHtml);
+
+        using var verifyScope = factory.Services.CreateScope();
+        var context = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var material = await context.Materials.SingleAsync(material => material.Id == ids.MaterialId);
+        var hasPrintJobForImport = await context.PrintJobs.AnyAsync(printJob => printJob.PrintImportId == importId);
+
+        Assert.Equal(10m, material.CurrentStockGrams);
+        Assert.False(hasPrintJobForImport);
+    }
+
+    [Fact]
     public async Task EditPrintJob_ToCompleted_DeductsStockThroughMvcPipeline()
     {
         using var factory = new ThreeDManagerWebFactory();
@@ -139,7 +200,9 @@ public class PrintJobControllerIntegrationTests
         Assert.Equal(material.Id, printJob.StockDeductedMaterialId);
     }
 
-    private static async Task<(Guid MaterialId, Guid ProductId, Guid PrinterId)> SeedCommonAsync(ThreeDManagerWebFactory factory)
+    private static async Task<(Guid MaterialId, Guid ProductId, Guid PrinterId)> SeedCommonAsync(
+        ThreeDManagerWebFactory factory,
+        decimal stockGrams = 1000m)
     {
         var materialId = Guid.NewGuid();
         var productId = Guid.NewGuid();
@@ -155,7 +218,7 @@ public class PrintJobControllerIntegrationTests
                 Brand = "E2E",
                 Color = "Black",
                 CostPerKg = 80m,
-                CurrentStockGrams = 1000m,
+                CurrentStockGrams = stockGrams,
                 CreatedAt = DateTime.UtcNow
             });
 

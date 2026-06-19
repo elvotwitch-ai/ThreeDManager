@@ -74,3 +74,8 @@
 - Validation run: `dotnet test ThreeDManager.slnx` passed with 6 tests; `dotnet build ThreeDManager.slnx` passed; `git diff --check` passed
 - Blockers: none
 - Next recommended task: add one controller integration test for the failure path when stock is insufficient, so the MVC validation message is covered too.
+- Summary: Added the controller integration test for insufficient stock on `PrintImports/CreatePrintJob`, proving the MVC pipeline returns the validation message, leaves the original stock unchanged, and does not create a `PrintJob` for the import.
+- Files changed: `tests/ThreeDManager.Tests/PrintJobControllerIntegrationTests.cs`, `docs/context/tasks_diary.md`
+- Validation run: `dotnet test ThreeDManager.slnx` passed with 7 tests; `dotnet build ThreeDManager.slnx` passed; `git diff --check` passed
+- Blockers: none
+- Next recommended task: use the integration suite as the guardrail for any future changes to import, edit, or stock-validation behavior.
