@@ -64,3 +64,8 @@
 - Validation run: `dotnet build ThreeDManager.slnx` passed; `dotnet run --project src/ThreeDManager.Web/ThreeDManager.Web.csproj --launch-profile http` started; e2e MVC edits verified stock `1000.00 -> 987.55` when status became `Completed` with `12.45 g`, restored to `1000.00` when status changed to `Failed`, returned to `987.55` when completed again, and ended at `980.00` when completed grams changed to `20.00`; `PrintJobs/Details` still showed `Baixa de estoque`.
 - Blockers: none
 - Next recommended task: add automated coverage for `PrintJobStockService` using a focused test project and an EF test database/provider.
+- Summary: Added a focused `xUnit` project for `PrintJobStockService` and codified the stock-deduction contract with four tests covering completed deductions, restore-on-status-change, replacement on edit, and insufficient stock failure.
+- Files changed: `tests/ThreeDManager.Tests/ThreeDManager.Tests.csproj`, `tests/ThreeDManager.Tests/PrintJobStockServiceTests.cs`, `ThreeDManager.slnx`, `docs/context/tasks_diary.md`
+- Validation run: `dotnet test ThreeDManager.slnx` passed with 4 tests; `dotnet build ThreeDManager.slnx` passed; `git diff --check` passed
+- Blockers: none
+- Next recommended task: use the new test project as the baseline for any future print-job or inventory rule changes.

@@ -6,4 +6,7 @@
     <Project Path="src/ThreeDManager.Web/ThreeDManager.Web.csproj" />
     <Project Path="src/ThreeDManager.Worker/ThreeDManager.Worker.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ThreeDManager.Tests/ThreeDManager.Tests.csproj" />
+  </Folder>
 </Solution>
