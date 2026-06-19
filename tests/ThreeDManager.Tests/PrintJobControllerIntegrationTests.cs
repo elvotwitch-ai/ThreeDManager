@@ -228,6 +228,43 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task AdjustStock_RemoveRejects_WhenItWouldMakeStockNegative()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory, stockGrams: 25m);
+        using var client = factory.CreateTestClient();
+
+        var getResponse = await client.GetAsync($"/Materials/AdjustStock/{ids.MaterialId}");
+        Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+
+        var token = ExtractAntiForgeryToken(await getResponse.Content.ReadAsStringAsync());
+        var postResponse = await client.PostAsync(
+            "/Materials/AdjustStock",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = token,
+                ["MaterialId"] = ids.MaterialId.ToString(),
+                ["MaterialName"] = "PLA Preto",
+                ["CurrentStockGrams"] = "25.00",
+                ["AdjustmentType"] = "Remove",
+                ["QuantityGrams"] = "30.00",
+                ["Notes"] = "Teste de proteção"
+            }));
+
+        var responseHtml = WebUtility.HtmlDecode(await postResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, postResponse.StatusCode);
+        Assert.Contains("A remoção não pode deixar o estoque negativo.", responseHtml);
+
+        using var verifyScope = factory.Services.CreateScope();
+        var context = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var material = await context.Materials.SingleAsync(material => material.Id == ids.MaterialId);
+        var movements = await context.MaterialStockMovements.Where(movement => movement.MaterialId == ids.MaterialId).ToListAsync();
+
+        Assert.Equal(25m, material.CurrentStockGrams);
+        Assert.Empty(movements);
+    }
+
+    [Fact]
     public async Task MaterialsIndex_ShowsLatestStockMovementSummary_AfterManualAdjustment()
     {
         using var factory = new ThreeDManagerWebFactory();

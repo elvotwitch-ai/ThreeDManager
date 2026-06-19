@@ -94,3 +94,8 @@
 - Validation run: `dotnet build ThreeDManager.slnx` passed; `dotnet test ThreeDManager.slnx --no-build` passed with 9 tests; real-app smoke under `ASPNETCORE_ENVIRONMENT=Testing` verified `Materials/AdjustStock` added stock, `Materials/Details` showed `1.500,00 g` and the note, and `Materials/Index` showed the compact recent movement summary
 - Blockers: none
 - Next recommended task: if you want to keep going, add the same compact stock-movement summary to another surface or move on to a different inventory workflow.
+- Summary: Hardened the manual stock adjustment flow with an explicit negative-stock guard, and verified the rejection path does not persist a movement or change the balance.
+- Files changed: `tests/ThreeDManager.Tests/PrintJobControllerIntegrationTests.cs`, `src/ThreeDManager.Web/Views/Materials/Index.cshtml`
+- Validation run: `dotnet build ThreeDManager.slnx` passed; `dotnet test ThreeDManager.slnx --no-build` passed with 11 tests; real-app smoke under `ASPNETCORE_ENVIRONMENT=Testing` verified `/Materials/AdjustStock` rejects removals above available stock, keeps the material at `25,00 g`, and leaves no saved movement
+- Blockers: none
+- Next recommended task: if you want another inventory follow-up, add the same movement summary to a second page or continue with a separate domain flow.
