@@ -15,6 +15,7 @@ Project validation:
 - `dotnet build ThreeDManager.slnx`
 - `dotnet run --project src/ThreeDManager.Web`
 - access the running app and verify the changed flow end-to-end
+- for behavior changes, create or modify data through the app path and verify the persisted or observable result
 - `dotnet test` when test projects exist
 - `git diff --check -- docs` for docs-only changes
 - `git status`, `git add .`, and `git commit -m "<message>"` only after build/run/app verification passes
@@ -26,6 +27,7 @@ Critical invariants:
 - Build the business model around product, production, inventory, commercial, finance, and intelligence.
 - Do not describe the solution as a monolith; keep boundaries explicit across the solution projects.
 - Do not commit a feature batch until it has been built, run, and checked in the app UI or API path it changed.
+- HTTP 200 alone is not enough for behavior changes; verify the expected state change.
 
 Task routing:
 - Feature work: inspect `docs/core/ARCHITECTURE.md`, `docs/core/ROADMAP.md`, `docs/context/SCOPE.md`, and `docs/context/BACKLOG.md`.

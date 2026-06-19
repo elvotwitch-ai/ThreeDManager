@@ -46,3 +46,11 @@
 - Validation run: `dotnet ef database update` passed; `dotnet build ThreeDManager.slnx` passed; `dotnet run --project src/ThreeDManager.Web --launch-profile http` started; `Dashboard`, `PrintJobs`, and `Materials` returned HTTP 200; web process was stopped after validation
 - Blockers: none
 - Next recommended task: exercise the full manual UI flow with a material that has stock, then complete a print job and confirm the material stock decreases by the filament grams.
+
+## 2026-06-19
+
+- Summary: Tightened decimal form binding so MVC edit posts accept HTML number values with decimal points, then validated the completed-print stock deduction through the real app flow.
+- Files changed: `src/ThreeDManager.Web/Program.cs`, `src/ThreeDManager.Web/ModelBinding/FlexibleDecimalModelBinder.cs`, `src/ThreeDManager.Web/ModelBinding/FlexibleDecimalModelBinderProvider.cs`, `docs/AGENT_CONTEXT.md`, `docs/INDEX.md`, `docs/core/IMPLEMENTATION_POLICY.md`, `docs/context/tasks_diary.md`
+- Validation run: `dotnet build ThreeDManager.slnx` passed; `dotnet run --project src/ThreeDManager.Web/ThreeDManager.Web.csproj --launch-profile http` started; e2e MVC POST to `PrintJobs/Edit` changed stock from `100.00` to `87.55`, set status to `Completed`, stored deducted grams `12.45`, calculated material cost `1.00`, kept stock at `87.55` on a second save, and `PrintJobs/Details` showed `Baixa de estoque`.
+- Blockers: none
+- Next recommended task: add a focused automated test project around print job completion/stock deduction once the test harness exists, so this e2e scenario is repeatable without manual PowerShell.

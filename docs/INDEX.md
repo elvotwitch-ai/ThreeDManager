@@ -24,6 +24,7 @@ Pre-commit checklist:
 1. Run `dotnet build ThreeDManager.slnx`.
 2. Run `dotnet run --project src/ThreeDManager.Web`.
 3. Open the app and verify the changed flow end-to-end.
-4. Run `git status`.
-5. Run `git add .`.
-6. Run `git commit -m "<message>"`.
+4. For behavior changes, verify the persisted or observable result, not only HTTP 200.
+5. Run `git status`.
+6. Run `git add .`.
+7. Run `git commit -m "<message>"`.

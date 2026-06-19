@@ -2,11 +2,15 @@ using Microsoft.EntityFrameworkCore;
 using ThreeDManager.Infrastructure.Data;
 using ThreeDManager.Application.Interfaces;
 using ThreeDManager.Infrastructure.Parsers;
+using ThreeDManager.Web.ModelBinding;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(options =>
+{
+    options.ModelBinderProviders.Insert(0, new FlexibleDecimalModelBinderProvider());
+});
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
