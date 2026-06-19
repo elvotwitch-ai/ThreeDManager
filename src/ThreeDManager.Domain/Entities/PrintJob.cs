@@ -14,6 +14,9 @@ public class PrintJob
     public int? ActualTimeMinutes {get; set; }
     public decimal? ReportedCost {get; set; }
     public decimal? CalculatedMaterialCost {get; set; }
+    public DateTime? StockDeductedAt {get; set; }
+    public Guid? StockDeductedMaterialId {get; set; }
+    public decimal? StockDeductedGrams {get; set; }
     public string Status {get; set; } = "Imported";
     public DateTime CreatedAt {get; set; } = DateTime.UtcNow;
 }

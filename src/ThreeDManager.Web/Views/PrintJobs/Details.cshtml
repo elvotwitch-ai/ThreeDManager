@@ -116,6 +116,18 @@
                 }
             </dd>
 
+            <dt class="col-sm-3">Baixa de estoque</dt>
+            <dd class="col-sm-9">
+                @if (Model.StockDeductedAt.HasValue && Model.StockDeductedGrams.HasValue)
+                {
+                    <span>@Model.StockDeductedGrams.Value.ToString("N2") g em @Model.StockDeductedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                }
+                else
+                {
+                    <span class="text-muted">Não realizada</span>
+                }
+            </dd>
+
             <dt class="col-sm-3">Status</dt>
             <dd class="col-sm-9">@Model.Status</dd>
 

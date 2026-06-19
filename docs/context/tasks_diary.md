@@ -41,3 +41,8 @@
 - Validation run: pending docs hygiene check
 - Blockers: none
 - Next recommended task: keep this checklist in sync with any future harness changes.
+- Summary: Added automatic material stock deduction when print jobs are marked as completed, including deduction tracking fields to avoid duplicate stock movements and restore stock when a deducted print job is edited or removed.
+- Files changed: `src/ThreeDManager.Domain/Entities/PrintJob.cs`, `src/ThreeDManager.Web/Controllers/PrintImportsController.cs`, `src/ThreeDManager.Web/Controllers/PrintJobsController.cs`, `src/ThreeDManager.Web/Views/PrintJobs/Details.cshtml`, `src/ThreeDManager.Infrastructure/Data/Migrations/20260619011241_AddStockDeductionTrackingToPrintJobs.cs`, `src/ThreeDManager.Infrastructure/Data/Migrations/20260619011241_AddStockDeductionTrackingToPrintJobs.Designer.cs`, `src/ThreeDManager.Infrastructure/Data/Migrations/AppDbContextModelSnapshot.cs`, `docs/context/tasks_diary.md`
+- Validation run: `dotnet ef database update` passed; `dotnet build ThreeDManager.slnx` passed; `dotnet run --project src/ThreeDManager.Web --launch-profile http` started; `Dashboard`, `PrintJobs`, and `Materials` returned HTTP 200; web process was stopped after validation
+- Blockers: none
+- Next recommended task: exercise the full manual UI flow with a material that has stock, then complete a print job and confirm the material stock decreases by the filament grams.

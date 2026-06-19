@@ -258,12 +258,65 @@ public class PrintImportsController : Controller
             CreatedAt = DateTime.UtcNow
         };
 
+        if (!await TryApplyStockDeductionAsync(printJob))
+        {
+            await PopulatePrintJobOptionsAsync(viewModel, viewModel.ParsedMaterialType);
+            return View(viewModel);
+        }
+
         _context.PrintJobs.Add(printJob);
         await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = "Produção gerada com sucesso.";
 
         return RedirectToAction("Details", "PrintJobs", new { id = printJob.Id });
+    }
+
+    private async Task<bool> TryApplyStockDeductionAsync(PrintJob printJob)
+    {
+        if (printJob.Status != "Completed")
+        {
+            return true;
+        }
+
+        if (printJob.MaterialId is null)
+        {
+            ModelState.AddModelError(nameof(PrintJobFromImportViewModel.MaterialId), "Selecione um material para concluir e baixar estoque.");
+            return false;
+        }
+
+        if (printJob.FilamentUsedGrams is null or <= 0)
+        {
+            ModelState.AddModelError(nameof(PrintJobFromImportViewModel.FilamentUsedGrams), "Informe o filamento usado para concluir e baixar estoque.");
+            return false;
+        }
+
+        var material = await _context.Materials.FindAsync(printJob.MaterialId.Value);
+
+        if (material is null)
+        {
+            ModelState.AddModelError(nameof(PrintJobFromImportViewModel.MaterialId), "Material não encontrado para baixar estoque.");
+            return false;
+        }
+
+        if (material.CurrentStockGrams is null)
+        {
+            ModelState.AddModelError(nameof(PrintJobFromImportViewModel.MaterialId), "O material selecionado não possui estoque informado.");
+            return false;
+        }
+
+        if (material.CurrentStockGrams.Value < printJob.FilamentUsedGrams.Value)
+        {
+            ModelState.AddModelError(nameof(PrintJobFromImportViewModel.FilamentUsedGrams), "Estoque insuficiente para concluir esta produção.");
+            return false;
+        }
+
+        material.CurrentStockGrams -= printJob.FilamentUsedGrams.Value;
+        printJob.StockDeductedAt = DateTime.UtcNow;
+        printJob.StockDeductedMaterialId = material.Id;
+        printJob.StockDeductedGrams = printJob.FilamentUsedGrams;
+
+        return true;
     }
 
     private async Task<decimal?> CalculateMaterialCostAsync(Guid? materialId, decimal? filamentUsedGrams)
