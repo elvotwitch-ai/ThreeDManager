@@ -9,5 +9,6 @@ public class Material
     public string? Color {get; set; }
     public decimal? CostPerKg {get; set; }
     public decimal? CurrentStockGrams {get; set; }
+    public decimal? MinimumStockGrams {get; set; }
     public DateTime CreatedAt {get; set; } = DateTime.UtcNow;
 }

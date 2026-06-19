@@ -128,6 +128,7 @@ public class MaterialsController : Controller
         existingMaterial.Color = material.Color;
         existingMaterial.CostPerKg = material.CostPerKg;
         existingMaterial.CurrentStockGrams = material.CurrentStockGrams;
+        existingMaterial.MinimumStockGrams = material.MinimumStockGrams;
 
         if (currentStockBeforeUpdate != material.CurrentStockGrams)
         {

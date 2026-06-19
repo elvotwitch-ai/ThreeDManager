@@ -53,6 +53,14 @@
                 <input asp-for="CurrentStockGrams" class="form-control" type="number" step="0.01" min="0" />
             </div>
 
+            <div class="mb-3">
+                <label asp-for="MinimumStockGrams" class="form-label">Estoque mínimo em gramas</label>
+                <input asp-for="MinimumStockGrams" class="form-control" type="number" step="0.01" />
+                <div class="form-text">
+                    Quando o estoque atual ficar igual ou abaixo deste valor, o material será marcado como baixo estoque.
+                </div>
+            </div>
+
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary">Salvar alterações</button>
                 <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>

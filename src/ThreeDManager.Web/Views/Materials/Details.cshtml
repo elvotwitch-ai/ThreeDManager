@@ -53,6 +53,44 @@
                 }
             </dd>
 
+            <dt class="col-sm-3">Estoque mínimo</dt>
+            <dd class="col-sm-9">
+                @if (Model.MinimumStockGrams.HasValue)
+                {
+                    <span>@Model.MinimumStockGrams.Value.ToString("N2") g</span>
+                }
+                else
+                {
+                    <span class="text-muted">Não definido</span>
+                }
+            </dd>
+
+            <dt class="col-sm-3">Status do estoque</dt>
+            <dd class="col-sm-9">
+                @{
+                    var hasCurrentStock = Model.CurrentStockGrams.HasValue;
+                    var hasMinimumStock = Model.MinimumStockGrams.HasValue;
+                    var currentStockGrams = Model.CurrentStockGrams.GetValueOrDefault();
+                    var minimumStockGrams = Model.MinimumStockGrams.GetValueOrDefault();
+                    var isLowStock = hasCurrentStock
+                        && hasMinimumStock
+                        && currentStockGrams <= minimumStockGrams;
+                }
+
+                @if (isLowStock)
+                {
+                    <span class="badge bg-danger">Baixo estoque</span>
+                }
+                else if (hasCurrentStock && hasMinimumStock)
+                {
+                    <span class="badge bg-success">Ok</span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary">Sem alerta configurado</span>
+                }
+            </dd>
+
             <dt class="col-sm-3">Criado em</dt>
             <dd class="col-sm-9">@Model.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
         </dl>

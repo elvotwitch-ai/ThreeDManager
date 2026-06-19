@@ -28,11 +28,15 @@ public class DashboardViewModel
 
     public decimal TotalCalculatedMaterialCost { get; set; }
 
+    public int LowStockMaterialsCount { get; set; }
+
     public List<DashboardRecentPrintJobViewModel> RecentPrintJobs { get; set; } = new();
 
     public List<DashboardFailedPrintImportViewModel> RecentFailedImports { get; set; } = new();
 
     public List<DashboardStockMovementViewModel> RecentStockMovements { get; set; } = new();
+
+    public List<DashboardLowStockMaterialViewModel> LowStockMaterials { get; set; } = new();
 }
 
 public class DashboardRecentPrintJobViewModel
@@ -90,4 +94,15 @@ public class DashboardStockMovementViewModel
     public string? Notes { get; set; }
 
     public DateTime CreatedAt { get; set; }
+}
+
+public class DashboardLowStockMaterialViewModel
+{
+    public Guid Id { get; set; }
+
+    public string Name { get; set; } = string.Empty;
+
+    public decimal CurrentStockGrams { get; set; }
+
+    public decimal MinimumStockGrams { get; set; }
 }

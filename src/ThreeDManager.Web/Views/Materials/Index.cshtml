@@ -47,6 +47,8 @@ else
                 <th>Cor</th>
                 <th>Custo por kg (R$)</th>
                 <th>Estoque atual</th>
+                <th>Estoque mínimo</th>
+                <th>Status estoque</th>
                 <th>Movimentação recente</th>
                 <th class="text-end">Ações</th>
             </tr>
@@ -86,6 +88,40 @@ else
                         else
                         {
                             <span class="badge text-bg-light">Não informado</span>
+                        }
+                    </td>
+                    <td>
+                        @if (material.MinimumStockGrams.HasValue)
+                        {
+                            <span>@material.MinimumStockGrams.Value.ToString("N2") g</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Não definido</span>
+                        }
+                    </td>
+                    <td>
+                        @{
+                            var hasCurrentStock = material.CurrentStockGrams.HasValue;
+                            var hasMinimumStock = material.MinimumStockGrams.HasValue;
+                            var currentStockGrams = material.CurrentStockGrams.GetValueOrDefault();
+                            var minimumStockGrams = material.MinimumStockGrams.GetValueOrDefault();
+                            var isLowStock = hasCurrentStock
+                                && hasMinimumStock
+                                && currentStockGrams <= minimumStockGrams;
+                        }
+
+                        @if (isLowStock)
+                        {
+                            <span class="badge bg-danger">Baixo estoque</span>
+                        }
+                        else if (hasCurrentStock && hasMinimumStock)
+                        {
+                            <span class="badge bg-success">Ok</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Sem alerta</span>
                         }
                     </td>
                     <td>

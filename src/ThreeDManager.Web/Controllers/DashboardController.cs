@@ -33,6 +33,14 @@ public class DashboardController : Controller
         var printerNames = await _context.Printers
             .ToDictionaryAsync(printer => printer.Id, printer => printer.Name);
 
+        var lowStockMaterials = await _context.Materials
+            .Where(material =>
+                material.CurrentStockGrams.HasValue
+                && material.MinimumStockGrams.HasValue
+                && material.CurrentStockGrams.Value <= material.MinimumStockGrams.Value)
+            .OrderBy(material => material.CurrentStockGrams)
+            .ToListAsync();
+
         var stockMovements = await _context.MaterialStockMovements
             .OrderByDescending(movement => movement.CreatedAt)
             .Take(5)
@@ -56,6 +64,17 @@ public class DashboardController : Controller
             TotalActualTimeMinutes = printJobs.Sum(printJob => printJob.ActualTimeMinutes ?? 0),
             TotalReportedCost = printJobs.Sum(printJob => printJob.ReportedCost ?? 0),
             TotalCalculatedMaterialCost = printJobs.Sum(printJob => printJob.CalculatedMaterialCost ?? 0),
+
+            LowStockMaterialsCount = lowStockMaterials.Count,
+            LowStockMaterials = lowStockMaterials
+                .Select(material => new DashboardLowStockMaterialViewModel
+                {
+                    Id = material.Id,
+                    Name = material.Name,
+                    CurrentStockGrams = material.CurrentStockGrams ?? 0,
+                    MinimumStockGrams = material.MinimumStockGrams ?? 0
+                })
+                .ToList(),
 
             RecentPrintJobs = printJobs
                 .Take(8)

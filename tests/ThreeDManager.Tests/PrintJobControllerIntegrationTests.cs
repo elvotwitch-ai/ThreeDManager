@@ -307,6 +307,63 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task LowStockAlert_IsShown_OnMaterialsAndDashboard_WhenBelowMinimum()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+        using var client = factory.CreateTestClient();
+
+        var editPage = await client.GetAsync($"/Materials/Edit/{ids.MaterialId}");
+        Assert.Equal(HttpStatusCode.OK, editPage.StatusCode);
+
+        var token = ExtractAntiForgeryToken(await editPage.Content.ReadAsStringAsync());
+        var postResponse = await client.PostAsync(
+            $"/Materials/Edit/{ids.MaterialId}",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = token,
+                ["Id"] = ids.MaterialId.ToString(),
+                ["Name"] = "PLA Preto",
+                ["Type"] = "PLA",
+                ["Brand"] = "E2E",
+                ["Color"] = "Black",
+                ["CostPerKg"] = "80.00",
+                ["CurrentStockGrams"] = "120.00",
+                ["MinimumStockGrams"] = "200.00",
+                ["CreatedAt"] = "2026-06-19T02:00:00Z"
+            }));
+
+        Assert.Equal(HttpStatusCode.Redirect, postResponse.StatusCode);
+
+        var detailsResponse = await client.GetAsync($"/Materials/Details/{ids.MaterialId}");
+        var detailsHtml = WebUtility.HtmlDecode(await detailsResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        Assert.Contains("Estoque mínimo", detailsHtml);
+        Assert.Contains("Baixo estoque", detailsHtml);
+
+        var indexResponse = await client.GetAsync("/Materials");
+        var indexHtml = WebUtility.HtmlDecode(await indexResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, indexResponse.StatusCode);
+        Assert.Contains("Baixo estoque", indexHtml);
+        Assert.Contains("120,00 g", indexHtml);
+        Assert.Contains("200,00 g", indexHtml);
+
+        var dashboardResponse = await client.GetAsync("/Dashboard");
+        var dashboardHtml = WebUtility.HtmlDecode(await dashboardResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, dashboardResponse.StatusCode);
+        Assert.Contains("Alertas de estoque", dashboardHtml);
+        Assert.Contains("Existem <strong>1</strong> materiais em baixo estoque.", dashboardHtml);
+        Assert.Contains("PLA Preto", dashboardHtml);
+
+        using var verifyScope = factory.Services.CreateScope();
+        var context = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var material = await context.Materials.SingleAsync(material => material.Id == ids.MaterialId);
+
+        Assert.Equal(120m, material.CurrentStockGrams);
+        Assert.Equal(200m, material.MinimumStockGrams);
+    }
+
+    [Fact]
     public async Task EditPrintJob_ToCompleted_DeductsStockThroughMvcPipeline()
     {
         using var factory = new ThreeDManagerWebFactory();
