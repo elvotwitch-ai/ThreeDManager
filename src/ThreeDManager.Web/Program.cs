@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using ThreeDManager.Infrastructure.Data;
 using ThreeDManager.Application.Interfaces;
 using ThreeDManager.Infrastructure.Parsers;
+using ThreeDManager.Infrastructure.Services;
 using ThreeDManager.Web.ModelBinding;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +17,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
 builder.Services.AddScoped<IPrintFileParser, GCodePrintFileParser>();
+builder.Services.AddScoped<IPrintJobStockService, PrintJobStockService>();
 
 var app = builder.Build();
 

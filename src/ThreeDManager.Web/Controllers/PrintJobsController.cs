@@ -3,16 +3,21 @@ using Microsoft.EntityFrameworkCore;
 using ThreeDManager.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using ThreeDManager.Domain.Entities;
+using ThreeDManager.Application.Interfaces;
 
 namespace ThreeDManager.Web.Controllers;
 
 public class PrintJobsController : Controller
 {
     private readonly AppDbContext _context;
+    private readonly IPrintJobStockService _stockService;
 
-    public PrintJobsController(AppDbContext context)
+    public PrintJobsController(
+        AppDbContext context,
+        IPrintJobStockService stockService)
     {
         _context = context;
+        _stockService = stockService;
     }
 
     public async Task<IActionResult> Index()
@@ -112,7 +117,11 @@ public class PrintJobsController : Controller
             return NotFound();
         }
 
-        await RestoreStockDeductionAsync(existingPrintJob);
+        var stockResult = await _stockService.SyncForEditedPrintJobAsync(
+            existingPrintJob,
+            printJob.MaterialId,
+            printJob.FilamentUsedGrams,
+            printJob.Status);
 
         existingPrintJob.ProductId = printJob.ProductId;
         existingPrintJob.PrinterId = printJob.PrinterId;
@@ -127,8 +136,9 @@ public class PrintJobsController : Controller
             printJob.FilamentUsedGrams);
         existingPrintJob.Status = printJob.Status;
 
-        if (!await TryApplyStockDeductionAsync(existingPrintJob))
+        if (!stockResult.Succeeded)
         {
+            AddStockModelError(stockResult);
             await PopulateOptionsAsync(printJob);
             return View(printJob);
         }
@@ -176,7 +186,7 @@ public class PrintJobsController : Controller
             return NotFound();
         }
 
-        await RestoreStockDeductionAsync(printJob);
+        await _stockService.RestoreForDeletedPrintJobAsync(printJob);
 
         _context.PrintJobs.Remove(printJob);
         await _context.SaveChangesAsync();
@@ -184,72 +194,6 @@ public class PrintJobsController : Controller
         TempData["SuccessMessage"] = "Produção removida com sucesso.";
 
         return RedirectToAction(nameof(Index));
-    }
-
-    private async Task RestoreStockDeductionAsync(PrintJob printJob)
-    {
-        if (printJob.StockDeductedMaterialId is null || printJob.StockDeductedGrams is null)
-        {
-            return;
-        }
-
-        var material = await _context.Materials.FindAsync(printJob.StockDeductedMaterialId.Value);
-
-        if (material is not null)
-        {
-            material.CurrentStockGrams = (material.CurrentStockGrams ?? 0) + printJob.StockDeductedGrams.Value;
-        }
-
-        printJob.StockDeductedAt = null;
-        printJob.StockDeductedMaterialId = null;
-        printJob.StockDeductedGrams = null;
-    }
-
-    private async Task<bool> TryApplyStockDeductionAsync(PrintJob printJob)
-    {
-        if (printJob.Status != "Completed")
-        {
-            return true;
-        }
-
-        if (printJob.MaterialId is null)
-        {
-            ModelState.AddModelError(nameof(PrintJob.MaterialId), "Selecione um material para concluir e baixar estoque.");
-            return false;
-        }
-
-        if (printJob.FilamentUsedGrams is null or <= 0)
-        {
-            ModelState.AddModelError(nameof(PrintJob.FilamentUsedGrams), "Informe o filamento usado para concluir e baixar estoque.");
-            return false;
-        }
-
-        var material = await _context.Materials.FindAsync(printJob.MaterialId.Value);
-
-        if (material is null)
-        {
-            ModelState.AddModelError(nameof(PrintJob.MaterialId), "Material não encontrado para baixar estoque.");
-            return false;
-        }
-
-        if (material.CurrentStockGrams is null)
-        {
-            ModelState.AddModelError(nameof(PrintJob.MaterialId), "O material selecionado não possui estoque informado.");
-            return false;
-        }
-
-        if (material.CurrentStockGrams.Value < printJob.FilamentUsedGrams.Value)
-        {
-            ModelState.AddModelError(nameof(PrintJob.FilamentUsedGrams), "Estoque insuficiente para concluir esta produção.");
-            return false;
-        }
-
-        material.CurrentStockGrams -= printJob.FilamentUsedGrams.Value;
-        printJob.StockDeductedAt = DateTime.UtcNow;
-        printJob.StockDeductedMaterialId = material.Id;
-        printJob.StockDeductedGrams = printJob.FilamentUsedGrams;
-
-        return true;
     }
 
     private async Task PopulateOptionsAsync(PrintJob printJob)
@@ -290,5 +234,12 @@ public class PrintJobsController : Controller
         }
 
         return Math.Round((filamentUsedGrams.Value / 1000m) * costPerKg.Value, 2);
+    }
+
+    private void AddStockModelError(PrintJobStockResult stockResult)
+    {
+        ModelState.AddModelError(
+            stockResult.FieldName ?? string.Empty,
+            stockResult.ErrorMessage ?? "Não foi possível atualizar o estoque.");
     }
 }

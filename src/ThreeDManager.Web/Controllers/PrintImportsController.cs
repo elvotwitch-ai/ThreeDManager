@@ -17,11 +17,16 @@ public class PrintImportsController : Controller
 
     private readonly AppDbContext _context;
     private readonly IPrintFileParser _parser;
+    private readonly IPrintJobStockService _stockService;
 
-    public PrintImportsController(AppDbContext context, IPrintFileParser parser)
+    public PrintImportsController(
+        AppDbContext context,
+        IPrintFileParser parser,
+        IPrintJobStockService stockService)
     {
         _context = context;
         _parser = parser;
+        _stockService = stockService;
     }
 
     public async Task<IActionResult> Index()
@@ -258,8 +263,11 @@ public class PrintImportsController : Controller
             CreatedAt = DateTime.UtcNow
         };
 
-        if (!await TryApplyStockDeductionAsync(printJob))
+        var stockResult = await _stockService.ApplyForNewPrintJobAsync(printJob);
+
+        if (!stockResult.Succeeded)
         {
+            AddStockModelError(stockResult);
             await PopulatePrintJobOptionsAsync(viewModel, viewModel.ParsedMaterialType);
             return View(viewModel);
         }
@@ -270,53 +278,6 @@ public class PrintImportsController : Controller
         TempData["SuccessMessage"] = "Produção gerada com sucesso.";
 
         return RedirectToAction("Details", "PrintJobs", new { id = printJob.Id });
-    }
-
-    private async Task<bool> TryApplyStockDeductionAsync(PrintJob printJob)
-    {
-        if (printJob.Status != "Completed")
-        {
-            return true;
-        }
-
-        if (printJob.MaterialId is null)
-        {
-            ModelState.AddModelError(nameof(PrintJobFromImportViewModel.MaterialId), "Selecione um material para concluir e baixar estoque.");
-            return false;
-        }
-
-        if (printJob.FilamentUsedGrams is null or <= 0)
-        {
-            ModelState.AddModelError(nameof(PrintJobFromImportViewModel.FilamentUsedGrams), "Informe o filamento usado para concluir e baixar estoque.");
-            return false;
-        }
-
-        var material = await _context.Materials.FindAsync(printJob.MaterialId.Value);
-
-        if (material is null)
-        {
-            ModelState.AddModelError(nameof(PrintJobFromImportViewModel.MaterialId), "Material não encontrado para baixar estoque.");
-            return false;
-        }
-
-        if (material.CurrentStockGrams is null)
-        {
-            ModelState.AddModelError(nameof(PrintJobFromImportViewModel.MaterialId), "O material selecionado não possui estoque informado.");
-            return false;
-        }
-
-        if (material.CurrentStockGrams.Value < printJob.FilamentUsedGrams.Value)
-        {
-            ModelState.AddModelError(nameof(PrintJobFromImportViewModel.FilamentUsedGrams), "Estoque insuficiente para concluir esta produção.");
-            return false;
-        }
-
-        material.CurrentStockGrams -= printJob.FilamentUsedGrams.Value;
-        printJob.StockDeductedAt = DateTime.UtcNow;
-        printJob.StockDeductedMaterialId = material.Id;
-        printJob.StockDeductedGrams = printJob.FilamentUsedGrams;
-
-        return true;
     }
 
     private async Task<decimal?> CalculateMaterialCostAsync(Guid? materialId, decimal? filamentUsedGrams)
@@ -337,6 +298,18 @@ public class PrintImportsController : Controller
         }
 
         return Math.Round((filamentUsedGrams.Value / 1000m) * costPerKg.Value, 2);
+    }
+
+    private void AddStockModelError(PrintJobStockResult stockResult)
+    {
+        var fieldName = stockResult.FieldName switch
+        {
+            nameof(PrintJob.MaterialId) => nameof(PrintJobFromImportViewModel.MaterialId),
+            nameof(PrintJob.FilamentUsedGrams) => nameof(PrintJobFromImportViewModel.FilamentUsedGrams),
+            _ => string.Empty
+        };
+
+        ModelState.AddModelError(fieldName, stockResult.ErrorMessage ?? "Não foi possível atualizar o estoque.");
     }
 
     private ParsedPrintMetadata? DeserializeParsedMetadata(PrintImport printImport)
