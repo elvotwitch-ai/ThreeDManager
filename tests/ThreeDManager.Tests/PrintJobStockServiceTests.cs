@@ -33,6 +33,7 @@ public class PrintJobStockServiceTests
         Assert.Equal(1000m, movement.StockBeforeGrams);
         Assert.Equal(987.55m, movement.StockAfterGrams);
         Assert.Contains("Baixa automática", movement.Notes);
+        Assert.Contains("12.45", movement.Notes);
     }
 
     [Fact]
@@ -64,6 +65,7 @@ public class PrintJobStockServiceTests
         Assert.Equal(-12.45m, movements[0].QuantityGrams);
         Assert.Equal("PrintJobStockRestored", movements[1].MovementType);
         Assert.Equal(12.45m, movements[1].QuantityGrams);
+        Assert.Contains("Devolução automática", movements[1].Notes);
     }
 
     [Fact]
@@ -94,6 +96,7 @@ public class PrintJobStockServiceTests
         Assert.Equal(-12.45m, movements[0].QuantityGrams);
         Assert.Equal(12.45m, movements[1].QuantityGrams);
         Assert.Equal(-20m, movements[2].QuantityGrams);
+        Assert.Contains("Baixa automática", movements[2].Notes);
     }
 
     [Fact]

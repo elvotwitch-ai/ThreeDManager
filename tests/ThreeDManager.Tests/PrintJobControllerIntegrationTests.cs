@@ -179,6 +179,42 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task Dashboard_ShowsRecentStockMovements_AfterManualAdjustment()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+        using var client = factory.CreateTestClient();
+
+        var getResponse = await client.GetAsync($"/Materials/Edit/{ids.MaterialId}");
+        Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+
+        var token = ExtractAntiForgeryToken(await getResponse.Content.ReadAsStringAsync());
+        var postResponse = await client.PostAsync(
+            $"/Materials/Edit/{ids.MaterialId}",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = token,
+                ["Id"] = ids.MaterialId.ToString(),
+                ["Name"] = "PLA Preto",
+                ["Type"] = "PLA",
+                ["Brand"] = "E2E",
+                ["Color"] = "Black",
+                ["CostPerKg"] = "80.00",
+                ["CurrentStockGrams"] = "900.00",
+                ["CreatedAt"] = "2026-06-19T02:00:00Z"
+            }));
+
+        Assert.Equal(HttpStatusCode.Redirect, postResponse.StatusCode);
+
+        var dashboardResponse = await client.GetAsync("/Dashboard");
+        var dashboardHtml = WebUtility.HtmlDecode(await dashboardResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, dashboardResponse.StatusCode);
+        Assert.Contains("Movimentações de estoque recentes", dashboardHtml);
+        Assert.Contains("PLA Preto", dashboardHtml);
+        Assert.Contains("Ajuste manual", dashboardHtml);
+    }
+
+    [Fact]
     public async Task EditPrintJob_ToCompleted_DeductsStockThroughMvcPipeline()
     {
         using var factory = new ThreeDManagerWebFactory();

@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using ThreeDManager.Application.Interfaces;
 using ThreeDManager.Domain.Entities;
@@ -70,7 +71,7 @@ public class PrintJobStockService : IPrintJobStockService
                 QuantityGrams = quantity,
                 StockBeforeGrams = stockBefore,
                 StockAfterGrams = stockAfter,
-                Notes = $"Devolução automática da produção {printJob.SourceFileName}",
+                Notes = $"Devolução automática de estoque da produção {printJob.SourceFileName} ({quantity.ToString("N2", CultureInfo.InvariantCulture)} g).",
                 CreatedAt = DateTime.UtcNow
             });
         }
@@ -142,7 +143,7 @@ public class PrintJobStockService : IPrintJobStockService
             QuantityGrams = -quantity,
             StockBeforeGrams = stockBefore,
             StockAfterGrams = stockAfter,
-            Notes = $"Baixa automática pela produção {printJob.SourceFileName}",
+            Notes = $"Baixa automática de estoque pela produção {printJob.SourceFileName} ({quantity.ToString("N2", CultureInfo.InvariantCulture)} g).",
             CreatedAt = DateTime.UtcNow
         });
 

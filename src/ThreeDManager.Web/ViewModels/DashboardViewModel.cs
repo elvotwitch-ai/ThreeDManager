@@ -31,6 +31,8 @@ public class DashboardViewModel
     public List<DashboardRecentPrintJobViewModel> RecentPrintJobs { get; set; } = new();
 
     public List<DashboardFailedPrintImportViewModel> RecentFailedImports { get; set; } = new();
+
+    public List<DashboardStockMovementViewModel> RecentStockMovements { get; set; } = new();
 }
 
 public class DashboardRecentPrintJobViewModel
@@ -69,4 +71,23 @@ public class DashboardFailedPrintImportViewModel
     public string? ErrorMessage { get; set; }
 
     public DateTime ImportedAt { get; set; }
+}
+
+public class DashboardStockMovementViewModel
+{
+    public Guid Id { get; set; }
+
+    public string MaterialName { get; set; } = string.Empty;
+
+    public string MovementType { get; set; } = string.Empty;
+
+    public decimal QuantityGrams { get; set; }
+
+    public decimal? StockBeforeGrams { get; set; }
+
+    public decimal? StockAfterGrams { get; set; }
+
+    public string? Notes { get; set; }
+
+    public DateTime CreatedAt { get; set; }
 }

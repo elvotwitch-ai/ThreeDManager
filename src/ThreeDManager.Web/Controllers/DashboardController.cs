@@ -33,6 +33,11 @@ public class DashboardController : Controller
         var printerNames = await _context.Printers
             .ToDictionaryAsync(printer => printer.Id, printer => printer.Name);
 
+        var stockMovements = await _context.MaterialStockMovements
+            .OrderByDescending(movement => movement.CreatedAt)
+            .Take(5)
+            .ToListAsync();
+
         var viewModel = new DashboardViewModel
         {
             TotalPrintJobs = printJobs.Count,
@@ -90,6 +95,22 @@ public class DashboardController : Controller
                     Status = printImport.Status,
                     ErrorMessage = printImport.ErrorMessage,
                     ImportedAt = printImport.ImportedAt
+                })
+                .ToList(),
+
+            RecentStockMovements = stockMovements
+                .Select(movement => new DashboardStockMovementViewModel
+                {
+                    Id = movement.Id,
+                    MaterialName = materialNames.TryGetValue(movement.MaterialId, out var movementMaterialName)
+                        ? movementMaterialName
+                        : "Material não encontrado",
+                    MovementType = movement.MovementType,
+                    QuantityGrams = movement.QuantityGrams,
+                    StockBeforeGrams = movement.StockBeforeGrams,
+                    StockAfterGrams = movement.StockAfterGrams,
+                    Notes = movement.Notes,
+                    CreatedAt = movement.CreatedAt
                 })
                 .ToList()
         };

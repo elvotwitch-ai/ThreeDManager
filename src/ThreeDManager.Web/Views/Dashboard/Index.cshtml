@@ -143,6 +143,66 @@
 
 <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
+        <strong>Movimentações de estoque recentes</strong>
+        <a asp-controller="Materials" asp-action="Index" class="btn btn-sm btn-outline-primary">Ver materiais</a>
+    </div>
+
+    <div class="card-body">
+        @if (!Model.RecentStockMovements.Any())
+        {
+            <div class="alert alert-info mb-0">
+                Nenhuma movimentação de estoque registrada ainda.
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-striped table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Material</th>
+                            <th>Movimento</th>
+                            <th>Quantidade</th>
+                            <th>Antes</th>
+                            <th>Depois</th>
+                            <th>Observação</th>
+                            <th>Em</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var movement in Model.RecentStockMovements)
+                        {
+                            var movementLabel = movement.MovementType switch
+                            {
+                                "PrintJobCompleted" => "Baixa automática",
+                                "PrintJobStockRestored" => "Devolução automática",
+                                "ManualAdjustment" => "Ajuste manual",
+                                _ => movement.MovementType
+                            };
+
+                            <tr>
+                                <td>@movement.MaterialName</td>
+                                <td>@movementLabel</td>
+                                <td>
+                                    <span class="@(movement.QuantityGrams < 0 ? "text-danger" : "text-success") fw-semibold">
+                                        @movement.QuantityGrams.ToString("+0.##;-0.##;0.##") g
+                                    </span>
+                                </td>
+                                <td>@(movement.StockBeforeGrams.HasValue ? $"{movement.StockBeforeGrams.Value:N2} g" : "-")</td>
+                                <td>@(movement.StockAfterGrams.HasValue ? $"{movement.StockAfterGrams.Value:N2} g" : "-")</td>
+                                <td>@(string.IsNullOrWhiteSpace(movement.Notes) ? "-" : movement.Notes)</td>
+                                <td>@movement.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
         <strong>Importações com falha recentes</strong>
         <a asp-controller="PrintImports" asp-action="Index" class="btn btn-sm btn-outline-primary">Ver todas</a>
     </div>

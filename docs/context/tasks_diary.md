@@ -84,3 +84,8 @@
 - Validation run: `dotnet build ThreeDManager.slnx` passed; `dotnet test ThreeDManager.slnx` passed with 8 tests; `dotnet run --project src/ThreeDManager.Web --no-launch-profile` under `ASPNETCORE_ENVIRONMENT=Testing` passed a real-app smoke flow creating a material, changing stock from `1000.00` to `900.00`, and confirming `Materials/Details` showed the movement history
 - Blockers: none
 - Next recommended task: if you want the audit trail to be visible in more places, add the same movement summary to the material list or dashboard later; otherwise commit this batch and move to the next feature.
+- Summary: Added a compact recent stock-movement section to the dashboard and made automatic stock movement notes more explicit with production names and gram amounts.
+- Files changed: `src/ThreeDManager.Infrastructure/Services/PrintJobStockService.cs`, `src/ThreeDManager.Web/Controllers/DashboardController.cs`, `src/ThreeDManager.Web/Views/Dashboard/Index.cshtml`, `src/ThreeDManager.Web/ViewModels/DashboardViewModel.cs`, `tests/ThreeDManager.Tests/PrintJobStockServiceTests.cs`, `tests/ThreeDManager.Tests/PrintJobControllerIntegrationTests.cs`
+- Validation run: `dotnet build ThreeDManager.slnx` passed; `dotnet test ThreeDManager.slnx --no-build` passed with 9 tests; real-app smoke under `ASPNETCORE_ENVIRONMENT=Testing` verified `/Dashboard` showed `Movimentações de estoque recentes` and `Ajuste manual`, and `Materials/Details` still showed the manual movement and `900,00 g`
+- Blockers: none
+- Next recommended task: if you want more visibility, surface the same stock-movement summary on `Materials/Index` next; otherwise commit this dashboard batch and continue to the next feature.
