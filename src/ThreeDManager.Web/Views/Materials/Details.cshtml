@@ -130,7 +130,8 @@
     }
 </div>
 
-<div class="mt-3 d-flex gap-2">
+<div class="mt-3 d-flex flex-wrap gap-2">
+    <a asp-action="AdjustStock" asp-route-id="@Model.Id" class="btn btn-success">Ajustar estoque</a>
     <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Editar</a>
     <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">Remover</a>
     <a asp-action="Index" class="btn btn-outline-secondary">Voltar</a>

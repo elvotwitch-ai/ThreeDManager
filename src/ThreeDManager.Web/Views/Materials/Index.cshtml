@@ -1,7 +1,9 @@
 @model IEnumerable<ThreeDManager.Domain.Entities.Material>
+@using ThreeDManager.Domain.Entities
 
 @{
     ViewData["Title"] = "Materiais";
+    var latestStockMovements = ViewBag.LatestStockMovements as Dictionary<Guid, MaterialStockMovement> ?? new Dictionary<Guid, MaterialStockMovement>();
 }
 
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
@@ -45,12 +47,22 @@ else
                 <th>Cor</th>
                 <th>Custo por kg (R$)</th>
                 <th>Estoque atual</th>
+                <th>Movimentação recente</th>
                 <th class="text-end">Ações</th>
             </tr>
         </thead>
         <tbody>
             @foreach (var material in Model)
             {
+                latestStockMovements.TryGetValue(material.Id, out var latestMovement);
+                var movementLabel = latestMovement?.MovementType switch
+                {
+                    "PrintJobCompleted" => "Baixa automática",
+                    "PrintJobStockRestored" => "Devolução automática",
+                    "ManualAdjustment" => "Ajuste manual",
+                    _ => latestMovement?.MovementType
+                };
+
                 <tr>
                     <td class="fw-semibold">@material.Name</td>
                     <td>@(material.Type ?? "-")</td>
@@ -76,10 +88,30 @@ else
                             <span class="badge text-bg-light">Não informado</span>
                         }
                     </td>
+                    <td>
+                        @if (latestMovement is null)
+                        {
+                            <span class="badge text-bg-light">Sem histórico</span>
+                        }
+                        else
+                        {
+                            <div class="small fw-semibold @(latestMovement.QuantityGrams < 0 ? "text-danger" : "text-success")">
+                                @(latestMovement.QuantityGrams > 0 ? "+" : string.Empty)@latestMovement.QuantityGrams.ToString("N2") g
+                            </div>
+                            <div class="small text-muted">
+                                @movementLabel
+                                @if (latestMovement.CreatedAt != default)
+                                {
+                                    <span>• @latestMovement.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                                }
+                            </div>
+                        }
+                    </td>
                     <td class="text-end">
-                        <div class="btn-group btn-group-sm" role="group" aria-label="Ações do material">
+                        <div class="btn-group btn-group-sm flex-wrap" role="group" aria-label="Ações do material">
                             <a asp-action="Details" asp-route-id="@material.Id" class="btn btn-outline-secondary">Detalhes</a>
                             <a asp-action="Edit" asp-route-id="@material.Id" class="btn btn-outline-primary">Editar</a>
+                            <a asp-action="AdjustStock" asp-route-id="@material.Id" class="btn btn-outline-success">Estoque</a>
                             <a asp-action="Delete" asp-route-id="@material.Id" class="btn btn-outline-danger">Remover</a>
                         </div>
                     </td>

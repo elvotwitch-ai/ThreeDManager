@@ -179,39 +179,86 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
-    public async Task Dashboard_ShowsRecentStockMovements_AfterManualAdjustment()
+    public async Task AdjustStock_AddRemoveAndSet_UpdatesMaterialStockAndRecordsMovement()
+    {
+        var scenarios = new[]
+        {
+            new { InitialStock = 1000m, AdjustmentType = "Add", Quantity = 500m, ExpectedStock = 1500m, ExpectedMovement = 500m },
+            new { InitialStock = 1000m, AdjustmentType = "Remove", Quantity = 100m, ExpectedStock = 900m, ExpectedMovement = -100m },
+            new { InitialStock = 1200m, AdjustmentType = "Set", Quantity = 1000m, ExpectedStock = 1000m, ExpectedMovement = -200m }
+        };
+
+        foreach (var scenario in scenarios)
+        {
+            using var factory = new ThreeDManagerWebFactory();
+            var ids = await SeedCommonAsync(factory, stockGrams: scenario.InitialStock);
+            using var client = factory.CreateTestClient();
+
+            var getResponse = await client.GetAsync($"/Materials/AdjustStock/{ids.MaterialId}");
+            Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+
+            var token = ExtractAntiForgeryToken(await getResponse.Content.ReadAsStringAsync());
+            var postResponse = await client.PostAsync(
+                "/Materials/AdjustStock",
+                new FormUrlEncodedContent(new Dictionary<string, string>
+                {
+                    ["__RequestVerificationToken"] = token,
+                    ["MaterialId"] = ids.MaterialId.ToString(),
+                    ["MaterialName"] = "PLA Preto",
+                    ["CurrentStockGrams"] = scenario.InitialStock.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture),
+                    ["AdjustmentType"] = scenario.AdjustmentType,
+                    ["QuantityGrams"] = scenario.Quantity.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture),
+                    ["Notes"] = $"Operação {scenario.AdjustmentType}"
+                }));
+
+            Assert.Equal(HttpStatusCode.Redirect, postResponse.StatusCode);
+            Assert.Equal($"/Materials/Details/{ids.MaterialId}", postResponse.Headers.Location?.ToString());
+
+            using var verifyScope = factory.Services.CreateScope();
+            var context = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var material = await context.Materials.SingleAsync(material => material.Id == ids.MaterialId);
+            var movement = await context.MaterialStockMovements.SingleAsync(movement => movement.MaterialId == ids.MaterialId);
+
+            Assert.Equal(scenario.ExpectedStock, material.CurrentStockGrams);
+            Assert.Equal("ManualAdjustment", movement.MovementType);
+            Assert.Equal(scenario.ExpectedMovement, movement.QuantityGrams);
+            Assert.Equal(scenario.InitialStock, movement.StockBeforeGrams);
+            Assert.Equal(scenario.ExpectedStock, movement.StockAfterGrams);
+        }
+    }
+
+    [Fact]
+    public async Task MaterialsIndex_ShowsLatestStockMovementSummary_AfterManualAdjustment()
     {
         using var factory = new ThreeDManagerWebFactory();
         var ids = await SeedCommonAsync(factory);
         using var client = factory.CreateTestClient();
 
-        var getResponse = await client.GetAsync($"/Materials/Edit/{ids.MaterialId}");
+        var getResponse = await client.GetAsync($"/Materials/AdjustStock/{ids.MaterialId}");
         Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
 
         var token = ExtractAntiForgeryToken(await getResponse.Content.ReadAsStringAsync());
         var postResponse = await client.PostAsync(
-            $"/Materials/Edit/{ids.MaterialId}",
+            "/Materials/AdjustStock",
             new FormUrlEncodedContent(new Dictionary<string, string>
             {
                 ["__RequestVerificationToken"] = token,
-                ["Id"] = ids.MaterialId.ToString(),
-                ["Name"] = "PLA Preto",
-                ["Type"] = "PLA",
-                ["Brand"] = "E2E",
-                ["Color"] = "Black",
-                ["CostPerKg"] = "80.00",
-                ["CurrentStockGrams"] = "900.00",
-                ["CreatedAt"] = "2026-06-19T02:00:00Z"
+                ["MaterialId"] = ids.MaterialId.ToString(),
+                ["MaterialName"] = "PLA Preto",
+                ["CurrentStockGrams"] = "1000.00",
+                ["AdjustmentType"] = "Add",
+                ["QuantityGrams"] = "500.00",
+                ["Notes"] = "Compra de rolo novo"
             }));
 
         Assert.Equal(HttpStatusCode.Redirect, postResponse.StatusCode);
 
-        var dashboardResponse = await client.GetAsync("/Dashboard");
-        var dashboardHtml = WebUtility.HtmlDecode(await dashboardResponse.Content.ReadAsStringAsync());
-        Assert.Equal(HttpStatusCode.OK, dashboardResponse.StatusCode);
-        Assert.Contains("Movimentações de estoque recentes", dashboardHtml);
-        Assert.Contains("PLA Preto", dashboardHtml);
-        Assert.Contains("Ajuste manual", dashboardHtml);
+        var indexResponse = await client.GetAsync("/Materials");
+        var indexHtml = WebUtility.HtmlDecode(await indexResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, indexResponse.StatusCode);
+        Assert.Contains("Movimentação recente", indexHtml);
+        Assert.Contains("Compra de rolo novo", indexHtml);
+        Assert.Contains("+500,00 g", indexHtml);
     }
 
     [Fact]

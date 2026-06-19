@@ -89,3 +89,8 @@
 - Validation run: `dotnet build ThreeDManager.slnx` passed; `dotnet test ThreeDManager.slnx --no-build` passed with 9 tests; real-app smoke under `ASPNETCORE_ENVIRONMENT=Testing` verified `/Dashboard` showed `Movimentações de estoque recentes` and `Ajuste manual`, and `Materials/Details` still showed the manual movement and `900,00 g`
 - Blockers: none
 - Next recommended task: if you want more visibility, surface the same stock-movement summary on `Materials/Index` next; otherwise commit this dashboard batch and continue to the next feature.
+- Summary: Added a manual stock adjustment screen at `/Materials/AdjustStock/{id}` with add/remove/set operations, plus a compact latest-movement summary and action button on the materials list.
+- Files changed: `src/ThreeDManager.Web/Controllers/MaterialsController.cs`, `src/ThreeDManager.Web/ViewModels/MaterialStockAdjustmentViewModel.cs`, `src/ThreeDManager.Web/Views/Materials/AdjustStock.cshtml`, `src/ThreeDManager.Web/Views/Materials/Details.cshtml`, `src/ThreeDManager.Web/Views/Materials/Index.cshtml`, `tests/ThreeDManager.Tests/PrintJobControllerIntegrationTests.cs`
+- Validation run: `dotnet build ThreeDManager.slnx` passed; `dotnet test ThreeDManager.slnx --no-build` passed with 9 tests; real-app smoke under `ASPNETCORE_ENVIRONMENT=Testing` verified `Materials/AdjustStock` added stock, `Materials/Details` showed `1.500,00 g` and the note, and `Materials/Index` showed the compact recent movement summary
+- Blockers: none
+- Next recommended task: if you want to keep going, add the same compact stock-movement summary to another surface or move on to a different inventory workflow.

@@ -1,0 +1,77 @@
+@model ThreeDManager.Web.ViewModels.MaterialStockAdjustmentViewModel
+
+@{
+    ViewData["Title"] = "Ajustar estoque";
+}
+
+<div class="mb-4">
+    <h1 class="mb-1">Ajustar estoque</h1>
+    <p class="text-muted mb-0">Registre uma entrada, saída ou correção manual de estoque.</p>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="alert alert-info mb-0">
+            Material: <strong>@Model.MaterialName</strong><br />
+            Estoque atual:
+            <strong>
+                @if (Model.CurrentStockGrams.HasValue)
+                {
+                    <span>@Model.CurrentStockGrams.Value.ToString("N2") g</span>
+                }
+                else
+                {
+                    <span>0,00 g</span>
+                }
+            </strong>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form asp-action="AdjustStock" method="post">
+            @Html.AntiForgeryToken()
+
+            <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+
+            <input type="hidden" asp-for="MaterialId" />
+            <input type="hidden" asp-for="MaterialName" />
+            <input type="hidden" asp-for="CurrentStockGrams" />
+
+            <div class="mb-3">
+                <label asp-for="AdjustmentType" class="form-label">Tipo de ajuste</label>
+                <select asp-for="AdjustmentType" class="form-select">
+                    <option value="Add">Adicionar ao estoque</option>
+                    <option value="Remove">Remover do estoque</option>
+                    <option value="Set">Definir estoque exato</option>
+                </select>
+                <span asp-validation-for="AdjustmentType" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="QuantityGrams" class="form-label">Quantidade (g)</label>
+                <input asp-for="QuantityGrams" class="form-control" type="number" step="0.01" min="0.01" />
+                <span asp-validation-for="QuantityGrams" class="text-danger"></span>
+                <div class="form-text">
+                    Para “Definir estoque exato”, informe o novo saldo total em gramas.
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Notes" class="form-label">Observações</label>
+                <textarea asp-for="Notes" class="form-control" rows="4" placeholder="Ex: compra de novo rolo, correção de inventário, perda de material..."></textarea>
+                <span asp-validation-for="Notes" class="text-danger"></span>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Salvar ajuste</button>
+                <a asp-action="Details" asp-route-id="@Model.MaterialId" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
