@@ -10,19 +10,37 @@ namespace ThreeDmanager.Infrastructure.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.RenameColumn(
-                name: "CreatedAT",
-                table: "materials",
-                newName: "CreatedAt");
+            migrationBuilder.Sql("""
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'materials'
+          AND column_name = 'CreatedAT'
+    ) THEN
+        ALTER TABLE materials RENAME COLUMN "CreatedAT" TO "CreatedAt";
+    END IF;
+END $$;
+""");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.RenameColumn(
-                name: "CreatedAt",
-                table: "materials",
-                newName: "CreatedAT");
+            migrationBuilder.Sql("""
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'materials'
+          AND column_name = 'CreatedAt'
+    ) THEN
+        ALTER TABLE materials RENAME COLUMN "CreatedAt" TO "CreatedAT";
+    END IF;
+END $$;
+""");
         }
     }
 }

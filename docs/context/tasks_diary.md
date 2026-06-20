@@ -109,3 +109,13 @@
 - Validation run: `dotnet test tests/ThreeDManager.Tests/ThreeDManager.Tests.csproj --filter LowStockAlert_IsShown_OnMaterialsAndDashboard_WhenBelowMinimum` passed; nullability warnings in the new Razor checks were removed and the test passed again cleanly
 - Blockers: none
 - Next recommended task: if you want to extend inventory visibility further, add the same compact stock summary to one more surface or move on to a separate production/inventory flow.
+- Summary: Applied the full migration chain to a fresh local PostgreSQL database, fixed the legacy `RenameMaterialCreatedAt` migration so it no-ops when `CreatedAT` is already absent, and smoke-tested `/Dashboard` and `/Materials` against the real local DB.
+- Files changed: `src/ThreeDManager.Infrastructure/Data/Migrations/20260529101446_RenameMaterialCreatedAt.cs`, `docs/context/tasks_diary.md`
+- Validation run: `docker compose up -d db`; `dotnet ef database update --project src/ThreeDManager.Infrastructure --startup-project src/ThreeDManager.Web` passed on a clean local Postgres; browser smoke of `http://localhost:5042/Dashboard` and `http://localhost:5042/Materials` passed with the app connected to the local database
+- Blockers: none
+- Next recommended task: if you want to keep moving on inventory, choose the next page to surface the compact stock summary on or the next production flow to harden.
+- Summary: Rehydrated the dirty migration-fix batch, revalidated the conditional `RenameMaterialCreatedAt` migration against local Postgres, and checked the app routes tied to the fresh-DB smoke.
+- Files changed: `src/ThreeDManager.Infrastructure/Data/Migrations/20260529101446_RenameMaterialCreatedAt.cs`, `docs/context/tasks_diary.md`
+- Validation run: `git diff --check` passed with line-ending warnings only; `dotnet build ThreeDManager.slnx` passed; `docker compose up -d db` confirmed `threedmanager-db` running; `dotnet ef database update --project src\ThreeDManager.Infrastructure --startup-project src\ThreeDManager.Web` passed; `dotnet run --project src\ThreeDManager.Web\ThreeDManager.Web.csproj --launch-profile http` started on `http://localhost:5042`; `Invoke-WebRequest` confirmed `/Dashboard` and `/Materials` returned HTTP 200 and rendered their expected page titles. In-app browser automation was unavailable in this automation sandbox, so the route smoke was HTTP-backed rather than visual.
+- Blockers: none for the migration fix; visual browser smoke could be repeated manually if desired.
+- Next recommended task: move to a separate production/inventory flow only after this migration-fix batch is committed.
