@@ -259,6 +259,72 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task CreatePrintJob_FromImport_RejectsErrorImport_EvenWithParsedData()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        var importId = Guid.NewGuid();
+        await factory.SeedAsync(async context =>
+        {
+            context.PrintImports.Add(new PrintImport
+            {
+                Id = importId,
+                FileName = "failed-with-stale-data.gcode",
+                FileType = "gcode",
+                ParsedDataJson = """
+                {"filamentUsedGrams":12.45,"filamentUsedMeters":1.23,"estimatedTimeMinutes":60,"reportedCost":2.5,"materialType":"PLA","warnings":[]}
+                """,
+                Status = PrintImportStatus.Error,
+                ErrorMessage = "Falha de parser",
+                ImportedAt = DateTime.UtcNow
+            });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+        var getResponse = await client.GetAsync($"/PrintImports/CreatePrintJob/{importId}");
+
+        Assert.Equal(HttpStatusCode.Redirect, getResponse.StatusCode);
+        Assert.Equal($"/PrintImports/Details/{importId}", getResponse.Headers.Location?.ToString());
+
+        var detailsResponse = await client.GetAsync($"/PrintImports/Details/{importId}");
+        Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        var token = ExtractAntiForgeryToken(await detailsResponse.Content.ReadAsStringAsync());
+
+        var postResponse = await client.PostAsync(
+            "/PrintImports/CreatePrintJob",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = token,
+                ["ImportId"] = importId.ToString(),
+                ["FileName"] = "failed-with-stale-data.gcode",
+                ["ParsedMaterialType"] = "PLA",
+                ["ProductId"] = ids.ProductId.ToString(),
+                ["PrinterId"] = ids.PrinterId.ToString(),
+                ["MaterialId"] = ids.MaterialId.ToString(),
+                ["FilamentUsedGrams"] = "12.45",
+                ["FilamentUsedMeters"] = "1.23",
+                ["EstimatedTimeMinutes"] = "60",
+                ["ActualTimeMinutes"] = "",
+                ["ReportedCost"] = "2.50",
+                ["Status"] = "Completed"
+            }));
+
+        Assert.Equal(HttpStatusCode.Redirect, postResponse.StatusCode);
+        Assert.Equal($"/PrintImports/Details/{importId}", postResponse.Headers.Location?.ToString());
+
+        using var verifyScope = factory.Services.CreateScope();
+        var context = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var hasPrintJobForImport = await context.PrintJobs.AnyAsync(printJob => printJob.PrintImportId == importId);
+        var material = await context.Materials.SingleAsync(material => material.Id == ids.MaterialId);
+
+        Assert.False(hasPrintJobForImport);
+        Assert.Equal(1000m, material.CurrentStockGrams);
+    }
+
+    [Fact]
     public async Task MaterialsDetails_ShowsStockMovementHistory_AfterManualAdjustment()
     {
         using var factory = new ThreeDManagerWebFactory();

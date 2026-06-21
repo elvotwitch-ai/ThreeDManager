@@ -188,9 +188,9 @@ public class PrintImportsController : Controller
             return NotFound();
         }
 
-        if (string.IsNullOrWhiteSpace(printImport.ParsedDataJson))
+        if (!CanGeneratePrintJob(printImport))
         {
-            TempData["ErrorMessage"] = "Processе o arquivo antes de gerar uma produção.";
+            TempData["ErrorMessage"] = "Processе o arquivo com sucesso antes de gerar uma produção.";
             return RedirectToAction(nameof(Details), new { id });
         }
 
@@ -247,6 +247,12 @@ public class PrintImportsController : Controller
         if (printImport is null)
         {
             return NotFound();
+        }
+
+        if (!CanGeneratePrintJob(printImport))
+        {
+            TempData["ErrorMessage"] = "Processе o arquivo com sucesso antes de gerar uma produção.";
+            return RedirectToAction(nameof(Details), new { id = viewModel.ImportId });
         }
 
         var alreadyHasPrintJob = await _context.PrintJobs
@@ -340,6 +346,12 @@ public class PrintImportsController : Controller
         {
             return null;
         }
+    }
+
+    private static bool CanGeneratePrintJob(PrintImport printImport)
+    {
+        return PrintImportStatus.Normalize(printImport.Status) == PrintImportStatus.Parsed
+            && !string.IsNullOrWhiteSpace(printImport.ParsedDataJson);
     }
 
     private async Task PopulatePrintJobOptionsAsync(PrintJobFromImportViewModel viewModel, string? parsedMaterialType = null)
