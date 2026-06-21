@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using ThreeDManager.Domain.Entities;
 using ThreeDManager.Infrastructure.Data;
 using ThreeDManager.Web.ViewModels;
 
@@ -51,10 +52,10 @@ public class DashboardController : Controller
             TotalPrintJobs = printJobs.Count,
             TotalPrintImports = printImports.Count,
 
-            CompletedPrintJobs = printJobs.Count(printJob => printJob.Status == "Completed"),
-            FailedPrintJobs = printJobs.Count(printJob => printJob.Status == "Failed"),
-            PlannedPrintJobs = printJobs.Count(printJob => printJob.Status == "Planned"),
-            ImportedPrintJobs = printJobs.Count(printJob => printJob.Status == "Imported"),
+            CompletedPrintJobs = printJobs.Count(printJob => printJob.Status == PrintJobStatus.Completed),
+            FailedPrintJobs = printJobs.Count(printJob => printJob.Status == PrintJobStatus.Failed),
+            PlannedPrintJobs = printJobs.Count(printJob => printJob.Status == PrintJobStatus.Planned),
+            ImportedPrintJobs = printJobs.Count(printJob => printJob.Status == PrintJobStatus.Imported),
 
             ParsedPrintImports = printImports.Count(printImport => printImport.Status == "Parsed"),
             FailedPrintImports = printImports.Count(printImport => printImport.Status == "Error"),

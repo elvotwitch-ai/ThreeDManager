@@ -109,6 +109,17 @@ public class PrintJobsController : Controller
             return BadRequest();
         }
 
+        var normalizedStatus = PrintJobStatus.Normalize(printJob.Status);
+
+        if (normalizedStatus is null)
+        {
+            ModelState.AddModelError(nameof(PrintJob.Status), "Selecione um status de produção válido.");
+        }
+        else
+        {
+            printJob.Status = normalizedStatus;
+        }
+
         if (!ModelState.IsValid)
         {
             await PopulateOptionsAsync(printJob);

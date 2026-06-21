@@ -87,7 +87,7 @@ public class PrintJobStockService : IPrintJobStockService
         decimal? filamentUsedGrams,
         string status)
     {
-        if (!string.Equals(status, "Completed", StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(status, PrintJobStatus.Completed, StringComparison.OrdinalIgnoreCase))
         {
             return PrintJobStockResult.Success;
         }

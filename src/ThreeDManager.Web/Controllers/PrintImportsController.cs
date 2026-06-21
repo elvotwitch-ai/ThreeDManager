@@ -211,7 +211,7 @@ public class PrintImportsController : Controller
             EstimatedTimeMinutes = metadata.EstimatedTimeMinutes,
             ReportedCost = metadata.ReportedCost,
             ParsedMaterialType = metadata.MaterialType,
-            Status = "Imported"
+            Status = PrintJobStatus.Imported
         };
 
         await PopulatePrintJobOptionsAsync(viewModel, metadata.MaterialType);
@@ -223,6 +223,19 @@ public class PrintImportsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreatePrintJob(PrintJobFromImportViewModel viewModel)
     {
+        var normalizedStatus = PrintJobStatus.Normalize(viewModel.Status);
+
+        if (normalizedStatus is null)
+        {
+            ModelState.AddModelError(
+                nameof(PrintJobFromImportViewModel.Status),
+                "Selecione um status de produção válido.");
+        }
+        else
+        {
+            viewModel.Status = normalizedStatus;
+        }
+
         if (!ModelState.IsValid)
         {
             await PopulatePrintJobOptionsAsync(viewModel, viewModel.ParsedMaterialType);
