@@ -443,6 +443,16 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("Vinculada", indexHtml);
         Assert.Contains($"/PrintJobs/Details/{printJobId}", indexHtml);
         Assert.Contains("Ver produção", indexHtml);
+
+        var pendingResponse = await client.GetAsync("/PrintImports?productionState=pending");
+        var pendingHtml = WebUtility.HtmlDecode(await pendingResponse.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, pendingResponse.StatusCode);
+        Assert.Contains("Pendentes de produção (", pendingHtml);
+        Assert.Contains("pending-generation.gcode", pendingHtml);
+        Assert.Contains($"/PrintImports/CreatePrintJob/{pendingImportId}", pendingHtml);
+        Assert.DoesNotContain("linked-generation.gcode", pendingHtml);
+        Assert.DoesNotContain($"/PrintJobs/Details/{printJobId}", pendingHtml);
     }
 
     [Fact]

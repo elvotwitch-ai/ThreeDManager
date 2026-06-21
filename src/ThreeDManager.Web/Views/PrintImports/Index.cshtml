@@ -4,6 +4,9 @@
 @{
     ViewData["Title"] = "Importações";
     var linkedPrintJobIdsByImportId = ViewData["LinkedPrintJobIdsByImportId"] as IReadOnlyDictionary<Guid, Guid> ?? new Dictionary<Guid, Guid>();
+    var productionStateFilter = ViewData["ProductionStateFilter"] as string;
+    var pendingProductionImportCount = ViewData["PendingProductionImportCount"] as int? ?? 0;
+    var isPendingProductionFilter = productionStateFilter == "pending";
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -13,6 +16,18 @@
     </div>
 
     <a asp-action="Create" class="btn btn-primary">Importar arquivo</a>
+</div>
+
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <a asp-action="Index"
+       class="btn btn-sm @(isPendingProductionFilter ? "btn-outline-secondary" : "btn-secondary")">
+        Todas
+    </a>
+    <a asp-action="Index"
+       asp-route-productionState="pending"
+       class="btn btn-sm @(isPendingProductionFilter ? "btn-warning" : "btn-outline-warning")">
+        Pendentes de produção (@pendingProductionImportCount)
+    </a>
 </div>
 
 @if (TempData["SuccessMessage"] is not null)
@@ -32,7 +47,9 @@
 @if (!Model.Any())
 {
     <div class="alert alert-info">
-        Nenhum arquivo importado ainda.
+        @(isPendingProductionFilter
+            ? "Nenhuma importação pendente de geração de produção."
+            : "Nenhum arquivo importado ainda.")
     </div>
 }
 else

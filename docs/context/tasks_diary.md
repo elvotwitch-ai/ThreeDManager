@@ -155,3 +155,8 @@
 - Validation run: `dotnet test tests\ThreeDManager.Tests\ThreeDManager.Tests.csproj --filter PrintImportsIndex_ShowsProductionState_ForPendingAndLinkedParsedImports` passed with 1 test; `dotnet build ThreeDManager.slnx` passed; `dotnet test ThreeDManager.slnx --no-build` passed with 18 tests; app smoke under `ASPNETCORE_ENVIRONMENT=Testing` on `http://127.0.0.1:5099` confirmed `/PrintImports` and `/Dashboard` returned HTTP 200 with expected page content.
 - Blockers: none.
 - Next recommended task: continue Phase 1 by adding an operator-visible filter or quick view for imports still pending production generation.
+- Summary: Added an operator-visible pending-production filter to the print imports list, including a pending count and a filtered quick view for parsed imports that are not linked to a production job.
+- Files changed: `src/ThreeDManager.Web/Controllers/PrintImportsController.cs`, `src/ThreeDManager.Web/Views/PrintImports/Index.cshtml`, `tests/ThreeDManager.Tests/PrintJobControllerIntegrationTests.cs`, `docs/context/tasks_diary.md`
+- Validation run: `dotnet test tests\ThreeDManager.Tests\ThreeDManager.Tests.csproj --filter PrintImportsIndex_ShowsProductionState_ForPendingAndLinkedParsedImports` passed with 1 test; `dotnet build ThreeDManager.slnx` passed; `dotnet test ThreeDManager.slnx --no-build` passed with 18 tests; app smoke under `ASPNETCORE_ENVIRONMENT=Testing` on `http://127.0.0.1:5106` confirmed `/PrintImports?productionState=pending` returned HTTP 200 and rendered the pending filter, and `/Dashboard` returned HTTP 200 with expected page content.
+- Blockers: none.
+- Next recommended task: continue Phase 1 by choosing the next import review hardening step from the live backlog.

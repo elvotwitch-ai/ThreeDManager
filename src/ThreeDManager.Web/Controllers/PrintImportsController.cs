@@ -29,13 +29,9 @@ public class PrintImportsController : Controller
         _stockService = stockService;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? productionState)
     {
-        var imports = await _context.PrintImports
-            .OrderByDescending(printImport => printImport.ImportedAt)
-            .ToListAsync();
-
-        ViewData["LinkedPrintJobIdsByImportId"] = await _context.PrintJobs
+        var linkedPrintJobIdsByImportId = await _context.PrintJobs
             .Where(printJob => printJob.PrintImportId != null)
             .GroupBy(printJob => printJob.PrintImportId!.Value)
             .Select(group => new
@@ -47,6 +43,25 @@ public class PrintImportsController : Controller
                     .First()
             })
             .ToDictionaryAsync(link => link.PrintImportId, link => link.PrintJobId);
+
+        var allImports = await _context.PrintImports
+            .OrderByDescending(printImport => printImport.ImportedAt)
+            .ToListAsync();
+
+        var pendingImports = allImports
+            .Where(printImport => CanGeneratePrintJob(printImport)
+                && !linkedPrintJobIdsByImportId.ContainsKey(printImport.Id))
+            .ToList();
+
+        var imports = string.Equals(productionState, "pending", StringComparison.OrdinalIgnoreCase)
+            ? pendingImports
+            : allImports;
+
+        ViewData["LinkedPrintJobIdsByImportId"] = linkedPrintJobIdsByImportId;
+        ViewData["ProductionStateFilter"] = string.Equals(productionState, "pending", StringComparison.OrdinalIgnoreCase)
+            ? "pending"
+            : null;
+        ViewData["PendingProductionImportCount"] = pendingImports.Count;
 
         return View(imports);
     }
