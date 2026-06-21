@@ -25,6 +25,11 @@ public class DashboardController : Controller
             .OrderByDescending(printJob => printJob.CreatedAt)
             .ToListAsync();
 
+        var linkedPrintImportIds = printJobs
+            .Where(printJob => printJob.PrintImportId.HasValue)
+            .Select(printJob => printJob.PrintImportId!.Value)
+            .ToHashSet();
+
         var productNames = await _context.Products
             .ToDictionaryAsync(product => product.Id, product => product.Name);
 
@@ -61,6 +66,10 @@ public class DashboardController : Controller
                 PrintImportStatus.Normalize(printImport.Status) == PrintImportStatus.Parsed),
             FailedPrintImports = printImports.Count(printImport =>
                 PrintImportStatus.Normalize(printImport.Status) == PrintImportStatus.Error),
+            PendingProductionImports = printImports.Count(printImport =>
+                PrintImportStatus.Normalize(printImport.Status) == PrintImportStatus.Parsed
+                && !string.IsNullOrWhiteSpace(printImport.ParsedDataJson)
+                && !linkedPrintImportIds.Contains(printImport.Id)),
 
             TotalFilamentUsedGrams = printJobs.Sum(printJob => printJob.FilamentUsedGrams ?? 0),
             TotalEstimatedTimeMinutes = printJobs.Sum(printJob => printJob.EstimatedTimeMinutes ?? 0),

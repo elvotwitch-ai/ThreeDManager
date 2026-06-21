@@ -18,6 +18,8 @@ public class DashboardViewModel
 
     public int FailedPrintImports { get; set; }
 
+    public int PendingProductionImports { get; set; }
+
     public decimal TotalFilamentUsedGrams { get; set; }
 
     public int TotalEstimatedTimeMinutes { get; set; }

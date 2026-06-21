@@ -91,10 +91,13 @@
     </div>
 
     <div class="col-md-3">
-        <div class="card border-secondary h-100">
+        <div class="card border-warning h-100">
             <div class="card-body">
-                <h6 class="text-muted">Produções importadas</h6>
-                <h2>@Model.ImportedPrintJobs</h2>
+                <h6 class="text-muted">Pendentes de produção</h6>
+                <h2>@Model.PendingProductionImports</h2>
+                <a asp-controller="PrintImports" asp-action="Index" asp-route-productionState="pending" class="btn btn-sm btn-outline-warning">
+                    Revisar importações
+                </a>
             </div>
         </div>
     </div>
