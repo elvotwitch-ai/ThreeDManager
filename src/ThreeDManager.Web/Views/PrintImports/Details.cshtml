@@ -1,3 +1,4 @@
+@using ThreeDManager.Domain.Entities
 @model ThreeDManager.Domain.Entities.PrintImport
 
 @{
@@ -11,6 +12,8 @@
     var totalLines = (Model.RawContent ?? string.Empty)
         .Split('\n')
         .Length;
+
+    var normalizedStatus = PrintImportStatus.Normalize(Model.Status);
 }
 
 <h1>@Model.FileName</h1>
@@ -93,7 +96,7 @@
         <button type="submit" class="btn btn-primary">Processar arquivo</button>
     </form>
 
-    @if (Model.Status == "Parsed" && !string.IsNullOrWhiteSpace(Model.ParsedDataJson))
+    @if (normalizedStatus == PrintImportStatus.Parsed && !string.IsNullOrWhiteSpace(Model.ParsedDataJson))
     {
         <a asp-action="CreatePrintJob" asp-route-id="@Model.Id" class="btn btn-success">Gerar produção</a>
     }

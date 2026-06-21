@@ -26,7 +26,7 @@ public class PrintJobControllerIntegrationTests
                 ParsedDataJson = """
                 {"filamentUsedGrams":12.45,"filamentUsedMeters":1.23,"estimatedTimeMinutes":60,"reportedCost":2.5,"materialType":"PLA","warnings":[]}
                 """,
-                Status = "Parsed",
+                Status = PrintImportStatus.Parsed,
                 ImportedAt = DateTime.UtcNow
             });
 
@@ -98,7 +98,7 @@ public class PrintJobControllerIntegrationTests
                 ParsedDataJson = """
                 {"filamentUsedGrams":12.45,"filamentUsedMeters":1.23,"estimatedTimeMinutes":60,"reportedCost":2.5,"materialType":"PLA","warnings":[]}
                 """,
-                Status = "Parsed",
+                Status = PrintImportStatus.Parsed,
                 ImportedAt = DateTime.UtcNow
             });
 
@@ -159,7 +159,7 @@ public class PrintJobControllerIntegrationTests
                 ParsedDataJson = """
                 {"filamentUsedGrams":12.45,"filamentUsedMeters":1.23,"estimatedTimeMinutes":60,"reportedCost":2.5,"materialType":"PLA","warnings":[]}
                 """,
-                Status = "Parsed",
+                Status = PrintImportStatus.Parsed,
                 ImportedAt = DateTime.UtcNow
             });
 
@@ -201,6 +201,61 @@ public class PrintJobControllerIntegrationTests
 
         Assert.False(hasPrintJobForImport);
         Assert.Equal(1000m, material.CurrentStockGrams);
+    }
+
+    [Fact]
+    public async Task PrintImportStatus_NormalizesStoredStatusCasing_OnImportAndDashboardViews()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+
+        var parsedImportId = Guid.NewGuid();
+        await factory.SeedAsync(async context =>
+        {
+            context.PrintImports.AddRange(
+                new PrintImport
+                {
+                    Id = parsedImportId,
+                    FileName = "parsed-lower.gcode",
+                    FileType = "gcode",
+                    RawContent = "; filament used [g] = 12.45",
+                    ParsedDataJson = """
+                    {"filamentUsedGrams":12.45,"filamentUsedMeters":1.23,"estimatedTimeMinutes":60,"reportedCost":2.5,"materialType":"PLA","warnings":[]}
+                    """,
+                    Status = "parsed",
+                    ImportedAt = DateTime.UtcNow
+                },
+                new PrintImport
+                {
+                    Id = Guid.NewGuid(),
+                    FileName = "error-lower.gcode",
+                    FileType = "gcode",
+                    RawContent = string.Empty,
+                    Status = "error",
+                    ErrorMessage = "Falha de teste",
+                    ImportedAt = DateTime.UtcNow.AddMinutes(-1)
+                });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var indexResponse = await client.GetAsync("/PrintImports");
+        var indexHtml = WebUtility.HtmlDecode(await indexResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, indexResponse.StatusCode);
+        Assert.Contains("Processado", indexHtml);
+        Assert.Contains("Erro", indexHtml);
+
+        var detailsResponse = await client.GetAsync($"/PrintImports/Details/{parsedImportId}");
+        var detailsHtml = WebUtility.HtmlDecode(await detailsResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        Assert.Contains("Gerar produção", detailsHtml);
+
+        var dashboardResponse = await client.GetAsync("/Dashboard");
+        var dashboardHtml = WebUtility.HtmlDecode(await dashboardResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, dashboardResponse.StatusCode);
+        Assert.Contains("error-lower.gcode", dashboardHtml);
+        Assert.Contains("Falha de teste", dashboardHtml);
     }
 
     [Fact]

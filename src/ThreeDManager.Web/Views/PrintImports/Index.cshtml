@@ -1,3 +1,4 @@
+@using ThreeDManager.Domain.Entities
 @model IEnumerable<ThreeDManager.Domain.Entities.PrintImport>
 
 @{
@@ -48,19 +49,21 @@ else
         <tbody>
             @foreach (var import in Model)
             {
+                var normalizedStatus = PrintImportStatus.Normalize(import.Status);
+
                 <tr>
                     <td>@import.FileName</td>
                     <td>@import.FileType</td>
                     <td>
-                        @if (import.Status == "Uploaded")
+                        @if (normalizedStatus == PrintImportStatus.Uploaded)
                         {
                             <span class="badge bg-primary">Importado</span>
                         }
-                        else if (import.Status == "Parsed")
+                        else if (normalizedStatus == PrintImportStatus.Parsed)
                         {
                             <span class="badge bg-success">Processado</span>
                         }
-                        else if (import.Status == "Error")
+                        else if (normalizedStatus == PrintImportStatus.Error)
                         {
                             <span class="badge bg-danger">Erro</span>
                         }

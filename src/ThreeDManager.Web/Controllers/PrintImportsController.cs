@@ -100,7 +100,7 @@ public class PrintImportsController : Controller
             FileType = extension.TrimStart('.'),
             RawContent = rawContent,
             ParsedDataJson = null,
-            Status = "Uploaded",
+            Status = PrintImportStatus.Uploaded,
             ErrorMessage = null,
             ImportedAt = DateTime.UtcNow
         };
@@ -125,7 +125,7 @@ public class PrintImportsController : Controller
 
         if (string.IsNullOrWhiteSpace(printImport.RawContent))
         {
-            printImport.Status = "Error";
+            printImport.Status = PrintImportStatus.Error;
             printImport.ErrorMessage = "A importação não possui conteúdo bruto para processar.";
 
             await _context.SaveChangesAsync();
@@ -136,7 +136,7 @@ public class PrintImportsController : Controller
 
         if (!_parser.CanParse(printImport.FileName, printImport.RawContent))
         {
-            printImport.Status = "Error";
+            printImport.Status = PrintImportStatus.Error;
             printImport.ErrorMessage = "Nenhum parser disponível para este arquivo.";
 
             await _context.SaveChangesAsync();
@@ -156,7 +156,7 @@ public class PrintImportsController : Controller
                     WriteIndented = true
                 });
 
-            printImport.Status = "Parsed";
+            printImport.Status = PrintImportStatus.Parsed;
 
             printImport.ErrorMessage = parsedMetadata.Warnings.Any()
                 ? string.Join(" | ", parsedMetadata.Warnings)
@@ -168,7 +168,7 @@ public class PrintImportsController : Controller
         }
         catch (Exception exception)
         {
-            printImport.Status = "Error";
+            printImport.Status = PrintImportStatus.Error;
             printImport.ErrorMessage = exception.Message;
 
             await _context.SaveChangesAsync();

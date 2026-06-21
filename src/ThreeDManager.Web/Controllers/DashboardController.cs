@@ -57,8 +57,10 @@ public class DashboardController : Controller
             PlannedPrintJobs = printJobs.Count(printJob => printJob.Status == PrintJobStatus.Planned),
             ImportedPrintJobs = printJobs.Count(printJob => printJob.Status == PrintJobStatus.Imported),
 
-            ParsedPrintImports = printImports.Count(printImport => printImport.Status == "Parsed"),
-            FailedPrintImports = printImports.Count(printImport => printImport.Status == "Error"),
+            ParsedPrintImports = printImports.Count(printImport =>
+                PrintImportStatus.Normalize(printImport.Status) == PrintImportStatus.Parsed),
+            FailedPrintImports = printImports.Count(printImport =>
+                PrintImportStatus.Normalize(printImport.Status) == PrintImportStatus.Error),
 
             TotalFilamentUsedGrams = printJobs.Sum(printJob => printJob.FilamentUsedGrams ?? 0),
             TotalEstimatedTimeMinutes = printJobs.Sum(printJob => printJob.EstimatedTimeMinutes ?? 0),
@@ -106,7 +108,7 @@ public class DashboardController : Controller
                 .ToList(),
 
             RecentFailedImports = printImports
-                .Where(printImport => printImport.Status == "Error")
+                .Where(printImport => PrintImportStatus.Normalize(printImport.Status) == PrintImportStatus.Error)
                 .Take(5)
                 .Select(printImport => new DashboardFailedPrintImportViewModel
                 {

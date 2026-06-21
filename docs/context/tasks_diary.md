@@ -124,3 +124,11 @@
 - Validation run: `dotnet test tests\ThreeDManager.Tests\ThreeDManager.Tests.csproj --filter "CreatePrintJob_FromImport_RejectsUnknownStatus|EditPrintJob_RejectsUnknownStatus_WithoutChangingStockOrJob"` passed with 2 tests; `dotnet build ThreeDManager.slnx` passed; `dotnet test ThreeDManager.slnx --no-build` passed with 14 tests; app smoke under `ASPNETCORE_ENVIRONMENT=Testing` on `http://127.0.0.1:5056` confirmed `/PrintImports` and `/PrintJobs` returned HTTP 200 with expected page content.
 - Blockers: none.
 - Next recommended task: extend the same status vocabulary to print import statuses (`Uploaded`, `Parsed`, `Error`) so dashboard/import filtering no longer depends on raw string literals.
+
+## 2026-06-20
+
+- Summary: Normalized print import status handling by adding a domain-owned `PrintImportStatus` vocabulary and using case-insensitive normalization on import list/details and dashboard failure visibility.
+- Files changed: `src/ThreeDManager.Domain/Entities/PrintImportStatus.cs`, `src/ThreeDManager.Domain/Entities/PrintImport.cs`, `src/ThreeDManager.Web/Controllers/PrintImportsController.cs`, `src/ThreeDManager.Web/Controllers/DashboardController.cs`, `src/ThreeDManager.Web/Views/PrintImports/Index.cshtml`, `src/ThreeDManager.Web/Views/PrintImports/Details.cshtml`, `tests/ThreeDManager.Tests/PrintJobControllerIntegrationTests.cs`, `docs/context/tasks_diary.md`
+- Validation run: `dotnet test tests\ThreeDManager.Tests\ThreeDManager.Tests.csproj --filter PrintImportStatus_NormalizesStoredStatusCasing_OnImportAndDashboardViews` passed with 1 test; `dotnet build ThreeDManager.slnx` passed; `dotnet test ThreeDManager.slnx --no-build` passed with 15 tests; app smoke under `ASPNETCORE_ENVIRONMENT=Testing` on `http://127.0.0.1:5062` confirmed `/Dashboard` and `/PrintImports` returned HTTP 200 with expected page titles; `git diff --check` reported only line-ending warnings.
+- Blockers: none.
+- Next recommended task: continue Phase 1 by hardening import review flow actions around parsed/error imports, starting with the smallest controller/view path and an integration test.
