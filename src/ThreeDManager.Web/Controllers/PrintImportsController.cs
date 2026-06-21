@@ -35,6 +35,12 @@ public class PrintImportsController : Controller
             .OrderByDescending(printImport => printImport.ImportedAt)
             .ToListAsync();
 
+        ViewData["LinkedPrintImportIds"] = await _context.PrintJobs
+            .Where(printJob => printJob.PrintImportId != null)
+            .Select(printJob => printJob.PrintImportId!.Value)
+            .Distinct()
+            .ToHashSetAsync();
+
         return View(imports);
     }
 

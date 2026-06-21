@@ -3,6 +3,7 @@
 
 @{
     ViewData["Title"] = "Importações";
+    var linkedPrintImportIds = ViewData["LinkedPrintImportIds"] as ISet<Guid> ?? new HashSet<Guid>();
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -42,6 +43,7 @@ else
                 <th>Arquivo</th>
                 <th>Tipo</th>
                 <th>Status</th>
+                <th>Produção</th>
                 <th>Importado em</th>
                 <th class="text-end">Ações</th>
             </tr>
@@ -50,6 +52,10 @@ else
             @foreach (var import in Model)
             {
                 var normalizedStatus = PrintImportStatus.Normalize(import.Status);
+                var hasLinkedProduction = linkedPrintImportIds.Contains(import.Id);
+                var canGenerateProduction = normalizedStatus == PrintImportStatus.Parsed
+                    && !string.IsNullOrWhiteSpace(import.ParsedDataJson)
+                    && !hasLinkedProduction;
 
                 <tr>
                     <td>@import.FileName</td>
@@ -70,6 +76,20 @@ else
                         else
                         {
                             <span class="badge bg-secondary">@import.Status</span>
+                        }
+                    </td>
+                    <td>
+                        @if (hasLinkedProduction)
+                        {
+                            <span class="badge bg-success">Vinculada</span>
+                        }
+                        else if (canGenerateProduction)
+                        {
+                            <span class="badge bg-warning text-dark">Pendente</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Indisponível</span>
                         }
                     </td>
                     <td>@import.ImportedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>

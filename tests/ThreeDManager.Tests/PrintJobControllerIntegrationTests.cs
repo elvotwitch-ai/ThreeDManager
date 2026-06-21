@@ -378,6 +378,70 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task PrintImportsIndex_ShowsProductionState_ForPendingAndLinkedParsedImports()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        var pendingImportId = Guid.NewGuid();
+        var linkedImportId = Guid.NewGuid();
+        var printJobId = Guid.NewGuid();
+
+        await factory.SeedAsync(async context =>
+        {
+            context.PrintImports.AddRange(
+                new PrintImport
+                {
+                    Id = pendingImportId,
+                    FileName = "pending-generation.gcode",
+                    FileType = "gcode",
+                    ParsedDataJson = """
+                    {"filamentUsedGrams":12.45,"filamentUsedMeters":1.23,"estimatedTimeMinutes":60,"reportedCost":2.5,"materialType":"PLA","warnings":[]}
+                    """,
+                    Status = PrintImportStatus.Parsed,
+                    ImportedAt = DateTime.UtcNow
+                },
+                new PrintImport
+                {
+                    Id = linkedImportId,
+                    FileName = "linked-generation.gcode",
+                    FileType = "gcode",
+                    ParsedDataJson = """
+                    {"filamentUsedGrams":12.45,"filamentUsedMeters":1.23,"estimatedTimeMinutes":60,"reportedCost":2.5,"materialType":"PLA","warnings":[]}
+                    """,
+                    Status = PrintImportStatus.Parsed,
+                    ImportedAt = DateTime.UtcNow.AddMinutes(-1)
+                });
+
+            context.PrintJobs.Add(new PrintJob
+            {
+                Id = printJobId,
+                ProductId = ids.ProductId,
+                PrinterId = ids.PrinterId,
+                MaterialId = ids.MaterialId,
+                PrintImportId = linkedImportId,
+                SourceFileName = "linked-generation.gcode",
+                FilamentUsedGrams = 12.45m,
+                Status = PrintJobStatus.Imported,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+        var indexResponse = await client.GetAsync("/PrintImports");
+        var indexHtml = WebUtility.HtmlDecode(await indexResponse.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, indexResponse.StatusCode);
+        Assert.Contains("Produção", indexHtml);
+        Assert.Contains("pending-generation.gcode", indexHtml);
+        Assert.Contains("Pendente", indexHtml);
+        Assert.Contains("linked-generation.gcode", indexHtml);
+        Assert.Contains("Vinculada", indexHtml);
+    }
+
+    [Fact]
     public async Task MaterialsDetails_ShowsStockMovementHistory_AfterManualAdjustment()
     {
         using var factory = new ThreeDManagerWebFactory();
