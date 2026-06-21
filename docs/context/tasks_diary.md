@@ -150,3 +150,8 @@
 - Validation run: `dotnet test tests\ThreeDManager.Tests\ThreeDManager.Tests.csproj --filter PrintImportsIndex_ShowsProductionState_ForPendingAndLinkedParsedImports` passed with 1 test; `dotnet build ThreeDManager.slnx` passed; `dotnet test ThreeDManager.slnx --no-build` passed with 18 tests; app smoke under `ASPNETCORE_ENVIRONMENT=Testing` on `http://127.0.0.1:5092` confirmed `/PrintImports` and `/Dashboard` returned HTTP 200 with expected imports page content.
 - Blockers: none.
 - Next recommended task: continue Phase 1 by making the print imports list action column context-aware, so parsed pending imports offer `Gerar produção` directly while linked imports point to the existing production.
+- Summary: Made the print imports list action column context-aware: pending parsed imports now offer `Gerar produção` directly, and linked imports point to the existing production.
+- Files changed: `src/ThreeDManager.Web/Controllers/PrintImportsController.cs`, `src/ThreeDManager.Web/Views/PrintImports/Index.cshtml`, `tests/ThreeDManager.Tests/PrintJobControllerIntegrationTests.cs`, `docs/context/tasks_diary.md`
+- Validation run: `dotnet test tests\ThreeDManager.Tests\ThreeDManager.Tests.csproj --filter PrintImportsIndex_ShowsProductionState_ForPendingAndLinkedParsedImports` passed with 1 test; `dotnet build ThreeDManager.slnx` passed; `dotnet test ThreeDManager.slnx --no-build` passed with 18 tests; app smoke under `ASPNETCORE_ENVIRONMENT=Testing` on `http://127.0.0.1:5099` confirmed `/PrintImports` and `/Dashboard` returned HTTP 200 with expected page content.
+- Blockers: none.
+- Next recommended task: continue Phase 1 by adding an operator-visible filter or quick view for imports still pending production generation.

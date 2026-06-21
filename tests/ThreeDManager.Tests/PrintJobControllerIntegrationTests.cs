@@ -437,8 +437,12 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("Produção", indexHtml);
         Assert.Contains("pending-generation.gcode", indexHtml);
         Assert.Contains("Pendente", indexHtml);
+        Assert.Contains($"/PrintImports/CreatePrintJob/{pendingImportId}", indexHtml);
+        Assert.Contains("Gerar produção", indexHtml);
         Assert.Contains("linked-generation.gcode", indexHtml);
         Assert.Contains("Vinculada", indexHtml);
+        Assert.Contains($"/PrintJobs/Details/{printJobId}", indexHtml);
+        Assert.Contains("Ver produção", indexHtml);
     }
 
     [Fact]

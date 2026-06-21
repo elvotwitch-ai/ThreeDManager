@@ -35,11 +35,18 @@ public class PrintImportsController : Controller
             .OrderByDescending(printImport => printImport.ImportedAt)
             .ToListAsync();
 
-        ViewData["LinkedPrintImportIds"] = await _context.PrintJobs
+        ViewData["LinkedPrintJobIdsByImportId"] = await _context.PrintJobs
             .Where(printJob => printJob.PrintImportId != null)
-            .Select(printJob => printJob.PrintImportId!.Value)
-            .Distinct()
-            .ToHashSetAsync();
+            .GroupBy(printJob => printJob.PrintImportId!.Value)
+            .Select(group => new
+            {
+                PrintImportId = group.Key,
+                PrintJobId = group
+                    .OrderByDescending(printJob => printJob.CreatedAt)
+                    .Select(printJob => printJob.Id)
+                    .First()
+            })
+            .ToDictionaryAsync(link => link.PrintImportId, link => link.PrintJobId);
 
         return View(imports);
     }
