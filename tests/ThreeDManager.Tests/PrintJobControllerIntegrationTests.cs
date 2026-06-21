@@ -325,6 +325,59 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task PrintImportDetails_LinksExistingPrintJob_WhenImportAlreadyGeneratedProduction()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        var importId = Guid.NewGuid();
+        var printJobId = Guid.NewGuid();
+
+        await factory.SeedAsync(async context =>
+        {
+            context.PrintImports.Add(new PrintImport
+            {
+                Id = importId,
+                FileName = "already-linked.gcode",
+                FileType = "gcode",
+                ParsedDataJson = """
+                {"filamentUsedGrams":12.45,"filamentUsedMeters":1.23,"estimatedTimeMinutes":60,"reportedCost":2.5,"materialType":"PLA","warnings":[]}
+                """,
+                Status = PrintImportStatus.Parsed,
+                ImportedAt = DateTime.UtcNow
+            });
+
+            context.PrintJobs.Add(new PrintJob
+            {
+                Id = printJobId,
+                ProductId = ids.ProductId,
+                PrinterId = ids.PrinterId,
+                MaterialId = ids.MaterialId,
+                PrintImportId = importId,
+                SourceFileName = "already-linked.gcode",
+                FilamentUsedGrams = 12.45m,
+                Status = PrintJobStatus.Imported,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+        var detailsResponse = await client.GetAsync($"/PrintImports/Details/{importId}");
+        var detailsHtml = WebUtility.HtmlDecode(await detailsResponse.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        Assert.Contains("Ver produção vinculada", detailsHtml);
+        Assert.Contains($"/PrintJobs/Details/{printJobId}", detailsHtml);
+        Assert.DoesNotContain("Gerar produção", detailsHtml);
+
+        var createResponse = await client.GetAsync($"/PrintImports/CreatePrintJob/{importId}");
+        Assert.Equal(HttpStatusCode.Redirect, createResponse.StatusCode);
+        Assert.Equal($"/PrintJobs/Details/{printJobId}", createResponse.Headers.Location?.ToString());
+    }
+
+    [Fact]
     public async Task MaterialsDetails_ShowsStockMovementHistory_AfterManualAdjustment()
     {
         using var factory = new ThreeDManagerWebFactory();

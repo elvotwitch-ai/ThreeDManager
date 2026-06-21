@@ -53,6 +53,8 @@ public class PrintImportsController : Controller
             return NotFound();
         }
 
+        ViewData["LinkedPrintJobId"] = await FindLinkedPrintJobIdAsync(printImport.Id);
+
         return View(printImport);
     }
 
@@ -192,6 +194,14 @@ public class PrintImportsController : Controller
         {
             TempData["ErrorMessage"] = "Processе o arquivo com sucesso antes de gerar uma produção.";
             return RedirectToAction(nameof(Details), new { id });
+        }
+
+        var linkedPrintJobId = await FindLinkedPrintJobIdAsync(id);
+
+        if (linkedPrintJobId is not null)
+        {
+            TempData["SuccessMessage"] = "Esta importação já possui uma produção vinculada.";
+            return RedirectToAction("Details", "PrintJobs", new { id = linkedPrintJobId.Value });
         }
 
         var metadata = DeserializeParsedMetadata(printImport);
@@ -352,6 +362,14 @@ public class PrintImportsController : Controller
     {
         return PrintImportStatus.Normalize(printImport.Status) == PrintImportStatus.Parsed
             && !string.IsNullOrWhiteSpace(printImport.ParsedDataJson);
+    }
+
+    private async Task<Guid?> FindLinkedPrintJobIdAsync(Guid importId)
+    {
+        return await _context.PrintJobs
+            .Where(printJob => printJob.PrintImportId == importId)
+            .Select(printJob => (Guid?)printJob.Id)
+            .FirstOrDefaultAsync();
     }
 
     private async Task PopulatePrintJobOptionsAsync(PrintJobFromImportViewModel viewModel, string? parsedMaterialType = null)

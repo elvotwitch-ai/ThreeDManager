@@ -137,3 +137,11 @@
 - Validation run: `dotnet test tests\ThreeDManager.Tests\ThreeDManager.Tests.csproj --filter CreatePrintJob_FromImport_RejectsErrorImport_EvenWithParsedData` passed with 1 test; `dotnet build ThreeDManager.slnx` passed; `dotnet test ThreeDManager.slnx --no-build` passed with 16 tests; app smoke under `ASPNETCORE_ENVIRONMENT=Testing` on `http://127.0.0.1:5071` confirmed `/PrintImports` and `/Dashboard` returned HTTP 200 with expected page content.
 - Blockers: none.
 - Next recommended task: continue Phase 1 by adding an explicit review affordance for parsed imports that already have a linked production, so the details page points to the existing job instead of only hiding generation.
+
+## 2026-06-21
+
+- Summary: Added the linked-production affordance for parsed imports that already generated a print job; import details now links to the existing production and direct generation requests redirect to that job instead of reopening the generation form.
+- Files changed: `src/ThreeDManager.Web/Controllers/PrintImportsController.cs`, `src/ThreeDManager.Web/Views/PrintImports/Details.cshtml`, `tests/ThreeDManager.Tests/PrintJobControllerIntegrationTests.cs`, `docs/context/tasks_diary.md`
+- Validation run: `dotnet test tests\ThreeDManager.Tests\ThreeDManager.Tests.csproj --filter PrintImportDetails_LinksExistingPrintJob_WhenImportAlreadyGeneratedProduction` passed with 1 test; `dotnet build ThreeDManager.slnx` passed; `dotnet test ThreeDManager.slnx --no-build` passed with 17 tests; app smoke under `ASPNETCORE_ENVIRONMENT=Testing` on `http://127.0.0.1:5084` confirmed `/PrintImports` and `/Dashboard` returned HTTP 200 with expected page content.
+- Blockers: none.
+- Next recommended task: continue Phase 1 by adding a compact import-to-production state indicator on the print imports list, so operators can see which parsed imports are still pending generation.
