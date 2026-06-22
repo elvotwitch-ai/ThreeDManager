@@ -4,6 +4,8 @@
 @{
     ViewData["Title"] = "Importações";
     var linkedPrintJobIdsByImportId = ViewData["LinkedPrintJobIdsByImportId"] as IReadOnlyDictionary<Guid, Guid> ?? new Dictionary<Guid, Guid>();
+    var processAvailabilityByImportId = ViewData["ProcessAvailabilityByImportId"] as IReadOnlyDictionary<Guid, (bool CanProcess, string? Message)>
+        ?? new Dictionary<Guid, (bool CanProcess, string? Message)>();
     var productionStateFilter = ViewData["ProductionStateFilter"] as string;
     var pendingProductionImportCount = ViewData["PendingProductionImportCount"] as int? ?? 0;
     var isPendingProductionFilter = productionStateFilter == "pending";
@@ -70,6 +72,9 @@ else
             {
                 var normalizedStatus = PrintImportStatus.Normalize(import.Status);
                 var hasLinkedProduction = linkedPrintJobIdsByImportId.TryGetValue(import.Id, out var linkedPrintJobId);
+                var processAvailability = processAvailabilityByImportId.TryGetValue(import.Id, out var currentProcessAvailability)
+                    ? currentProcessAvailability
+                    : (false, null);
                 var canGenerateProduction = normalizedStatus == PrintImportStatus.Parsed
                     && !string.IsNullOrWhiteSpace(import.ParsedDataJson)
                     && !hasLinkedProduction;
@@ -89,6 +94,14 @@ else
                         else if (normalizedStatus == PrintImportStatus.Error)
                         {
                             <span class="badge bg-danger">Erro</span>
+                            if (!string.IsNullOrWhiteSpace(processAvailability.Message))
+                            {
+                                <div class="small text-muted mt-1">
+                                    @(processAvailability.CanProcess
+                                        ? "Pode tentar processar novamente."
+                                        : "Reimporte um arquivo compatível para seguir.")
+                                </div>
+                            }
                         }
                         else
                         {
@@ -123,10 +136,15 @@ else
 
                             <a asp-action="Details" asp-route-id="@import.Id" class="btn btn-sm btn-outline-secondary">Detalhes</a>
 
-                            <form asp-action="Process" asp-route-id="@import.Id" method="post" class="m-0 d-inline-block">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-sm btn-outline-primary">Processar</button>
-                            </form>
+                            @if (processAvailability.CanProcess)
+                            {
+                                <form asp-action="Process" asp-route-id="@import.Id" method="post" class="m-0 d-inline-block">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">
+                                        @(normalizedStatus == PrintImportStatus.Error ? "Tentar novamente" : "Processar")
+                                    </button>
+                                </form>
+                            }
 
                             <a asp-action="Delete" asp-route-id="@import.Id" class="btn btn-sm btn-outline-danger">Remover</a>
                         </div>

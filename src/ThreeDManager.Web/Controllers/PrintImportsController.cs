@@ -48,6 +48,10 @@ public class PrintImportsController : Controller
             .OrderByDescending(printImport => printImport.ImportedAt)
             .ToListAsync();
 
+        var processAvailabilityByImportId = allImports.ToDictionary(
+            printImport => printImport.Id,
+            GetProcessAvailability);
+
         var pendingImports = allImports
             .Where(printImport => CanGeneratePrintJob(printImport)
                 && !linkedPrintJobIdsByImportId.ContainsKey(printImport.Id))
@@ -58,6 +62,7 @@ public class PrintImportsController : Controller
             : allImports;
 
         ViewData["LinkedPrintJobIdsByImportId"] = linkedPrintJobIdsByImportId;
+        ViewData["ProcessAvailabilityByImportId"] = processAvailabilityByImportId;
         ViewData["ProductionStateFilter"] = string.Equals(productionState, "pending", StringComparison.OrdinalIgnoreCase)
             ? "pending"
             : null;
