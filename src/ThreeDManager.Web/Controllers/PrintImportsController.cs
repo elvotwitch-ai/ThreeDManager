@@ -82,6 +82,9 @@ public class PrintImportsController : Controller
         }
 
         ViewData["LinkedPrintJobId"] = await FindLinkedPrintJobIdAsync(printImport.Id);
+        var processAvailability = GetProcessAvailability(printImport);
+        ViewData["CanProcessImport"] = processAvailability.CanProcess;
+        ViewData["ProcessImportHint"] = processAvailability.Message;
 
         return View(printImport);
     }
@@ -390,6 +393,26 @@ public class PrintImportsController : Controller
     {
         return PrintImportStatus.Normalize(printImport.Status) == PrintImportStatus.Parsed
             && !string.IsNullOrWhiteSpace(printImport.ParsedDataJson);
+    }
+
+    private (bool CanProcess, string? Message) GetProcessAvailability(PrintImport printImport)
+    {
+        if (string.IsNullOrWhiteSpace(printImport.RawContent))
+        {
+            return (false, "Esta importação não possui conteúdo bruto salvo. Reimporte o arquivo para tentar novamente.");
+        }
+
+        if (!_parser.CanParse(printImport.FileName, printImport.RawContent))
+        {
+            return (false, "Nenhum parser disponível para este arquivo. Reimporte um arquivo compatível para seguir com a revisão.");
+        }
+
+        if (PrintImportStatus.Normalize(printImport.Status) == PrintImportStatus.Error)
+        {
+            return (true, "O arquivo pode ser processado novamente após revisar o conteúdo bruto abaixo.");
+        }
+
+        return (true, null);
     }
 
     private async Task<Guid?> FindLinkedPrintJobIdAsync(Guid importId)

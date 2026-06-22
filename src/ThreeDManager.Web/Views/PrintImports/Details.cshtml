@@ -15,6 +15,8 @@
 
     var normalizedStatus = PrintImportStatus.Normalize(Model.Status);
     var linkedPrintJobId = ViewData["LinkedPrintJobId"] is Guid value ? value : (Guid?)null;
+    var canProcessImport = ViewData["CanProcessImport"] is true;
+    var processImportHint = ViewData["ProcessImportHint"] as string;
 }
 
 <h1>@Model.FileName</h1>
@@ -71,6 +73,12 @@
     </div>
 </div>
 
+@if (normalizedStatus == PrintImportStatus.Error && !string.IsNullOrWhiteSpace(processImportHint))
+{
+    <div class="alert @(canProcessImport ? "alert-warning" : "alert-secondary") mb-4">
+        @processImportHint
+    </div>
+}
 
 @if (!string.IsNullOrWhiteSpace(Model.ParsedDataJson))
 {
@@ -92,10 +100,15 @@
 <pre class="bg-light border rounded p-3" style="max-height: 500px; overflow: auto;"><code>@string.Join('\n', rawLines)</code></pre>
 
 <div class="mt-3 d-flex gap-2">
-    <form asp-action="Process" asp-route-id="@Model.Id" method="post" class="m-0">
-        @Html.AntiForgeryToken()
-        <button type="submit" class="btn btn-primary">Processar arquivo</button>
-    </form>
+    @if (canProcessImport)
+    {
+        <form asp-action="Process" asp-route-id="@Model.Id" method="post" class="m-0">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-primary">
+                @(normalizedStatus == PrintImportStatus.Error ? "Tentar processar novamente" : "Processar arquivo")
+            </button>
+        </form>
+    }
 
     @if (linkedPrintJobId is not null)
     {
