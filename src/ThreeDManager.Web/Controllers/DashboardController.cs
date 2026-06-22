@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using ThreeDManager.Application.Interfaces;
 using ThreeDManager.Domain.Entities;
 using ThreeDManager.Infrastructure.Data;
 using ThreeDManager.Web.ViewModels;
@@ -9,10 +10,12 @@ namespace ThreeDManager.Web.Controllers;
 public class DashboardController : Controller
 {
     private readonly AppDbContext _context;
+    private readonly IPrintFileParser _parser;
 
-    public DashboardController(AppDbContext context)
+    public DashboardController(AppDbContext context, IPrintFileParser parser)
     {
         _context = context;
+        _parser = parser;
     }
 
     public async Task<IActionResult> Index()
@@ -125,6 +128,7 @@ public class DashboardController : Controller
                     FileName = printImport.FileName,
                     Status = printImport.Status,
                     ErrorMessage = printImport.ErrorMessage,
+                    CanProcessAgain = CanProcessAgain(printImport),
                     ImportedAt = printImport.ImportedAt
                 })
                 .ToList(),
@@ -147,5 +151,11 @@ public class DashboardController : Controller
         };
 
         return View(viewModel);
+    }
+
+    private bool CanProcessAgain(PrintImport printImport)
+    {
+        return !string.IsNullOrWhiteSpace(printImport.RawContent)
+            && _parser.CanParse(printImport.FileName, printImport.RawContent);
     }
 }

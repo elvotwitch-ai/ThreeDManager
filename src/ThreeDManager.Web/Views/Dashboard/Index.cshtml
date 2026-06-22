@@ -278,6 +278,7 @@
                         <tr>
                             <th>Arquivo</th>
                             <th>Status</th>
+                            <th>Recuperação</th>
                             <th>Erro</th>
                             <th>Importado em</th>
                             <th class="text-end">Ações</th>
@@ -289,6 +290,16 @@
                             <tr>
                                 <td>@import.FileName</td>
                                 <td><span class="badge bg-danger">Falha</span></td>
+                                <td>
+                                    @if (import.CanProcessAgain)
+                                    {
+                                        <span class="badge bg-warning text-dark">Pode tentar novamente</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Reimportar arquivo</span>
+                                    }
+                                </td>
                                 <td>@(string.IsNullOrWhiteSpace(import.ErrorMessage) ? "Erro não informado" : import.ErrorMessage)</td>
                                 <td>@import.ImportedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
                                 <td class="text-end">

@@ -76,6 +76,8 @@ public class DashboardFailedPrintImportViewModel
 
     public string? ErrorMessage { get; set; }
 
+    public bool CanProcessAgain { get; set; }
+
     public DateTime ImportedAt { get; set; }
 }
 
