@@ -691,6 +691,48 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task Dashboard_LinksFailedImports_ToRecoveryQueue()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+
+        await factory.SeedAsync(async context =>
+        {
+            context.PrintImports.AddRange(
+                new PrintImport
+                {
+                    Id = Guid.NewGuid(),
+                    FileName = "dashboard-failed.gcode",
+                    FileType = "gcode",
+                    RawContent = "; failed import",
+                    Status = PrintImportStatus.Error,
+                    ErrorMessage = "Falha de parser",
+                    ImportedAt = DateTime.UtcNow
+                },
+                new PrintImport
+                {
+                    Id = Guid.NewGuid(),
+                    FileName = "dashboard-uploaded.gcode",
+                    FileType = "gcode",
+                    RawContent = "; uploaded import",
+                    Status = PrintImportStatus.Uploaded,
+                    ImportedAt = DateTime.UtcNow.AddMinutes(-1)
+                });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+        var dashboardResponse = await client.GetAsync("/Dashboard");
+        var dashboardHtml = WebUtility.HtmlDecode(await dashboardResponse.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, dashboardResponse.StatusCode);
+        Assert.Contains("Importações com falha", dashboardHtml);
+        Assert.Contains(">1<", dashboardHtml);
+        Assert.Contains("/PrintImports?status=error", dashboardHtml);
+        Assert.Contains("Revisar falhas", dashboardHtml);
+    }
+
+    [Fact]
     public async Task MaterialsDetails_ShowsStockMovementHistory_AfterManualAdjustment()
     {
         using var factory = new ThreeDManagerWebFactory();

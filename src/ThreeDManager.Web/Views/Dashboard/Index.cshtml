@@ -260,7 +260,7 @@
 <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
         <strong>Importações com falha recentes</strong>
-        <a asp-controller="PrintImports" asp-action="Index" class="btn btn-sm btn-outline-primary">Ver todas</a>
+        <a asp-controller="PrintImports" asp-action="Index" asp-route-status="error" class="btn btn-sm btn-outline-danger">Revisar falhas</a>
     </div>
 
     <div class="card-body">
