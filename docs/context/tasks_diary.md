@@ -185,3 +185,11 @@
 - Validation run: `dotnet test tests\ThreeDManager.Tests\ThreeDManager.Tests.csproj --filter PrintImportsIndex_ShowsRecoveryHint_AndHidesUnsupportedProcessAction_ForErrorImports` passed with 1 test; `dotnet build ThreeDManager.slnx` passed; `dotnet test ThreeDManager.slnx --no-build` passed with 21 tests; Testing-environment app smoke on `http://127.0.0.1:5136` confirmed `/PrintImports` and `/PrintImports?productionState=pending` returned HTTP 200 with the expected page content.
 - Blockers: none.
 - Next recommended task: continue Phase 1 by adding a failed-import quick filter on `/PrintImports`, so operators can isolate retry/reimport work before opening individual records.
+
+## 2026-06-22
+
+- Summary: Added a failed-import quick filter on `/PrintImports`, so operators can isolate retryable and reimport-only errors without mixing them with pending-production or uploaded imports.
+- Files changed: `src/ThreeDManager.Web/Controllers/PrintImportsController.cs`, `src/ThreeDManager.Web/Views/PrintImports/Index.cshtml`, `tests/ThreeDManager.Tests/PrintJobControllerIntegrationTests.cs`, `docs/context/tasks_diary.md`
+- Validation run: `dotnet test tests\ThreeDManager.Tests\ThreeDManager.Tests.csproj --filter PrintImportsIndex_FiltersFailedImports_ForRecoveryReview` passed with 1 test; `dotnet build ThreeDManager.slnx` passed; `dotnet test ThreeDManager.slnx --no-build` passed with 22 tests; Testing-environment app smoke on `http://127.0.0.1:5144` confirmed `/PrintImports?status=error` and `/PrintImports?productionState=pending` returned HTTP 200 with the expected filter content.
+- Blockers: none.
+- Next recommended task: add a dashboard shortcut to `/PrintImports?status=error`, so operators can jump from failure visibility to the filtered recovery queue in one click.

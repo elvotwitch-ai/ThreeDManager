@@ -7,8 +7,12 @@
     var processAvailabilityByImportId = ViewData["ProcessAvailabilityByImportId"] as IReadOnlyDictionary<Guid, (bool CanProcess, string? Message)>
         ?? new Dictionary<Guid, (bool CanProcess, string? Message)>();
     var productionStateFilter = ViewData["ProductionStateFilter"] as string;
+    var statusFilter = ViewData["StatusFilter"] as string;
     var pendingProductionImportCount = ViewData["PendingProductionImportCount"] as int? ?? 0;
+    var failedImportCount = ViewData["FailedImportCount"] as int? ?? 0;
     var isPendingProductionFilter = productionStateFilter == "pending";
+    var isErrorStatusFilter = statusFilter == "error";
+    var isAnyFilterActive = isPendingProductionFilter || isErrorStatusFilter;
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -22,13 +26,18 @@
 
 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
     <a asp-action="Index"
-       class="btn btn-sm @(isPendingProductionFilter ? "btn-outline-secondary" : "btn-secondary")">
+       class="btn btn-sm @(isAnyFilterActive ? "btn-outline-secondary" : "btn-secondary")">
         Todas
     </a>
     <a asp-action="Index"
        asp-route-productionState="pending"
        class="btn btn-sm @(isPendingProductionFilter ? "btn-warning" : "btn-outline-warning")">
         Pendentes de produção (@pendingProductionImportCount)
+    </a>
+    <a asp-action="Index"
+       asp-route-status="error"
+       class="btn btn-sm @(isErrorStatusFilter ? "btn-danger" : "btn-outline-danger")">
+        Falhas (@failedImportCount)
     </a>
 </div>
 
@@ -51,7 +60,9 @@
     <div class="alert alert-info">
         @(isPendingProductionFilter
             ? "Nenhuma importação pendente de geração de produção."
-            : "Nenhum arquivo importado ainda.")
+            : isErrorStatusFilter
+                ? "Nenhuma importação com falha no momento."
+                : "Nenhum arquivo importado ainda.")
     </div>
 }
 else

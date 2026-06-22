@@ -29,7 +29,7 @@ public class PrintImportsController : Controller
         _stockService = stockService;
     }
 
-    public async Task<IActionResult> Index(string? productionState)
+    public async Task<IActionResult> Index(string? productionState, string? status)
     {
         var linkedPrintJobIdsByImportId = await _context.PrintJobs
             .Where(printJob => printJob.PrintImportId != null)
@@ -57,16 +57,25 @@ public class PrintImportsController : Controller
                 && !linkedPrintJobIdsByImportId.ContainsKey(printImport.Id))
             .ToList();
 
-        var imports = string.Equals(productionState, "pending", StringComparison.OrdinalIgnoreCase)
+        var failedImports = allImports
+            .Where(printImport => PrintImportStatus.Normalize(printImport.Status) == PrintImportStatus.Error)
+            .ToList();
+
+        var isPendingProductionFilter = string.Equals(productionState, "pending", StringComparison.OrdinalIgnoreCase);
+        var isErrorStatusFilter = string.Equals(status, "error", StringComparison.OrdinalIgnoreCase);
+
+        var imports = isPendingProductionFilter
             ? pendingImports
-            : allImports;
+            : isErrorStatusFilter
+                ? failedImports
+                : allImports;
 
         ViewData["LinkedPrintJobIdsByImportId"] = linkedPrintJobIdsByImportId;
         ViewData["ProcessAvailabilityByImportId"] = processAvailabilityByImportId;
-        ViewData["ProductionStateFilter"] = string.Equals(productionState, "pending", StringComparison.OrdinalIgnoreCase)
-            ? "pending"
-            : null;
+        ViewData["ProductionStateFilter"] = isPendingProductionFilter ? "pending" : null;
         ViewData["PendingProductionImportCount"] = pendingImports.Count;
+        ViewData["StatusFilter"] = isErrorStatusFilter ? "error" : null;
+        ViewData["FailedImportCount"] = failedImports.Count;
 
         return View(imports);
     }
