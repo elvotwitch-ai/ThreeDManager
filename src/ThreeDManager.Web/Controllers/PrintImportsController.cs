@@ -444,6 +444,11 @@ public class PrintImportsController : Controller
             return Redirect("/Dashboard");
         }
 
+        if (string.Equals(returnTo, "errorQueue", StringComparison.OrdinalIgnoreCase))
+        {
+            return RedirectToAction(nameof(Index), new { status = "error" });
+        }
+
         return RedirectToAction(nameof(Details), new { id });
     }
 

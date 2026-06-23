@@ -214,3 +214,9 @@
 - Validation run: `dotnet test tests\ThreeDManager.Tests\ThreeDManager.Tests.csproj --filter Dashboard_LinksFailedImports_ToRecoveryQueue` passed with 1 test; `dotnet build ThreeDManager.slnx` passed; `dotnet test ThreeDManager.slnx --no-build` passed with 23 tests; Testing-environment HTTP smoke on `http://127.0.0.1:5176` confirmed `/Dashboard` and `/PrintImports?status=error` returned HTTP 200 with expected dashboard/recovery content.
 - Blockers: none.
 - Next recommended task: continue Phase 1 with one small import-review polish step, such as showing the last retry result on the filtered `/PrintImports?status=error` queue if operators need feedback there too.
+- Summary: Kept retries started from the filtered failed-import queue on `/PrintImports?status=error`, showing the existing processing success/error feedback without sending operators to an individual details page.
+- Timestamp: 2026-06-23 18:04:27 -03:00
+- Files changed: `src/ThreeDManager.Web/Controllers/PrintImportsController.cs`, `src/ThreeDManager.Web/Views/PrintImports/Index.cshtml`, `tests/ThreeDManager.Tests/PrintJobControllerIntegrationTests.cs`, `docs/context/tasks_diary.md`
+- Validation run: `dotnet test tests\ThreeDManager.Tests\ThreeDManager.Tests.csproj --filter PrintImportsIndex_RetainsFailedFilterAndShowsRetryResult` passed with 1 test; `dotnet build ThreeDManager.slnx` passed with 0 warnings and 0 errors; `dotnet test ThreeDManager.slnx --no-build` passed with 24 tests; in-app browser smoke on `http://127.0.0.1:5184/PrintImports?status=error` confirmed the failed filter stayed active and the queue empty state rendered correctly.
+- Blockers: none.
+- Next recommended task: continue Phase 1 with one small import-review consistency step, such as preserving the pending-production filter when an operator processes an uploaded import from a filtered review page.

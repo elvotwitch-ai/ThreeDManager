@@ -151,6 +151,10 @@ else
                             {
                                 <form asp-action="Process" asp-route-id="@import.Id" method="post" class="m-0 d-inline-block">
                                     @Html.AntiForgeryToken()
+                                    @if (isErrorStatusFilter)
+                                    {
+                                        <input type="hidden" name="returnTo" value="errorQueue" />
+                                    }
                                     <button type="submit" class="btn btn-sm btn-outline-primary">
                                         @(normalizedStatus == PrintImportStatus.Error ? "Tentar novamente" : "Processar")
                                     </button>
