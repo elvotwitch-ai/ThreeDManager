@@ -208,3 +208,9 @@
 - Validation run: `dotnet test tests\ThreeDManager.Tests\ThreeDManager.Tests.csproj --filter Dashboard_LinksFailedImports_ToRecoveryQueue` passed with 1 test; `dotnet build ThreeDManager.slnx` passed; `dotnet test ThreeDManager.slnx --no-build` passed with 23 tests; Testing-environment app smoke on `http://127.0.0.1:5168` confirmed `/Dashboard` and `/PrintImports?status=error` rendered the expected recovery UI.
 - Blockers: none.
 - Next recommended task: continue Phase 1 with one small import-review hardening task, such as making the dashboard failed-import retry POST flow show a clear success/failure result after processing.
+- Summary: Made dashboard failed-import retry POSTs return to `/Dashboard` with a visible success or error alert, so operators get immediate feedback after retrying a recoverable import from the dashboard table.
+- Timestamp: 2026-06-23 15:07:02 -03:00
+- Files changed: `src/ThreeDManager.Web/Controllers/PrintImportsController.cs`, `src/ThreeDManager.Web/Views/Dashboard/Index.cshtml`, `tests/ThreeDManager.Tests/PrintJobControllerIntegrationTests.cs`, `docs/context/tasks_diary.md`
+- Validation run: `dotnet test tests\ThreeDManager.Tests\ThreeDManager.Tests.csproj --filter Dashboard_LinksFailedImports_ToRecoveryQueue` passed with 1 test; `dotnet build ThreeDManager.slnx` passed; `dotnet test ThreeDManager.slnx --no-build` passed with 23 tests; Testing-environment HTTP smoke on `http://127.0.0.1:5176` confirmed `/Dashboard` and `/PrintImports?status=error` returned HTTP 200 with expected dashboard/recovery content.
+- Blockers: none.
+- Next recommended task: continue Phase 1 with one small import-review polish step, such as showing the last retry result on the filtered `/PrintImports?status=error` queue if operators need feedback there too.

@@ -161,7 +161,7 @@ public class PrintImportsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Process(Guid id)
+    public async Task<IActionResult> Process(Guid id, string? returnTo)
     {
         var printImport = await _context.PrintImports.FindAsync(id);
 
@@ -178,7 +178,7 @@ public class PrintImportsController : Controller
             await _context.SaveChangesAsync();
 
             TempData["ErrorMessage"] = "Não foi possível processar: conteúdo bruto vazio.";
-            return RedirectToAction(nameof(Details), new { id });
+            return RedirectAfterProcess(id, returnTo);
         }
 
         if (!_parser.CanParse(printImport.FileName, printImport.RawContent))
@@ -189,7 +189,7 @@ public class PrintImportsController : Controller
             await _context.SaveChangesAsync();
 
             TempData["ErrorMessage"] = "Nenhum parser disponível para este arquivo.";
-            return RedirectToAction(nameof(Details), new { id });
+            return RedirectAfterProcess(id, returnTo);
         }
 
         try
@@ -223,7 +223,7 @@ public class PrintImportsController : Controller
             TempData["ErrorMessage"] = "Erro ao processar o arquivo.";
         }
 
-        return RedirectToAction(nameof(Details), new { id });
+        return RedirectAfterProcess(id, returnTo);
     }
 
     public async Task<IActionResult> CreatePrintJob(Guid id)
@@ -435,6 +435,16 @@ public class PrintImportsController : Controller
             .Where(printJob => printJob.PrintImportId == importId)
             .Select(printJob => (Guid?)printJob.Id)
             .FirstOrDefaultAsync();
+    }
+
+    private IActionResult RedirectAfterProcess(Guid id, string? returnTo)
+    {
+        if (string.Equals(returnTo, "dashboard", StringComparison.OrdinalIgnoreCase))
+        {
+            return Redirect("/Dashboard");
+        }
+
+        return RedirectToAction(nameof(Details), new { id });
     }
 
     private async Task PopulatePrintJobOptionsAsync(PrintJobFromImportViewModel viewModel, string? parsedMaterialType = null)

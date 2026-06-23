@@ -749,6 +749,32 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains($"/PrintImports/Process/{retryableImportId}", dashboardHtml);
         Assert.DoesNotContain($"/PrintImports/Process/{blockedImportId}", dashboardHtml);
         Assert.Contains("Tentar novamente", dashboardHtml);
+        Assert.Contains("name=\"returnTo\" value=\"dashboard\"", dashboardHtml);
+
+        var token = ExtractAntiForgeryToken(dashboardHtml);
+        var retryResponse = await client.PostAsync(
+            $"/PrintImports/Process/{retryableImportId}",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = token,
+                ["returnTo"] = "dashboard"
+            }));
+
+        Assert.Equal(HttpStatusCode.Redirect, retryResponse.StatusCode);
+        Assert.Equal("/Dashboard", retryResponse.Headers.Location?.ToString());
+
+        using var verifyScope = factory.Services.CreateScope();
+        var context = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var retryableImport = await context.PrintImports.SingleAsync(printImport => printImport.Id == retryableImportId);
+
+        Assert.Equal(PrintImportStatus.Parsed, retryableImport.Status);
+        Assert.False(string.IsNullOrWhiteSpace(retryableImport.ParsedDataJson));
+
+        var refreshedDashboardResponse = await client.GetAsync("/Dashboard");
+        var refreshedDashboardHtml = WebUtility.HtmlDecode(await refreshedDashboardResponse.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, refreshedDashboardResponse.StatusCode);
+        Assert.Contains("Arquivo processado com sucesso.", refreshedDashboardHtml);
     }
 
     [Fact]

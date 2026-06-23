@@ -24,6 +24,20 @@
     </p>
 </div>
 
+@if (TempData["SuccessMessage"] is not null)
+{
+    <div class="alert alert-success">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (TempData["ErrorMessage"] is not null)
+{
+    <div class="alert alert-danger">
+        @TempData["ErrorMessage"]
+    </div>
+}
+
 <div class="row g-3 mb-4">
     <div class="col-md-3">
         <div class="card border-primary h-100">
@@ -310,6 +324,7 @@
                                     {
                                         <form asp-controller="PrintImports" asp-action="Process" asp-route-id="@import.Id" method="post" class="m-0 d-inline-block">
                                             @Html.AntiForgeryToken()
+                                            <input type="hidden" name="returnTo" value="dashboard" />
                                             <button type="submit" class="btn btn-sm btn-outline-primary">
                                                 Tentar novamente
                                             </button>
