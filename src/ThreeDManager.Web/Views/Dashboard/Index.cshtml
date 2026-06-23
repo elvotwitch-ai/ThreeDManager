@@ -306,6 +306,15 @@
                                     <a asp-controller="PrintImports" asp-action="Details" asp-route-id="@import.Id" class="btn btn-sm btn-outline-secondary">
                                         Detalhes
                                     </a>
+                                    @if (import.CanProcessAgain)
+                                    {
+                                        <form asp-controller="PrintImports" asp-action="Process" asp-route-id="@import.Id" method="post" class="m-0 d-inline-block">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">
+                                                Tentar novamente
+                                            </button>
+                                        </form>
+                                    }
                                 </td>
                             </tr>
                         }
