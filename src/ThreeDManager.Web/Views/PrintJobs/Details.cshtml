@@ -191,7 +191,7 @@
 </div>
 
 <div class="mt-3 d-flex gap-2">
-    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Editar</a>
+    <a asp-action="Edit" asp-route-id="@Model.Id" asp-route-returnTo="@returnTo" class="btn btn-primary">Editar</a>
     @if (returnTo == "errorQueue")
     {
         <a asp-controller="PrintImports" asp-action="Index" asp-route-status="error" class="btn btn-outline-secondary">Voltar para falhas</a>

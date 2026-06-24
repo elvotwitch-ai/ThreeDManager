@@ -852,6 +852,94 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task EditPrintJob_PreservesPendingQueueContext_OnGetAndSuccessfulPost()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        var pendingImportId = Guid.NewGuid();
+        var printJobId = Guid.NewGuid();
+
+        await factory.SeedAsync(async context =>
+        {
+            context.PrintImports.Add(new PrintImport
+            {
+                Id = pendingImportId,
+                FileName = "pending-edit-context.gcode",
+                FileType = "gcode",
+                ParsedDataJson = """
+                {"filamentUsedGrams":12.45,"filamentUsedMeters":1.23,"estimatedTimeMinutes":60,"reportedCost":2.5,"materialType":"PLA","warnings":[]}
+                """,
+                Status = PrintImportStatus.Parsed,
+                ImportedAt = DateTime.UtcNow
+            });
+
+            context.PrintJobs.Add(new PrintJob
+            {
+                Id = printJobId,
+                ProductId = ids.ProductId,
+                PrinterId = ids.PrinterId,
+                MaterialId = ids.MaterialId,
+                PrintImportId = pendingImportId,
+                SourceFileName = "pending-edit-context.gcode",
+                FilamentUsedGrams = 12.45m,
+                FilamentUsedMeters = 1.23m,
+                EstimatedTimeMinutes = 60,
+                ReportedCost = 2.50m,
+                Status = PrintJobStatus.Imported,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var detailsResponse = await client.GetAsync($"/PrintJobs/Details/{printJobId}?returnTo=pendingQueue");
+        var detailsHtml = WebUtility.HtmlDecode(await detailsResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        Assert.Contains($"/PrintJobs/Edit/{printJobId}?returnTo=pendingQueue", detailsHtml);
+
+        var editResponse = await client.GetAsync($"/PrintJobs/Edit/{printJobId}?returnTo=pendingQueue");
+        var editHtml = WebUtility.HtmlDecode(await editResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, editResponse.StatusCode);
+        Assert.Contains("name=\"returnTo\" value=\"pendingQueue\"", editHtml);
+        Assert.Contains($"/PrintJobs/Details/{printJobId}?returnTo=pendingQueue", editHtml);
+
+        var token = ExtractAntiForgeryToken(editHtml);
+        var postResponse = await client.PostAsync(
+            $"/PrintJobs/Edit/{printJobId}",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = token,
+                ["Id"] = printJobId.ToString(),
+                ["ProductId"] = ids.ProductId.ToString(),
+                ["PrinterId"] = ids.PrinterId.ToString(),
+                ["MaterialId"] = ids.MaterialId.ToString(),
+                ["PrintImportId"] = pendingImportId.ToString(),
+                ["SourceFileName"] = "pending-edit-context.gcode",
+                ["CreatedAt"] = "2026-06-24T12:00:00Z",
+                ["FilamentUsedGrams"] = "12.45",
+                ["FilamentUsedMeters"] = "1.23",
+                ["EstimatedTimeMinutes"] = "75",
+                ["ActualTimeMinutes"] = "",
+                ["ReportedCost"] = "2.50",
+                ["Status"] = "Planned",
+                ["returnTo"] = "pendingQueue"
+            }));
+
+        Assert.Equal(HttpStatusCode.Redirect, postResponse.StatusCode);
+        Assert.Equal($"/PrintJobs/Details/{printJobId}?returnTo=pendingQueue", postResponse.Headers.Location?.ToString());
+
+        var refreshedDetailsResponse = await client.GetAsync($"/PrintJobs/Details/{printJobId}?returnTo=pendingQueue");
+        var refreshedDetailsHtml = WebUtility.HtmlDecode(await refreshedDetailsResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, refreshedDetailsResponse.StatusCode);
+        Assert.Contains("/PrintImports?productionState=pending", refreshedDetailsHtml);
+        Assert.Contains($"/PrintImports/Details/{pendingImportId}?returnTo=pendingQueue", refreshedDetailsHtml);
+        Assert.Contains("Voltar para pendentes", refreshedDetailsHtml);
+    }
+
+    [Fact]
     public async Task PrintImportsIndex_ShowsProductionState_ForPendingAndLinkedParsedImports()
     {
         using var factory = new ThreeDManagerWebFactory();

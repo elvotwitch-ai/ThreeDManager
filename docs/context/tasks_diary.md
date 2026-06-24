@@ -261,3 +261,10 @@
 - Validation run: browser-visible smoke on `http://127.0.0.1:5212` created a product, printer, material, and `.gcode` import, processed it, generated a production from `/PrintImports?productionState=pending`, and verified `PrintJobs/Details` rendered both `Voltar para pendentes` and `Ver importação` with `returnTo=pendingQueue`; `Ver importação` opened `/PrintImports/Details/{id}?returnTo=pendingQueue`, and that page still rendered `Voltar para pendentes`.
 - Blockers: none.
 - Next recommended task: continue Phase 1 with one small import-review consistency slice adjacent to queue context, or move to the next production/inventory polish item if this chain is complete.
+
+- Summary: Preserved import-review queue context through the print-job edit flow, so productions opened from a filtered queue keep their back path on the details page, edit page, cancel action, and successful save redirect.
+- Timestamp: 2026-06-24 09:08:54 -03:00
+- Files changed: `src/ThreeDManager.Web/Controllers/PrintJobsController.cs`, `src/ThreeDManager.Web/Views/PrintJobs/Details.cshtml`, `src/ThreeDManager.Web/Views/PrintJobs/Edit.cshtml`, `tests/ThreeDManager.Tests/PrintJobControllerIntegrationTests.cs`, `docs/context/tasks_diary.md`
+- Validation run: focused `dotnet test tests\ThreeDManager.Tests\ThreeDManager.Tests.csproj --filter EditPrintJob_PreservesPendingQueueContext_OnGetAndSuccessfulPost` passed; `dotnet build ThreeDManager.slnx` passed after one transient `VBCSCompiler` file-lock retry on `ThreeDManager.Domain.dll`; `dotnet test ThreeDManager.slnx --no-build` passed with 29 tests; live app smoke on `http://127.0.0.1:5224` confirmed `PrintJobs/Details/{id}?returnTo=pendingQueue` rendered `Editar` with `?returnTo=pendingQueue`, and the linked edit page rendered both the hidden `returnTo` field and the cancel link back to the same queue-aware details URL.
+- Blockers: none.
+- Next recommended task: continue the same consistency chain with one small follow-up on the print-job delete flow, so productions opened from a filtered import-review queue can also cancel or finish removal without losing the originating queue context.

@@ -82,7 +82,7 @@ public class PrintJobsController : Controller
 
         return View(printJob);
     }
-    public async Task<IActionResult> Edit(Guid? id)
+    public async Task<IActionResult> Edit(Guid? id, string? returnTo)
     {
         if (id is null)
         {
@@ -97,13 +97,14 @@ public class PrintJobsController : Controller
         }
 
         await PopulateOptionsAsync(printJob);
+        ViewData["ReturnTo"] = NormalizeReturnTo(returnTo);
 
         return View(printJob);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(Guid id, PrintJob printJob)
+    public async Task<IActionResult> Edit(Guid id, PrintJob printJob, string? returnTo)
     {
         if (id != printJob.Id)
         {
@@ -124,6 +125,7 @@ public class PrintJobsController : Controller
         if (!ModelState.IsValid)
         {
             await PopulateOptionsAsync(printJob);
+            ViewData["ReturnTo"] = NormalizeReturnTo(returnTo);
             return View(printJob);
         }
 
@@ -157,6 +159,7 @@ public class PrintJobsController : Controller
         {
             AddStockModelError(stockResult);
             await PopulateOptionsAsync(printJob);
+            ViewData["ReturnTo"] = NormalizeReturnTo(returnTo);
             return View(printJob);
         }
 
@@ -164,7 +167,13 @@ public class PrintJobsController : Controller
 
         TempData["SuccessMessage"] = "Produção atualizada com sucesso.";
 
-        return RedirectToAction(nameof(Details), new { id = existingPrintJob.Id });
+        return RedirectToAction(
+            nameof(Details),
+            new
+            {
+                id = existingPrintJob.Id,
+                returnTo = NormalizeReturnTo(returnTo)
+            });
     }
 
     public async Task<IActionResult> Delete(Guid? id)

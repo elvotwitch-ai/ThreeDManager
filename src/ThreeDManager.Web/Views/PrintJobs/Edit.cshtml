@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Editar produção";
+    var returnTo = ViewData["ReturnTo"] as string;
 }
 
 <h1>Editar produção</h1>
@@ -19,6 +20,10 @@
     <input type="hidden" asp-for="PrintImportId" />
     <input type="hidden" asp-for="SourceFileName" />
     <input type="hidden" asp-for="CreatedAt" />
+    @if (!string.IsNullOrWhiteSpace(returnTo))
+    {
+        <input type="hidden" name="returnTo" value="@returnTo" />
+    }
 
     <div class="mb-3">
         <label asp-for="ProductId" class="form-label">Produto</label>
@@ -89,7 +94,7 @@
 
     <div class="d-flex gap-2">
         <button type="submit" class="btn btn-primary">Salvar alterações</button>
-        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Cancelar</a>
+        <a asp-action="Details" asp-route-id="@Model.Id" asp-route-returnTo="@returnTo" class="btn btn-outline-secondary">Cancelar</a>
     </div>
 </form>
 
