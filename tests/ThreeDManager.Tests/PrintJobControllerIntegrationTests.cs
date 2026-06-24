@@ -1689,6 +1689,71 @@ public class PrintJobControllerIntegrationTests
         Assert.Null(printJob.StockDeductedGrams);
     }
 
+    [Fact]
+    public async Task PrintJobsViews_ShowLocalizedStatusLabels_InIndexDetailsDeleteAndEdit()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        var completedPrintJobId = Guid.NewGuid();
+        var canceledPrintJobId = Guid.NewGuid();
+
+        await factory.SeedAsync(async context =>
+        {
+            context.PrintJobs.AddRange(
+                new PrintJob
+                {
+                    Id = completedPrintJobId,
+                    ProductId = ids.ProductId,
+                    PrinterId = ids.PrinterId,
+                    MaterialId = ids.MaterialId,
+                    SourceFileName = "completed.gcode",
+                    Status = PrintJobStatus.Completed,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new PrintJob
+                {
+                    Id = canceledPrintJobId,
+                    ProductId = ids.ProductId,
+                    PrinterId = ids.PrinterId,
+                    MaterialId = ids.MaterialId,
+                    SourceFileName = "canceled.gcode",
+                    Status = PrintJobStatus.Canceled,
+                    CreatedAt = DateTime.UtcNow.AddMinutes(-5)
+                });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var indexResponse = await client.GetAsync("/PrintJobs");
+        var indexHtml = WebUtility.HtmlDecode(await indexResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, indexResponse.StatusCode);
+        Assert.Contains("Concluída", indexHtml);
+        Assert.Contains("Cancelada", indexHtml);
+        Assert.DoesNotContain(">Completed<", indexHtml);
+        Assert.DoesNotContain(">Canceled<", indexHtml);
+
+        var detailsResponse = await client.GetAsync($"/PrintJobs/Details/{completedPrintJobId}");
+        var detailsHtml = WebUtility.HtmlDecode(await detailsResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        Assert.Contains("Concluída", detailsHtml);
+        Assert.DoesNotContain(">Completed<", detailsHtml);
+
+        var deleteResponse = await client.GetAsync($"/PrintJobs/Delete/{canceledPrintJobId}");
+        var deleteHtml = WebUtility.HtmlDecode(await deleteResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
+        Assert.Contains("Cancelada", deleteHtml);
+        Assert.DoesNotContain(">Canceled<", deleteHtml);
+
+        var editResponse = await client.GetAsync($"/PrintJobs/Edit/{completedPrintJobId}");
+        var editHtml = WebUtility.HtmlDecode(await editResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, editResponse.StatusCode);
+        Assert.Contains(">Concluída</option>", editHtml);
+        Assert.Contains(">Cancelada</option>", editHtml);
+    }
+
     private static async Task<(Guid MaterialId, Guid ProductId, Guid PrinterId)> SeedCommonAsync(
         ThreeDManagerWebFactory factory,
         decimal stockGrams = 1000m)

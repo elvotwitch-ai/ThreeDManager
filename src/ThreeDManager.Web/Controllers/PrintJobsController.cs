@@ -4,6 +4,7 @@ using ThreeDManager.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using ThreeDManager.Domain.Entities;
 using ThreeDManager.Application.Interfaces;
+using ThreeDManager.Web.Presentation;
 
 namespace ThreeDManager.Web.Controllers;
 
@@ -254,6 +255,15 @@ public class PrintJobsController : Controller
         ViewBag.ProductOptions = new SelectList(products, "Id", "Name", printJob.ProductId);
         ViewBag.PrinterOptions = new SelectList(printers, "Id", "Name", printJob.PrinterId);
         ViewBag.MaterialOptions = new SelectList(materials, "Id", "Name", printJob.MaterialId);
+        ViewBag.StatusOptions = new SelectList(
+            PrintJobStatus.All.Select(status => new
+            {
+                Value = status,
+                Text = PrintJobStatusPresentation.GetDisplayLabel(status)
+            }),
+            "Value",
+            "Text",
+            printJob.Status);
     }
 
     private async Task<decimal?> CalculateMaterialCostAsync(Guid? materialId, decimal? filamentUsedGrams)

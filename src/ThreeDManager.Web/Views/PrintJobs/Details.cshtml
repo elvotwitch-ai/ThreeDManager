@@ -1,5 +1,6 @@
 @model ThreeDManager.Domain.Entities.PrintJob
 @using ThreeDManager.Domain.Entities
+@using ThreeDManager.Web.Presentation
 
 @{
     ViewData["Title"] = "Detalhes da produção";
@@ -132,7 +133,11 @@
             </dd>
 
             <dt class="col-sm-3">Status</dt>
-            <dd class="col-sm-9">@Model.Status</dd>
+            <dd class="col-sm-9">
+                <span class="badge @PrintJobStatusPresentation.GetBadgeClass(Model.Status)">
+                    @PrintJobStatusPresentation.GetDisplayLabel(Model.Status)
+                </span>
+            </dd>
 
             <dt class="col-sm-3">Criado em</dt>
             <dd class="col-sm-9">@Model.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
