@@ -147,7 +147,10 @@ else
                             }
                             else if (canGenerateProduction)
                             {
-                                <a asp-action="CreatePrintJob" asp-route-id="@import.Id" class="btn btn-sm btn-outline-success">Gerar produção</a>
+                                <a asp-action="CreatePrintJob"
+                                   asp-route-id="@import.Id"
+                                   asp-route-returnTo="@detailsReturnTo"
+                                   class="btn btn-sm btn-outline-success">Gerar produção</a>
                             }
 
                             <a asp-action="Details"

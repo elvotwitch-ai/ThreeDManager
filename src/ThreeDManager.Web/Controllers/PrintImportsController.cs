@@ -227,7 +227,7 @@ public class PrintImportsController : Controller
         return RedirectAfterProcess(id, returnTo);
     }
 
-    public async Task<IActionResult> CreatePrintJob(Guid id)
+    public async Task<IActionResult> CreatePrintJob(Guid id, string? returnTo)
     {
         var printImport = await _context.PrintImports.FindAsync(id);
 
@@ -239,7 +239,7 @@ public class PrintImportsController : Controller
         if (!CanGeneratePrintJob(printImport))
         {
             TempData["ErrorMessage"] = "Processе o arquivo com sucesso antes de gerar uma produção.";
-            return RedirectToAction(nameof(Details), new { id });
+            return RedirectToAction(nameof(Details), new { id, returnTo = NormalizeReturnTo(returnTo) });
         }
 
         var linkedPrintJobId = await FindLinkedPrintJobIdAsync(id);
@@ -262,6 +262,7 @@ public class PrintImportsController : Controller
         {
             ImportId = printImport.Id,
             FileName = printImport.FileName,
+            ReturnTo = NormalizeReturnTo(returnTo),
             FilamentUsedGrams = metadata.FilamentUsedGrams,
             FilamentUsedMeters = metadata.FilamentUsedMeters,
             EstimatedTimeMinutes = metadata.EstimatedTimeMinutes,
@@ -308,7 +309,7 @@ public class PrintImportsController : Controller
         if (!CanGeneratePrintJob(printImport))
         {
             TempData["ErrorMessage"] = "Processе o arquivo com sucesso antes de gerar uma produção.";
-            return RedirectToAction(nameof(Details), new { id = viewModel.ImportId });
+            return RedirectToAction(nameof(Details), new { id = viewModel.ImportId, returnTo = NormalizeReturnTo(viewModel.ReturnTo) });
         }
 
         var alreadyHasPrintJob = await _context.PrintJobs
@@ -317,7 +318,7 @@ public class PrintImportsController : Controller
         if (alreadyHasPrintJob)
         {
             TempData["ErrorMessage"] = "Esta importação já possui uma produção gerada.";
-            return RedirectToAction(nameof(Details), new { id = viewModel.ImportId });
+            return RedirectToAction(nameof(Details), new { id = viewModel.ImportId, returnTo = NormalizeReturnTo(viewModel.ReturnTo) });
         }
 
         var printJob = new PrintJob

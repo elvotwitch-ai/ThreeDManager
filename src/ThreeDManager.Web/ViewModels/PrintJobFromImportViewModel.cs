@@ -9,6 +9,8 @@ public class PrintJobFromImportViewModel
 
     public string FileName { get; set; } = string.Empty;
 
+    public string? ReturnTo { get; set; }
+
     [Required(ErrorMessage = "Selecione um produto.")]
     public Guid? ProductId { get; set; }
 

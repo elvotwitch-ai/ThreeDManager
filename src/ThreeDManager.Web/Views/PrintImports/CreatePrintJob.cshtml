@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Gerar produção";
+    var returnTo = Model.ReturnTo;
 }
 
 <h1>Gerar produção</h1>
@@ -21,6 +22,7 @@
 
     <input type="hidden" asp-for="ImportId" />
     <input type="hidden" asp-for="FileName" />
+    <input type="hidden" asp-for="ReturnTo" />
     <input type="hidden" asp-for="ParsedMaterialType" />
 
     <div class="mb-3">
@@ -101,7 +103,18 @@
 
     <div class="d-flex gap-2">
         <button type="submit" class="btn btn-primary">Gerar produção</button>
-        <a asp-action="Details" asp-route-id="@Model.ImportId" class="btn btn-outline-secondary">Cancelar</a>
+        <a asp-action="Details"
+           asp-route-id="@Model.ImportId"
+           asp-route-returnTo="@returnTo"
+           class="btn btn-outline-secondary">Cancelar</a>
+        @if (returnTo == "pendingQueue")
+        {
+            <a asp-action="Index" asp-route-productionState="pending" class="btn btn-outline-secondary">Voltar para pendentes</a>
+        }
+        else if (returnTo == "errorQueue")
+        {
+            <a asp-action="Index" asp-route-status="error" class="btn btn-outline-secondary">Voltar para falhas</a>
+        }
     </div>
 </form>
 
