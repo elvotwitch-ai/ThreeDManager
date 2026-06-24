@@ -143,7 +143,11 @@ else
                         <div class="d-flex justify-content-end gap-1">
                             @if (hasLinkedProduction)
                             {
-                                <a asp-controller="PrintJobs" asp-action="Details" asp-route-id="@linkedPrintJobId" class="btn btn-sm btn-outline-success">Ver produção</a>
+                                <a asp-controller="PrintJobs"
+                                   asp-action="Details"
+                                   asp-route-id="@linkedPrintJobId"
+                                   asp-route-returnTo="@detailsReturnTo"
+                                   class="btn btn-sm btn-outline-success">Ver produção</a>
                             }
                             else if (canGenerateProduction)
                             {

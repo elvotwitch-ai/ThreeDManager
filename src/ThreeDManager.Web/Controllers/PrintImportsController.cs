@@ -247,7 +247,14 @@ public class PrintImportsController : Controller
         if (linkedPrintJobId is not null)
         {
             TempData["SuccessMessage"] = "Esta importação já possui uma produção vinculada.";
-            return RedirectToAction("Details", "PrintJobs", new { id = linkedPrintJobId.Value });
+            return RedirectToAction(
+                "Details",
+                "PrintJobs",
+                new
+                {
+                    id = linkedPrintJobId.Value,
+                    returnTo = NormalizeReturnTo(returnTo)
+                });
         }
 
         var metadata = DeserializeParsedMetadata(printImport);

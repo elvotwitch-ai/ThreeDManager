@@ -38,7 +38,7 @@ public class PrintJobsController : Controller
         return View(printJobs);
     }
 
-    public async Task<IActionResult> Details(Guid? id)
+    public async Task<IActionResult> Details(Guid? id, string? returnTo)
     {
         if (id is null)
         {
@@ -78,6 +78,7 @@ public class PrintJobsController : Controller
             .Where(movement => movement.PrintJobId == printJob.Id)
             .OrderByDescending(movement => movement.CreatedAt)
             .FirstOrDefaultAsync();
+        ViewData["ReturnTo"] = NormalizeReturnTo(returnTo);
 
         return View(printJob);
     }
@@ -257,5 +258,20 @@ public class PrintJobsController : Controller
         ModelState.AddModelError(
             stockResult.FieldName ?? string.Empty,
             stockResult.ErrorMessage ?? "Não foi possível atualizar o estoque.");
+    }
+
+    private static string? NormalizeReturnTo(string? returnTo)
+    {
+        if (string.Equals(returnTo, "errorQueue", StringComparison.OrdinalIgnoreCase))
+        {
+            return "errorQueue";
+        }
+
+        if (string.Equals(returnTo, "pendingQueue", StringComparison.OrdinalIgnoreCase))
+        {
+            return "pendingQueue";
+        }
+
+        return null;
     }
 }

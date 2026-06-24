@@ -4,6 +4,7 @@
 @{
     ViewData["Title"] = "Detalhes da produção";
     var stockMovement = ViewBag.StockMovement as MaterialStockMovement;
+    var returnTo = ViewData["ReturnTo"] as string;
 }
 
 <h1>Detalhes da produção</h1>
@@ -191,11 +192,26 @@
 
 <div class="mt-3 d-flex gap-2">
     <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Editar</a>
-    <a asp-action="Index" class="btn btn-outline-secondary">Voltar</a>
+    @if (returnTo == "errorQueue")
+    {
+        <a asp-controller="PrintImports" asp-action="Index" asp-route-status="error" class="btn btn-outline-secondary">Voltar para falhas</a>
+    }
+    else if (returnTo == "pendingQueue")
+    {
+        <a asp-controller="PrintImports" asp-action="Index" asp-route-productionState="pending" class="btn btn-outline-secondary">Voltar para pendentes</a>
+    }
+    else
+    {
+        <a asp-action="Index" class="btn btn-outline-secondary">Voltar</a>
+    }
 
     @if (Model.PrintImportId.HasValue)
     {
-        <a asp-controller="PrintImports" asp-action="Details" asp-route-id="@Model.PrintImportId" class="btn btn-outline-primary">
+        <a asp-controller="PrintImports"
+           asp-action="Details"
+           asp-route-id="@Model.PrintImportId"
+           asp-route-returnTo="@returnTo"
+           class="btn btn-outline-primary">
             Ver importação
         </a>
     }

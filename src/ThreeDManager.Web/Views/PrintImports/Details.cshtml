@@ -117,7 +117,11 @@
 
     @if (linkedPrintJobId is not null)
     {
-        <a asp-controller="PrintJobs" asp-action="Details" asp-route-id="@linkedPrintJobId.Value" class="btn btn-success">Ver produção vinculada</a>
+        <a asp-controller="PrintJobs"
+           asp-action="Details"
+           asp-route-id="@linkedPrintJobId.Value"
+           asp-route-returnTo="@returnTo"
+           class="btn btn-success">Ver produção vinculada</a>
     }
     else if (normalizedStatus == PrintImportStatus.Parsed && !string.IsNullOrWhiteSpace(Model.ParsedDataJson))
     {
