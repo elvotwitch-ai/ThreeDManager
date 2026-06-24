@@ -940,6 +940,93 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task EditPrintJob_PreservesPendingQueueContext_OnStockValidationError()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        var pendingImportId = Guid.NewGuid();
+        var printJobId = Guid.NewGuid();
+
+        await factory.SeedAsync(async context =>
+        {
+            context.PrintImports.Add(new PrintImport
+            {
+                Id = pendingImportId,
+                FileName = "pending-edit-validation.gcode",
+                FileType = "gcode",
+                ParsedDataJson = """
+                {"filamentUsedGrams":12.45,"filamentUsedMeters":1.23,"estimatedTimeMinutes":60,"reportedCost":2.5,"materialType":"PLA","warnings":[]}
+                """,
+                Status = PrintImportStatus.Parsed,
+                ImportedAt = DateTime.UtcNow
+            });
+
+            context.PrintJobs.Add(new PrintJob
+            {
+                Id = printJobId,
+                ProductId = ids.ProductId,
+                PrinterId = ids.PrinterId,
+                MaterialId = ids.MaterialId,
+                PrintImportId = pendingImportId,
+                SourceFileName = "pending-edit-validation.gcode",
+                FilamentUsedGrams = 12.45m,
+                FilamentUsedMeters = 1.23m,
+                EstimatedTimeMinutes = 60,
+                ReportedCost = 2.50m,
+                Status = PrintJobStatus.Imported,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var editResponse = await client.GetAsync($"/PrintJobs/Edit/{printJobId}?returnTo=pendingQueue");
+        var editHtml = WebUtility.HtmlDecode(await editResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, editResponse.StatusCode);
+
+        var token = ExtractAntiForgeryToken(editHtml);
+        var postResponse = await client.PostAsync(
+            $"/PrintJobs/Edit/{printJobId}",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = token,
+                ["Id"] = printJobId.ToString(),
+                ["ProductId"] = ids.ProductId.ToString(),
+                ["PrinterId"] = ids.PrinterId.ToString(),
+                ["MaterialId"] = ids.MaterialId.ToString(),
+                ["PrintImportId"] = pendingImportId.ToString(),
+                ["SourceFileName"] = "pending-edit-validation.gcode",
+                ["CreatedAt"] = "2026-06-24T12:00:00Z",
+                ["FilamentUsedGrams"] = "1200.00",
+                ["FilamentUsedMeters"] = "1.23",
+                ["EstimatedTimeMinutes"] = "75",
+                ["ActualTimeMinutes"] = "",
+                ["ReportedCost"] = "2.50",
+                ["Status"] = "Completed",
+                ["returnTo"] = "pendingQueue"
+            }));
+
+        var responseHtml = WebUtility.HtmlDecode(await postResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, postResponse.StatusCode);
+        Assert.Contains("Estoque insuficiente para concluir esta produção.", responseHtml);
+        Assert.Contains("name=\"returnTo\" value=\"pendingQueue\"", responseHtml);
+        Assert.Contains($"/PrintJobs/Details/{printJobId}?returnTo=pendingQueue", responseHtml);
+
+        using var verifyScope = factory.Services.CreateScope();
+        var context = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var material = await context.Materials.SingleAsync(material => material.Id == ids.MaterialId);
+        var printJob = await context.PrintJobs.SingleAsync(printJob => printJob.Id == printJobId);
+
+        Assert.Equal(1000m, material.CurrentStockGrams);
+        Assert.Equal(PrintJobStatus.Imported, printJob.Status);
+        Assert.Null(printJob.StockDeductedAt);
+        Assert.Null(printJob.StockDeductedGrams);
+    }
+
+    [Fact]
     public async Task DeletePrintJob_PreservesPendingQueueContext_OnGetCancelAndSuccessfulPost()
     {
         using var factory = new ThreeDManagerWebFactory();
