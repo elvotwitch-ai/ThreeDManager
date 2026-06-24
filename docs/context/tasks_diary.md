@@ -240,3 +240,24 @@
 - Validation run: focused `dotnet test tests\ThreeDManager.Tests\ThreeDManager.Tests.csproj --filter CreatePrintJob_PreservesPendingQueueContext_WhenImportAlreadyLinkedToProduction` passed; `dotnet build ThreeDManager.slnx` passed on retry after one transient `VBCSCompiler` file lock in `src\ThreeDManager.Domain\obj\Debug\net10.0`; `dotnet test ThreeDManager.slnx --no-build` passed with 27 tests; `git diff --check` passed with line-ending warnings only. No fresh browser walk covered the exact linked-import branch because the local app state did not provide a ready linked import on demand, so that queue-preservation path remained verified by the focused integration test in this run.
 - Blockers: none.
 - Next recommended task: continue Phase 1 with one small import-review consistency step, such as preserving queue context after a successful `Gerar produção` POST lands on `PrintJobs/Details`.
+
+- Summary: Preserved pending-queue context after a successful `Gerar produção` POST, so the production details page keeps the queue-specific back path and import link after the create action succeeds.
+- Timestamp: 2026-06-24 03:04:00 -03:00
+- Files changed: `src/ThreeDManager.Web/Controllers/PrintImportsController.cs`, `tests/ThreeDManager.Tests/PrintJobControllerIntegrationTests.cs`, `docs/context/tasks_diary.md`
+- Validation run: focused `dotnet test tests\ThreeDManager.Tests\ThreeDManager.Tests.csproj --filter CreatePrintJob_PreservesPendingQueueContext_AfterSuccessfulPost` passed with 1 test; `dotnet build ThreeDManager.slnx` passed on retry after one transient `CS2012` file lock in `src\ThreeDManager.Domain\obj\Debug\net10.0\ThreeDManager.Domain.dll`; `dotnet test ThreeDManager.slnx --no-build` passed with 27 tests; `git diff --check` passed with line-ending warnings only.
+- Blockers: no fresh browser/manual smoke exercised the exact POST success branch in a live app session during this batch, so the redirect contract is verified by the MVC integration host rather than a new local UI mutation.
+- Next recommended task: if you want a fully manual confirmation before commit, run one targeted app-level smoke of the pending queue -> `Gerar produção` -> production details flow with seedable local data; otherwise keep moving with the next small import-review consistency slice.
+
+- Summary: Rehydrated the existing uncommitted queue-context batch, reran focused validation, and attempted a live Testing-environment smoke of `PrintImports -> Gerar produção -> PrintJobs/Details` without making further code changes.
+- Timestamp: 2026-06-24 05:16:40 -03:00
+- Files changed: `docs/context/tasks_diary.md`
+- Validation run: `dotnet test tests\ThreeDManager.Tests\ThreeDManager.Tests.csproj --filter CreatePrintJob_PreservesPendingQueueContext_AfterSuccessfulPost` passed with 1 test; `dotnet build ThreeDManager.slnx` passed; an ad-hoc Testing-environment MVC smoke created a product, printer, material, imported and processed a `.gcode`, opened the pending-production queue, posted `Gerar produção`, and confirmed the import left `/PrintImports?productionState=pending`, but the PowerShell client did not yield a conclusive assertion for the final import backlink query-string on `PrintJobs/Details`.
+- Blockers: no commit yet because the exact live `PrintJobs/Details -> Ver importação` backlink with `returnTo=pendingQueue` is still only integration-tested, not cleanly confirmed through a browser/manual app read.
+- Next recommended task: run one browser-visible smoke on the generated production details page and verify both `Voltar para pendentes` and `Ver importação` keep `returnTo=pendingQueue`; if that passes, commit the existing three-file batch.
+
+- Summary: Confirmed the pending-queue redirect slice in a browser-visible Testing-environment smoke, then completed the existing three-file batch for commit.
+- Timestamp: 2026-06-24 07:08:42 -03:00
+- Files changed: `src/ThreeDManager.Web/Controllers/PrintImportsController.cs`, `tests/ThreeDManager.Tests/PrintJobControllerIntegrationTests.cs`, `docs/context/tasks_diary.md`
+- Validation run: browser-visible smoke on `http://127.0.0.1:5212` created a product, printer, material, and `.gcode` import, processed it, generated a production from `/PrintImports?productionState=pending`, and verified `PrintJobs/Details` rendered both `Voltar para pendentes` and `Ver importação` with `returnTo=pendingQueue`; `Ver importação` opened `/PrintImports/Details/{id}?returnTo=pendingQueue`, and that page still rendered `Voltar para pendentes`.
+- Blockers: none.
+- Next recommended task: continue Phase 1 with one small import-review consistency slice adjacent to queue context, or move to the next production/inventory polish item if this chain is complete.

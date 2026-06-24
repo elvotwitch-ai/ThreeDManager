@@ -360,7 +360,14 @@ public class PrintImportsController : Controller
 
         TempData["SuccessMessage"] = "Produção gerada com sucesso.";
 
-        return RedirectToAction("Details", "PrintJobs", new { id = printJob.Id });
+        return RedirectToAction(
+            "Details",
+            "PrintJobs",
+            new
+            {
+                id = printJob.Id,
+                returnTo = NormalizeReturnTo(viewModel.ReturnTo)
+            });
     }
 
     private async Task<decimal?> CalculateMaterialCostAsync(Guid? materialId, decimal? filamentUsedGrams)
