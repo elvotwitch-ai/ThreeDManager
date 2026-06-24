@@ -220,3 +220,9 @@
 - Validation run: `dotnet test tests\ThreeDManager.Tests\ThreeDManager.Tests.csproj --filter PrintImportsIndex_RetainsFailedFilterAndShowsRetryResult` passed with 1 test; `dotnet build ThreeDManager.slnx` passed with 0 warnings and 0 errors; `dotnet test ThreeDManager.slnx --no-build` passed with 24 tests; in-app browser smoke on `http://127.0.0.1:5184/PrintImports?status=error` confirmed the failed filter stayed active and the queue empty state rendered correctly.
 - Blockers: none.
 - Next recommended task: continue Phase 1 with one small import-review consistency step, such as preserving the pending-production filter when an operator processes an uploaded import from a filtered review page.
+- Summary: Preserved the originating import-review queue when operators open import details, so the failure and pending-production filters now survive details navigation and supported retry processing.
+- Timestamp: 2026-06-23 21:14:34 -03:00
+- Files changed: `src/ThreeDManager.Web/Controllers/PrintImportsController.cs`, `src/ThreeDManager.Web/Views/PrintImports/Index.cshtml`, `src/ThreeDManager.Web/Views/PrintImports/Details.cshtml`, `tests/ThreeDManager.Tests/PrintJobControllerIntegrationTests.cs`, `docs/context/tasks_diary.md`
+- Validation run: focused `PrintImportDetails_PreservesFilteredQueueForBackAndRetryActions` passed; `dotnet build ThreeDManager.slnx` passed with 0 warnings and 0 errors; `dotnet test ThreeDManager.slnx --no-build` passed with 25 tests; real PostgreSQL browser smoke on `http://127.0.0.1:5192/PrintImports?productionState=pending` verified the details URL carried `returnTo=pendingQueue`, details rendered `Voltar para pendentes`, and the back action returned to the active pending filter.
+- Blockers: none.
+- Next recommended task: continue Phase 1 with one small import-review consistency step, such as preserving queue context when navigating from filtered imports into production generation and validation errors.

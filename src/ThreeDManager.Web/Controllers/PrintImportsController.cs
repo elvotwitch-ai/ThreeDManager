@@ -80,7 +80,7 @@ public class PrintImportsController : Controller
         return View(imports);
     }
 
-    public async Task<IActionResult> Details(Guid? id)
+    public async Task<IActionResult> Details(Guid? id, string? returnTo)
     {
         if (id is null)
         {
@@ -99,6 +99,7 @@ public class PrintImportsController : Controller
         var processAvailability = GetProcessAvailability(printImport);
         ViewData["CanProcessImport"] = processAvailability.CanProcess;
         ViewData["ProcessImportHint"] = processAvailability.Message;
+        ViewData["ReturnTo"] = NormalizeReturnTo(returnTo);
 
         return View(printImport);
     }
@@ -449,7 +450,27 @@ public class PrintImportsController : Controller
             return RedirectToAction(nameof(Index), new { status = "error" });
         }
 
+        if (string.Equals(returnTo, "pendingQueue", StringComparison.OrdinalIgnoreCase))
+        {
+            return RedirectToAction(nameof(Index), new { productionState = "pending" });
+        }
+
         return RedirectToAction(nameof(Details), new { id });
+    }
+
+    private static string? NormalizeReturnTo(string? returnTo)
+    {
+        if (string.Equals(returnTo, "errorQueue", StringComparison.OrdinalIgnoreCase))
+        {
+            return "errorQueue";
+        }
+
+        if (string.Equals(returnTo, "pendingQueue", StringComparison.OrdinalIgnoreCase))
+        {
+            return "pendingQueue";
+        }
+
+        return null;
     }
 
     private async Task PopulatePrintJobOptionsAsync(PrintJobFromImportViewModel viewModel, string? parsedMaterialType = null)

@@ -17,6 +17,7 @@
     var linkedPrintJobId = ViewData["LinkedPrintJobId"] is Guid value ? value : (Guid?)null;
     var canProcessImport = ViewData["CanProcessImport"] is true;
     var processImportHint = ViewData["ProcessImportHint"] as string;
+    var returnTo = ViewData["ReturnTo"] as string;
 }
 
 <h1>@Model.FileName</h1>
@@ -104,6 +105,10 @@
     {
         <form asp-action="Process" asp-route-id="@Model.Id" method="post" class="m-0">
             @Html.AntiForgeryToken()
+            @if (!string.IsNullOrWhiteSpace(returnTo))
+            {
+                <input type="hidden" name="returnTo" value="@returnTo" />
+            }
             <button type="submit" class="btn btn-primary">
                 @(normalizedStatus == PrintImportStatus.Error ? "Tentar processar novamente" : "Processar arquivo")
             </button>
@@ -119,6 +124,17 @@
         <a asp-action="CreatePrintJob" asp-route-id="@Model.Id" class="btn btn-success">Gerar produção</a>
     }
 
-    <a asp-action="Index" class="btn btn-outline-secondary">Voltar</a>
+    @if (returnTo == "errorQueue")
+    {
+        <a asp-action="Index" asp-route-status="error" class="btn btn-outline-secondary">Voltar para falhas</a>
+    }
+    else if (returnTo == "pendingQueue")
+    {
+        <a asp-action="Index" asp-route-productionState="pending" class="btn btn-outline-secondary">Voltar para pendentes</a>
+    }
+    else
+    {
+        <a asp-action="Index" class="btn btn-outline-secondary">Voltar</a>
+    }
     <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">Remover</a>
 </div>
