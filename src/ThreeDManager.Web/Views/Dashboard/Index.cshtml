@@ -1,4 +1,5 @@
 @model ThreeDManager.Web.ViewModels.DashboardViewModel
+@using ThreeDManager.Web.Presentation
 
 @{
     ViewData["Title"] = "Dashboard";
@@ -417,26 +418,9 @@
                                 }
                             </td>
                             <td>
-                                @if (job.Status == "Completed")
-                                {
-                                    <span class="badge bg-success">Concluída</span>
-                                }
-                                else if (job.Status == "Failed")
-                                {
-                                    <span class="badge bg-danger">Falhou</span>
-                                }
-                                else if (job.Status == "Planned")
-                                {
-                                    <span class="badge bg-primary">Planejada</span>
-                                }
-                                else if (job.Status == "Imported")
-                                {
-                                    <span class="badge bg-secondary">Importada</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-secondary">@job.Status</span>
-                                }
+                                <span class="badge @PrintJobStatusPresentation.GetBadgeClass(job.Status)">
+                                    @PrintJobStatusPresentation.GetDisplayLabel(job.Status)
+                                </span>
                             </td>
                             <td class="text-end">
                                 <a asp-controller="PrintJobs" asp-action="Details" asp-route-id="@job.Id" class="btn btn-sm btn-outline-secondary">

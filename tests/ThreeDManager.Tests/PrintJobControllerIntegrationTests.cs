@@ -1754,6 +1754,58 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains(">Cancelada</option>", editHtml);
     }
 
+    [Fact]
+    public async Task Dashboard_ShowsLocalizedStatusLabels_InRecentPrintJobsTable()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        var completedPrintJobId = Guid.NewGuid();
+        var canceledPrintJobId = Guid.NewGuid();
+
+        await factory.SeedAsync(async context =>
+        {
+            context.PrintJobs.AddRange(
+                new PrintJob
+                {
+                    Id = completedPrintJobId,
+                    ProductId = ids.ProductId,
+                    PrinterId = ids.PrinterId,
+                    MaterialId = ids.MaterialId,
+                    SourceFileName = "dashboard-completed.gcode",
+                    Status = PrintJobStatus.Completed,
+                    CreatedAt = DateTime.UtcNow.AddMinutes(10)
+                },
+                new PrintJob
+                {
+                    Id = canceledPrintJobId,
+                    ProductId = ids.ProductId,
+                    PrinterId = ids.PrinterId,
+                    MaterialId = ids.MaterialId,
+                    SourceFileName = "dashboard-canceled.gcode",
+                    Status = PrintJobStatus.Canceled,
+                    CreatedAt = DateTime.UtcNow.AddMinutes(9)
+                });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var dashboardResponse = await client.GetAsync("/Dashboard");
+        var dashboardHtml = WebUtility.HtmlDecode(await dashboardResponse.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, dashboardResponse.StatusCode);
+        Assert.Contains("dashboard-completed.gcode", dashboardHtml);
+        Assert.Contains("dashboard-canceled.gcode", dashboardHtml);
+        Assert.Contains("badge bg-success", dashboardHtml);
+        Assert.Contains("badge bg-dark", dashboardHtml);
+        Assert.Contains("Concluída", dashboardHtml);
+        Assert.Contains("Cancelada", dashboardHtml);
+        Assert.DoesNotContain(">Completed<", dashboardHtml);
+        Assert.DoesNotContain(">Canceled<", dashboardHtml);
+    }
+
     private static async Task<(Guid MaterialId, Guid ProductId, Guid PrinterId)> SeedCommonAsync(
         ThreeDManagerWebFactory factory,
         decimal stockGrams = 1000m)
