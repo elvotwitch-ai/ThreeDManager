@@ -940,6 +940,89 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task DeletePrintJob_PreservesPendingQueueContext_OnGetCancelAndSuccessfulPost()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        var pendingImportId = Guid.NewGuid();
+        var printJobId = Guid.NewGuid();
+
+        await factory.SeedAsync(async context =>
+        {
+            context.PrintImports.Add(new PrintImport
+            {
+                Id = pendingImportId,
+                FileName = "pending-delete-context.gcode",
+                FileType = "gcode",
+                ParsedDataJson = """
+                {"filamentUsedGrams":12.45,"filamentUsedMeters":1.23,"estimatedTimeMinutes":60,"reportedCost":2.5,"materialType":"PLA","warnings":[]}
+                """,
+                Status = PrintImportStatus.Parsed,
+                ImportedAt = DateTime.UtcNow
+            });
+
+            context.PrintJobs.Add(new PrintJob
+            {
+                Id = printJobId,
+                ProductId = ids.ProductId,
+                PrinterId = ids.PrinterId,
+                MaterialId = ids.MaterialId,
+                PrintImportId = pendingImportId,
+                SourceFileName = "pending-delete-context.gcode",
+                FilamentUsedGrams = 12.45m,
+                FilamentUsedMeters = 1.23m,
+                EstimatedTimeMinutes = 60,
+                ReportedCost = 2.50m,
+                Status = PrintJobStatus.Planned,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var detailsResponse = await client.GetAsync($"/PrintJobs/Details/{printJobId}?returnTo=pendingQueue");
+        var detailsHtml = WebUtility.HtmlDecode(await detailsResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        Assert.Contains($"/PrintJobs/Delete/{printJobId}?returnTo=pendingQueue", detailsHtml);
+
+        var deleteResponse = await client.GetAsync($"/PrintJobs/Delete/{printJobId}?returnTo=pendingQueue");
+        var deleteHtml = WebUtility.HtmlDecode(await deleteResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
+        Assert.Contains("name=\"returnTo\" value=\"pendingQueue\"", deleteHtml);
+        Assert.Contains($"/PrintJobs/Details/{printJobId}?returnTo=pendingQueue", deleteHtml);
+
+        var token = ExtractAntiForgeryToken(deleteHtml);
+        var postResponse = await client.PostAsync(
+            $"/PrintJobs/Delete/{printJobId}",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = token,
+                ["Id"] = printJobId.ToString(),
+                ["returnTo"] = "pendingQueue"
+            }));
+
+        Assert.Equal(HttpStatusCode.Redirect, postResponse.StatusCode);
+        Assert.Equal($"/PrintImports/Details/{pendingImportId}?returnTo=pendingQueue", postResponse.Headers.Location?.ToString());
+
+        var importDetailsResponse = await client.GetAsync($"/PrintImports/Details/{pendingImportId}?returnTo=pendingQueue");
+        var importDetailsHtml = WebUtility.HtmlDecode(await importDetailsResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, importDetailsResponse.StatusCode);
+        Assert.Contains("Voltar para pendentes", importDetailsHtml);
+        Assert.Contains($"/PrintImports/CreatePrintJob/{pendingImportId}?returnTo=pendingQueue", importDetailsHtml);
+
+        using var verifyScope = factory.Services.CreateScope();
+        var context = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var deletedPrintJob = await context.PrintJobs.SingleOrDefaultAsync(printJob => printJob.Id == printJobId);
+        var import = await context.PrintImports.SingleAsync(printImport => printImport.Id == pendingImportId);
+
+        Assert.Null(deletedPrintJob);
+        Assert.Equal(PrintImportStatus.Parsed, import.Status);
+    }
+
+    [Fact]
     public async Task PrintImportsIndex_ShowsProductionState_ForPendingAndLinkedParsedImports()
     {
         using var factory = new ThreeDManagerWebFactory();

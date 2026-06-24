@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Remover produção";
+    var returnTo = ViewData["ReturnTo"] as string;
 }
 
 <h1>Remover produção</h1>
@@ -44,9 +45,13 @@
     @Html.AntiForgeryToken()
 
     <input type="hidden" asp-for="Id" />
+    @if (!string.IsNullOrWhiteSpace(returnTo))
+    {
+        <input type="hidden" name="returnTo" value="@returnTo" />
+    }
 
     <div class="d-flex gap-2">
         <button type="submit" class="btn btn-danger">Confirmar remoção</button>
-        <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+        <a asp-action="Details" asp-route-id="@Model.Id" asp-route-returnTo="@returnTo" class="btn btn-outline-secondary">Cancelar</a>
     </div>
 </form>

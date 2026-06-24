@@ -176,7 +176,7 @@ public class PrintJobsController : Controller
             });
     }
 
-    public async Task<IActionResult> Delete(Guid? id)
+    public async Task<IActionResult> Delete(Guid? id, string? returnTo)
     {
         if (id is null)
         {
@@ -197,13 +197,14 @@ public class PrintJobsController : Controller
                 .Select(product => product.Name)
                 .FirstOrDefaultAsync()
             : null;
+        ViewData["ReturnTo"] = NormalizeReturnTo(returnTo);
 
         return View(printJob);
     }
 
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(Guid id)
+    public async Task<IActionResult> DeleteConfirmed(Guid id, string? returnTo)
     {
         var printJob = await _context.PrintJobs.FindAsync(id);
 
@@ -218,6 +219,19 @@ public class PrintJobsController : Controller
         await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = "Produção removida com sucesso.";
+
+        var normalizedReturnTo = NormalizeReturnTo(returnTo);
+        if (printJob.PrintImportId.HasValue && normalizedReturnTo is not null)
+        {
+            return RedirectToAction(
+                "Details",
+                "PrintImports",
+                new
+                {
+                    id = printJob.PrintImportId.Value,
+                    returnTo = normalizedReturnTo
+                });
+        }
 
         return RedirectToAction(nameof(Index));
     }
