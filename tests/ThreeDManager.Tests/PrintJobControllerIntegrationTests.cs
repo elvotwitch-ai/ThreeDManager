@@ -1935,8 +1935,10 @@ public class PrintJobControllerIntegrationTests
         var indexResponse = await client.GetAsync("/PrintJobs");
         var indexHtml = WebUtility.HtmlDecode(await indexResponse.Content.ReadAsStringAsync());
         Assert.Equal(HttpStatusCode.OK, indexResponse.StatusCode);
+        Assert.Contains("<th>Status da produção</th>", indexHtml);
         Assert.Contains("Concluída", indexHtml);
         Assert.Contains("Cancelada", indexHtml);
+        Assert.DoesNotContain("<th>Status</th>", indexHtml);
         Assert.DoesNotContain(">Completed<", indexHtml);
         Assert.DoesNotContain(">Canceled<", indexHtml);
 
@@ -2005,14 +2007,17 @@ public class PrintJobControllerIntegrationTests
 
         var dashboardResponse = await client.GetAsync("/Dashboard");
         var dashboardHtml = WebUtility.HtmlDecode(await dashboardResponse.Content.ReadAsStringAsync());
+        var recentPrintJobsSection = dashboardHtml[dashboardHtml.IndexOf("Últimas produções", StringComparison.Ordinal)..];
 
         Assert.Equal(HttpStatusCode.OK, dashboardResponse.StatusCode);
         Assert.Contains("dashboard-completed.gcode", dashboardHtml);
         Assert.Contains("dashboard-canceled.gcode", dashboardHtml);
         Assert.Contains("badge bg-success", dashboardHtml);
         Assert.Contains("badge bg-dark", dashboardHtml);
+        Assert.Contains("<th>Status da produção</th>", recentPrintJobsSection);
         Assert.Contains("Concluída", dashboardHtml);
         Assert.Contains("Cancelada", dashboardHtml);
+        Assert.DoesNotContain("<th>Status</th>", recentPrintJobsSection);
         Assert.DoesNotContain(">Completed<", dashboardHtml);
         Assert.DoesNotContain(">Canceled<", dashboardHtml);
     }
