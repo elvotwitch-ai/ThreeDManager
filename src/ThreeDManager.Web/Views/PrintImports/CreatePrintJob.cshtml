@@ -91,13 +91,7 @@
 
         <div class="col-md-4 mb-3">
             <label asp-for="Status" class="form-label">Status</label>
-            <select asp-for="Status" class="form-select">
-                <option value="Imported">Importada</option>
-                <option value="Planned">Planejada</option>
-                <option value="Completed">Concluída</option>
-                <option value="Failed">Falhou</option>
-                <option value="Canceled">Cancelada</option>
-            </select>
+            <select asp-for="Status" asp-items="Model.StatusOptions" class="form-select"></select>
         </div>
     </div>
 

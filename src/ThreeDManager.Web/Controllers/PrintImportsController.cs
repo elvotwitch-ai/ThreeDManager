@@ -7,6 +7,7 @@ using System.Text.Json;
 using ThreeDManager.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using ThreeDManager.Application.DTOs;
+using ThreeDManager.Web.Presentation;
 using ThreeDManager.Web.ViewModels;
 
 namespace ThreeDManager.Web.Controllers;
@@ -521,6 +522,12 @@ public class PrintImportsController : Controller
         {
             Value = material.Id.ToString(),
             Text = $"{material.Name} - {material.Type} {material.Color}".Trim()
+        });
+
+        viewModel.StatusOptions = PrintJobStatus.All.Select(status => new SelectListItem
+        {
+            Value = status,
+            Text = PrintJobStatusPresentation.GetDisplayLabel(status)
         });
 
         if (viewModel.MaterialId is null && !string.IsNullOrWhiteSpace(parsedMaterialType))

@@ -39,4 +39,6 @@ public class PrintJobFromImportViewModel
     public IEnumerable<SelectListItem> PrinterOptions { get; set; } = Enumerable.Empty<SelectListItem>();
 
     public IEnumerable<SelectListItem> MaterialOptions { get; set; } = Enumerable.Empty<SelectListItem>();
+
+    public IEnumerable<SelectListItem> StatusOptions { get; set; } = Enumerable.Empty<SelectListItem>();
 }

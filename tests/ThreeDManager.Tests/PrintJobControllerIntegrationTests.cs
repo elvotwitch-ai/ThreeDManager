@@ -1806,6 +1806,48 @@ public class PrintJobControllerIntegrationTests
         Assert.DoesNotContain(">Canceled<", dashboardHtml);
     }
 
+    [Fact]
+    public async Task CreatePrintJob_View_UsesLocalizedStatusOptions()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        await SeedCommonAsync(factory);
+
+        var importId = Guid.NewGuid();
+        await factory.SeedAsync(async context =>
+        {
+            context.PrintImports.Add(new PrintImport
+            {
+                Id = importId,
+                FileName = "status-options.gcode",
+                FileType = "gcode",
+                ParsedDataJson = """
+                {"filamentUsedGrams":12.45,"filamentUsedMeters":1.23,"estimatedTimeMinutes":60,"reportedCost":2.5,"materialType":"PLA","warnings":[]}
+                """,
+                Status = PrintImportStatus.Parsed,
+                ImportedAt = DateTime.UtcNow
+            });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var response = await client.GetAsync($"/PrintImports/CreatePrintJob/{importId}");
+        var html = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains(">Importada</option>", html);
+        Assert.Contains(">Planejada</option>", html);
+        Assert.Contains(">Concluída</option>", html);
+        Assert.Contains(">Falhou</option>", html);
+        Assert.Contains(">Cancelada</option>", html);
+        Assert.DoesNotContain(">Imported<", html);
+        Assert.DoesNotContain(">Planned<", html);
+        Assert.DoesNotContain(">Completed<", html);
+        Assert.DoesNotContain(">Failed<", html);
+        Assert.DoesNotContain(">Canceled<", html);
+    }
+
     private static async Task<(Guid MaterialId, Guid ProductId, Guid PrinterId)> SeedCommonAsync(
         ThreeDManagerWebFactory factory,
         decimal stockGrams = 1000m)
