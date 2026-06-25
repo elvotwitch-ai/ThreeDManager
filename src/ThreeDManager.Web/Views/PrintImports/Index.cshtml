@@ -1,9 +1,11 @@
 @using ThreeDManager.Domain.Entities
+@using ThreeDManager.Web.Presentation
 @model IEnumerable<ThreeDManager.Domain.Entities.PrintImport>
 
 @{
     ViewData["Title"] = "Importações";
     var linkedPrintJobIdsByImportId = ViewData["LinkedPrintJobIdsByImportId"] as IReadOnlyDictionary<Guid, Guid> ?? new Dictionary<Guid, Guid>();
+    var linkedPrintJobStatusesByImportId = ViewData["LinkedPrintJobStatusesByImportId"] as IReadOnlyDictionary<Guid, string?> ?? new Dictionary<Guid, string?>();
     var processAvailabilityByImportId = ViewData["ProcessAvailabilityByImportId"] as IReadOnlyDictionary<Guid, (bool CanProcess, string? Message)>
         ?? new Dictionary<Guid, (bool CanProcess, string? Message)>();
     var productionStateFilter = ViewData["ProductionStateFilter"] as string;
@@ -88,6 +90,9 @@ else
             {
                 var normalizedStatus = PrintImportStatus.Normalize(import.Status);
                 var hasLinkedProduction = linkedPrintJobIdsByImportId.TryGetValue(import.Id, out var linkedPrintJobId);
+                var linkedPrintJobStatus = linkedPrintJobStatusesByImportId.TryGetValue(import.Id, out var currentLinkedPrintJobStatus)
+                    ? currentLinkedPrintJobStatus
+                    : null;
                 var processAvailability = processAvailabilityByImportId.TryGetValue(import.Id, out var currentProcessAvailability)
                     ? currentProcessAvailability
                     : (false, null);
@@ -127,7 +132,12 @@ else
                     <td>
                         @if (hasLinkedProduction)
                         {
-                            <span class="badge bg-success">Vinculada</span>
+                            <div class="d-flex flex-wrap gap-1">
+                                <span class="badge bg-success">Vinculada</span>
+                                <span class="badge @PrintJobStatusPresentation.GetBadgeClass(linkedPrintJobStatus)">
+                                    @PrintJobStatusPresentation.GetDisplayLabel(linkedPrintJobStatus)
+                                </span>
+                            </div>
                         }
                         else if (canGenerateProduction)
                         {

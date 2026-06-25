@@ -32,18 +32,24 @@ public class PrintImportsController : Controller
 
     public async Task<IActionResult> Index(string? productionState, string? status)
     {
-        var linkedPrintJobIdsByImportId = await _context.PrintJobs
+        var linkedPrintJobsByImportId = await _context.PrintJobs
             .Where(printJob => printJob.PrintImportId != null)
             .GroupBy(printJob => printJob.PrintImportId!.Value)
             .Select(group => new
             {
                 PrintImportId = group.Key,
-                PrintJobId = group
+                PrintJob = group
                     .OrderByDescending(printJob => printJob.CreatedAt)
-                    .Select(printJob => printJob.Id)
+                    .Select(printJob => new
+                    {
+                        printJob.Id,
+                        printJob.Status
+                    })
                     .First()
             })
-            .ToDictionaryAsync(link => link.PrintImportId, link => link.PrintJobId);
+            .ToDictionaryAsync(
+                link => link.PrintImportId,
+                link => (link.PrintJob.Id, link.PrintJob.Status));
 
         var allImports = await _context.PrintImports
             .OrderByDescending(printImport => printImport.ImportedAt)
@@ -55,7 +61,7 @@ public class PrintImportsController : Controller
 
         var pendingImports = allImports
             .Where(printImport => CanGeneratePrintJob(printImport)
-                && !linkedPrintJobIdsByImportId.ContainsKey(printImport.Id))
+                && !linkedPrintJobsByImportId.ContainsKey(printImport.Id))
             .ToList();
 
         var failedImports = allImports
@@ -71,7 +77,12 @@ public class PrintImportsController : Controller
                 ? failedImports
                 : allImports;
 
-        ViewData["LinkedPrintJobIdsByImportId"] = linkedPrintJobIdsByImportId;
+        ViewData["LinkedPrintJobIdsByImportId"] = linkedPrintJobsByImportId.ToDictionary(
+            link => link.Key,
+            link => link.Value.Id);
+        ViewData["LinkedPrintJobStatusesByImportId"] = linkedPrintJobsByImportId.ToDictionary(
+            link => link.Key,
+            link => link.Value.Status);
         ViewData["ProcessAvailabilityByImportId"] = processAvailabilityByImportId;
         ViewData["ProductionStateFilter"] = isPendingProductionFilter ? "pending" : null;
         ViewData["PendingProductionImportCount"] = pendingImports.Count;
@@ -96,7 +107,9 @@ public class PrintImportsController : Controller
             return NotFound();
         }
 
-        ViewData["LinkedPrintJobId"] = await FindLinkedPrintJobIdAsync(printImport.Id);
+        var linkedPrintJob = await FindLinkedPrintJobAsync(printImport.Id);
+        ViewData["LinkedPrintJobId"] = linkedPrintJob?.Id;
+        ViewData["LinkedPrintJobStatus"] = linkedPrintJob?.Status;
         var processAvailability = GetProcessAvailability(printImport);
         ViewData["CanProcessImport"] = processAvailability.CanProcess;
         ViewData["ProcessImportHint"] = processAvailability.Message;
@@ -243,7 +256,7 @@ public class PrintImportsController : Controller
             return RedirectToAction(nameof(Details), new { id, returnTo = NormalizeReturnTo(returnTo) });
         }
 
-        var linkedPrintJobId = await FindLinkedPrintJobIdAsync(id);
+        var linkedPrintJobId = (await FindLinkedPrintJobAsync(id))?.Id;
 
         if (linkedPrintJobId is not null)
         {
@@ -446,12 +459,20 @@ public class PrintImportsController : Controller
         return (true, null);
     }
 
-    private async Task<Guid?> FindLinkedPrintJobIdAsync(Guid importId)
+    private async Task<(Guid Id, string? Status)?> FindLinkedPrintJobAsync(Guid importId)
     {
-        return await _context.PrintJobs
+        var linkedPrintJob = await _context.PrintJobs
             .Where(printJob => printJob.PrintImportId == importId)
-            .Select(printJob => (Guid?)printJob.Id)
+            .Select(printJob => new
+            {
+                printJob.Id,
+                printJob.Status
+            })
             .FirstOrDefaultAsync();
+
+        return linkedPrintJob is null
+            ? null
+            : (linkedPrintJob.Id, linkedPrintJob.Status);
     }
 
     private IActionResult RedirectAfterProcess(Guid id, string? returnTo)

@@ -407,7 +407,7 @@ public class PrintJobControllerIntegrationTests
                 PrintImportId = importId,
                 SourceFileName = "already-linked.gcode",
                 FilamentUsedGrams = 12.45m,
-                Status = PrintJobStatus.Imported,
+                Status = PrintJobStatus.Completed,
                 CreatedAt = DateTime.UtcNow
             });
 
@@ -420,12 +420,66 @@ public class PrintJobControllerIntegrationTests
 
         Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
         Assert.Contains("Ver produção vinculada", detailsHtml);
+        Assert.Contains("Produção vinculada", detailsHtml);
+        Assert.Contains("Concluída", detailsHtml);
+        Assert.DoesNotContain(">Completed<", detailsHtml);
         Assert.Contains($"/PrintJobs/Details/{printJobId}", detailsHtml);
         Assert.DoesNotContain("Gerar produção", detailsHtml);
 
         var createResponse = await client.GetAsync($"/PrintImports/CreatePrintJob/{importId}");
         Assert.Equal(HttpStatusCode.Redirect, createResponse.StatusCode);
         Assert.Equal($"/PrintJobs/Details/{printJobId}", createResponse.Headers.Location?.ToString());
+    }
+
+    [Fact]
+    public async Task PrintImportsIndex_ShowsLocalizedLinkedProductionStatus()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        var linkedImportId = Guid.NewGuid();
+        var linkedPrintJobId = Guid.NewGuid();
+
+        await factory.SeedAsync(async context =>
+        {
+            context.PrintImports.Add(new PrintImport
+            {
+                Id = linkedImportId,
+                FileName = "linked-status.gcode",
+                FileType = "gcode",
+                ParsedDataJson = """
+                {"filamentUsedGrams":12.45,"filamentUsedMeters":1.23,"estimatedTimeMinutes":60,"reportedCost":2.5,"materialType":"PLA","warnings":[]}
+                """,
+                Status = PrintImportStatus.Parsed,
+                ImportedAt = DateTime.UtcNow
+            });
+
+            context.PrintJobs.Add(new PrintJob
+            {
+                Id = linkedPrintJobId,
+                ProductId = ids.ProductId,
+                PrinterId = ids.PrinterId,
+                MaterialId = ids.MaterialId,
+                PrintImportId = linkedImportId,
+                SourceFileName = "linked-status.gcode",
+                Status = PrintJobStatus.Canceled,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var response = await client.GetAsync("/PrintImports");
+        var html = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("linked-status.gcode", html);
+        Assert.Contains("Vinculada", html);
+        Assert.Contains("Cancelada", html);
+        Assert.DoesNotContain(">Canceled<", html);
+        Assert.Contains($"/PrintJobs/Details/{linkedPrintJobId}", html);
     }
 
     [Fact]
