@@ -2017,8 +2017,12 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("<th>Tempo estimado</th>", recentPrintJobsSection);
         Assert.Contains("<th>Custos da produção</th>", recentPrintJobsSection);
         Assert.Contains("<th>Status da produção</th>", recentPrintJobsSection);
+        Assert.Contains("Custo informado:", recentPrintJobsSection);
+        Assert.Contains("Custo calculado do material: não disponível", recentPrintJobsSection);
         Assert.DoesNotContain("<th>Tempo</th>", recentPrintJobsSection);
         Assert.DoesNotContain("<th>Custo</th>", recentPrintJobsSection);
+        Assert.DoesNotContain("Arquivo:", recentPrintJobsSection);
+        Assert.DoesNotContain("Material:", recentPrintJobsSection);
         Assert.Contains("Concluída", dashboardHtml);
         Assert.Contains("Cancelada", dashboardHtml);
         Assert.DoesNotContain("<th>Status</th>", recentPrintJobsSection);

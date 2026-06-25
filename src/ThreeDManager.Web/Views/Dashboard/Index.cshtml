@@ -401,20 +401,20 @@
                             <td>
                                 @if (job.ReportedCost.HasValue)
                                 {
-                                    <div>Arquivo: @job.ReportedCost.Value.ToString("C")</div>
+                                    <div>Custo informado: @job.ReportedCost.Value.ToString("C")</div>
                                 }
                                 else
                                 {
-                                    <div class="text-muted">Arquivo: não informado</div>
+                                    <div class="text-muted">Custo informado: não disponível</div>
                                 }
 
                                 @if (job.CalculatedMaterialCost.HasValue)
                                 {
-                                    <div class="text-muted small">Material: @job.CalculatedMaterialCost.Value.ToString("C")</div>
+                                    <div class="text-muted small">Custo calculado do material: @job.CalculatedMaterialCost.Value.ToString("C")</div>
                                 }
                                 else
                                 {
-                                    <div class="text-muted small">Material: não calculado</div>
+                                    <div class="text-muted small">Custo calculado do material: não disponível</div>
                                 }
                             </td>
                             <td>

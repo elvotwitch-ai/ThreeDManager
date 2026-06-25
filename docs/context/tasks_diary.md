@@ -373,3 +373,10 @@
 - Validation run: focused `dotnet test tests\ThreeDManager.Tests\ThreeDManager.Tests.csproj --filter Dashboard_ShowsLocalizedStatusLabels_InRecentPrintJobsTable` passed with 1 test; `dotnet build ThreeDManager.slnx` passed with transient `MSB3026` retry warnings caused by `testhost` holding copied test assemblies; `dotnet test ThreeDManager.slnx --no-build` passed with 37 tests; live `ASPNETCORE_ENVIRONMENT=Testing` smoke on `http://127.0.0.1:5472/Dashboard` returned HTTP 200.
 - Blockers: none.
 - Next recommended task: inspect the next smallest production-facing copy gap on the dashboard or `PrintJobs`, such as renaming the recent-productions `Arquivo`/`Material` cost labels if a more explicit operator wording is warranted.
+
+- Summary: Clarified the dashboard recent-productions cost breakdown so the operator view now says `Custo informado` and `Custo calculado do material` instead of the terse `Arquivo` and `Material` prefixes.
+- Timestamp: 2026-06-25 19:05:27 -03:00
+- Files changed: `src/ThreeDManager.Web/Views/Dashboard/Index.cshtml`, `tests/ThreeDManager.Tests/PrintJobControllerIntegrationTests.cs`, `docs/context/tasks_diary.md`
+- Validation run: focused `dotnet test tests\ThreeDManager.Tests\ThreeDManager.Tests.csproj --filter Dashboard_ShowsLocalizedStatusLabels_InRecentPrintJobsTable` passed with 1 test; `dotnet build ThreeDManager.slnx` passed with transient `MSB3026` retry warnings caused by `testhost` holding copied test assemblies; `dotnet test ThreeDManager.slnx --no-build` passed with 37 tests; `git diff --check` reported line-ending warnings only; isolated `ASPNETCORE_ENVIRONMENT=Testing` smoke on `http://127.0.0.1:5488/Dashboard` returned HTTP 200 and rendered the dashboard recent-productions section.
+- Blockers: none.
+- Next recommended task: inspect the next smallest dashboard or `PrintJobs` production-copy gap, such as clarifying the recent-productions `Filamento` label if a more explicit operator wording is still needed.
