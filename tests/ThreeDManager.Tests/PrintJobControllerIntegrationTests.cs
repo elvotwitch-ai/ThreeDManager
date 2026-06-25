@@ -2041,6 +2041,7 @@ public class PrintJobControllerIntegrationTests
         var html = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("Status da produção", html);
         Assert.Contains(">Importada</option>", html);
         Assert.Contains(">Planejada</option>", html);
         Assert.Contains(">Concluída</option>", html);
