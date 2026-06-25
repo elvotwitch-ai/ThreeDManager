@@ -1,3 +1,4 @@
+@using ThreeDManager.Web.Presentation
 @model ThreeDManager.Domain.Entities.PrintImport
 
 @{
@@ -20,7 +21,11 @@
             <dd class="col-sm-9">@Model.FileType</dd>
 
             <dt class="col-sm-3">Status</dt>
-            <dd class="col-sm-9">@Model.Status</dd>
+            <dd class="col-sm-9">
+                <span class="badge @PrintImportStatusPresentation.GetBadgeClass(Model.Status)">
+                    @PrintImportStatusPresentation.GetDisplayLabel(Model.Status)
+                </span>
+            </dd>
 
             <dt class="col-sm-3">Importado em</dt>
             <dd class="col-sm-9">@Model.ImportedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>

@@ -259,7 +259,7 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
-    public async Task PrintImportsViews_ShowLocalizedImportStatusLabels_InIndexAndDetails()
+    public async Task PrintImportsViews_ShowLocalizedImportStatusLabels_InIndexDetailsAndDelete()
     {
         using var factory = new ThreeDManagerWebFactory();
 
@@ -323,6 +323,13 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("badge bg-success", detailsHtml);
         Assert.Contains("Processado", detailsHtml);
         Assert.DoesNotContain(">Parsed<", detailsHtml);
+
+        var deleteResponse = await client.GetAsync($"/PrintImports/Delete/{errorImportId}");
+        var deleteHtml = WebUtility.HtmlDecode(await deleteResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
+        Assert.Contains("badge bg-danger", deleteHtml);
+        Assert.Contains("Erro", deleteHtml);
+        Assert.DoesNotContain(">Error<", deleteHtml);
     }
 
     [Fact]
