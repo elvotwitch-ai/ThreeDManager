@@ -259,6 +259,73 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task PrintImportsViews_ShowLocalizedImportStatusLabels_InIndexAndDetails()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+
+        var uploadedImportId = Guid.NewGuid();
+        var parsedImportId = Guid.NewGuid();
+        var errorImportId = Guid.NewGuid();
+
+        await factory.SeedAsync(async context =>
+        {
+            context.PrintImports.AddRange(
+                new PrintImport
+                {
+                    Id = uploadedImportId,
+                    FileName = "uploaded.gcode",
+                    FileType = "gcode",
+                    RawContent = "; uploaded only",
+                    Status = PrintImportStatus.Uploaded,
+                    ImportedAt = DateTime.UtcNow
+                },
+                new PrintImport
+                {
+                    Id = parsedImportId,
+                    FileName = "parsed.gcode",
+                    FileType = "gcode",
+                    RawContent = "; parsed",
+                    ParsedDataJson = """
+                    {"filamentUsedGrams":12.45,"filamentUsedMeters":1.23,"estimatedTimeMinutes":60,"reportedCost":2.5,"materialType":"PLA","warnings":[]}
+                    """,
+                    Status = PrintImportStatus.Parsed,
+                    ImportedAt = DateTime.UtcNow.AddMinutes(-1)
+                },
+                new PrintImport
+                {
+                    Id = errorImportId,
+                    FileName = "error.gcode",
+                    FileType = "gcode",
+                    RawContent = string.Empty,
+                    Status = PrintImportStatus.Error,
+                    ErrorMessage = "Falha de teste",
+                    ImportedAt = DateTime.UtcNow.AddMinutes(-2)
+                });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var indexResponse = await client.GetAsync("/PrintImports");
+        var indexHtml = WebUtility.HtmlDecode(await indexResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, indexResponse.StatusCode);
+        Assert.Contains("Importado", indexHtml);
+        Assert.Contains("Processado", indexHtml);
+        Assert.Contains("Erro", indexHtml);
+        Assert.DoesNotContain(">Uploaded<", indexHtml);
+        Assert.DoesNotContain(">Parsed<", indexHtml);
+        Assert.DoesNotContain(">Error<", indexHtml);
+
+        var detailsResponse = await client.GetAsync($"/PrintImports/Details/{parsedImportId}");
+        var detailsHtml = WebUtility.HtmlDecode(await detailsResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        Assert.Contains("badge bg-success", detailsHtml);
+        Assert.Contains("Processado", detailsHtml);
+        Assert.DoesNotContain(">Parsed<", detailsHtml);
+    }
+
+    [Fact]
     public async Task CreatePrintJob_FromImport_RejectsErrorImport_EvenWithParsedData()
     {
         using var factory = new ThreeDManagerWebFactory();

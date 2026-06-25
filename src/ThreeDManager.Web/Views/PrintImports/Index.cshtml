@@ -104,17 +104,11 @@ else
                     <td>@import.FileName</td>
                     <td>@import.FileType</td>
                     <td>
-                        @if (normalizedStatus == PrintImportStatus.Uploaded)
+                        @if (normalizedStatus == PrintImportStatus.Error)
                         {
-                            <span class="badge bg-primary">Importado</span>
-                        }
-                        else if (normalizedStatus == PrintImportStatus.Parsed)
-                        {
-                            <span class="badge bg-success">Processado</span>
-                        }
-                        else if (normalizedStatus == PrintImportStatus.Error)
-                        {
-                            <span class="badge bg-danger">Erro</span>
+                            <span class="badge @PrintImportStatusPresentation.GetBadgeClass(import.Status)">
+                                @PrintImportStatusPresentation.GetDisplayLabel(import.Status)
+                            </span>
                             if (!string.IsNullOrWhiteSpace(processAvailability.Message))
                             {
                                 <div class="small text-muted mt-1">
@@ -126,7 +120,9 @@ else
                         }
                         else
                         {
-                            <span class="badge bg-secondary">@import.Status</span>
+                            <span class="badge @PrintImportStatusPresentation.GetBadgeClass(import.Status)">
+                                @PrintImportStatusPresentation.GetDisplayLabel(import.Status)
+                            </span>
                         }
                     </td>
                     <td>
