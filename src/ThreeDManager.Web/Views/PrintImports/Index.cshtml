@@ -182,7 +182,10 @@ else
                                 </form>
                             }
 
-                            <a asp-action="Delete" asp-route-id="@import.Id" class="btn btn-sm btn-outline-danger">Remover</a>
+                            <a asp-action="Delete"
+                               asp-route-id="@import.Id"
+                               asp-route-returnTo="@detailsReturnTo"
+                               class="btn btn-sm btn-outline-danger">Remover</a>
                         </div>
                     </td>
                 </tr>

@@ -564,7 +564,7 @@ public class PrintImportsController : Controller
         }
     }
 
-    public async Task<IActionResult> Delete(Guid? id)
+    public async Task<IActionResult> Delete(Guid? id, string? returnTo)
     {
         if (id is null)
         {
@@ -579,12 +579,13 @@ public class PrintImportsController : Controller
             return NotFound();
         }
 
+        ViewData["ReturnTo"] = NormalizeReturnTo(returnTo);
         return View(printImport);
     }
 
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(Guid id)
+    public async Task<IActionResult> DeleteConfirmed(Guid id, string? returnTo)
     {
         var printImport = await _context.PrintImports.FindAsync(id);
 
@@ -599,13 +600,30 @@ public class PrintImportsController : Controller
         if (hasPrintJobs)
         {
             TempData["ErrorMessage"] = "Esta importação não pode ser removida porque possui produções vinculadas.";
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Details), new { id, returnTo = NormalizeReturnTo(returnTo) });
         }
 
         _context.PrintImports.Remove(printImport);
         await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = "Importação removida com sucesso.";
+        return RedirectAfterDelete(returnTo);
+    }
+
+    private IActionResult RedirectAfterDelete(string? returnTo)
+    {
+        var normalizedReturnTo = NormalizeReturnTo(returnTo);
+
+        if (normalizedReturnTo == "errorQueue")
+        {
+            return RedirectToAction(nameof(Index), new { status = "error" });
+        }
+
+        if (normalizedReturnTo == "pendingQueue")
+        {
+            return RedirectToAction(nameof(Index), new { productionState = "pending" });
+        }
+
         return RedirectToAction(nameof(Index));
     }
 }

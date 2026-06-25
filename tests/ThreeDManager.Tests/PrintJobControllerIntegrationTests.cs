@@ -791,6 +791,83 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task DeletePrintImport_PreservesFailedQueueContext_OnGetCancelAndSuccessfulPost()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+
+        var failedImportId = Guid.NewGuid();
+        var otherFailedImportId = Guid.NewGuid();
+
+        await factory.SeedAsync(async context =>
+        {
+            context.PrintImports.AddRange(
+                new PrintImport
+                {
+                    Id = failedImportId,
+                    FileName = "failed-delete-context.gcode",
+                    FileType = "gcode",
+                    RawContent = string.Empty,
+                    Status = PrintImportStatus.Error,
+                    ErrorMessage = "Falha para exclusão",
+                    ImportedAt = DateTime.UtcNow
+                },
+                new PrintImport
+                {
+                    Id = otherFailedImportId,
+                    FileName = "failed-still-listed.gcode",
+                    FileType = "gcode",
+                    RawContent = string.Empty,
+                    Status = PrintImportStatus.Error,
+                    ErrorMessage = "Outra falha",
+                    ImportedAt = DateTime.UtcNow.AddMinutes(-1)
+                });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var failedQueueResponse = await client.GetAsync("/PrintImports?status=error");
+        var failedQueueHtml = WebUtility.HtmlDecode(await failedQueueResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, failedQueueResponse.StatusCode);
+        Assert.Contains($"/PrintImports/Delete/{failedImportId}?returnTo=errorQueue", failedQueueHtml);
+
+        var deleteResponse = await client.GetAsync($"/PrintImports/Delete/{failedImportId}?returnTo=errorQueue");
+        var deleteHtml = WebUtility.HtmlDecode(await deleteResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
+        Assert.Contains("name=\"returnTo\" value=\"errorQueue\"", deleteHtml);
+        Assert.Contains($"/PrintImports/Details/{failedImportId}?returnTo=errorQueue", deleteHtml);
+
+        var token = ExtractAntiForgeryToken(deleteHtml);
+        var postResponse = await client.PostAsync(
+            $"/PrintImports/Delete/{failedImportId}",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = token,
+                ["Id"] = failedImportId.ToString(),
+                ["returnTo"] = "errorQueue"
+            }));
+
+        Assert.Equal(HttpStatusCode.Redirect, postResponse.StatusCode);
+        Assert.Equal("/PrintImports?status=error", postResponse.Headers.Location?.ToString());
+
+        var refreshedQueueResponse = await client.GetAsync("/PrintImports?status=error");
+        var refreshedQueueHtml = WebUtility.HtmlDecode(await refreshedQueueResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, refreshedQueueResponse.StatusCode);
+        Assert.DoesNotContain("failed-delete-context.gcode", refreshedQueueHtml);
+        Assert.Contains("failed-still-listed.gcode", refreshedQueueHtml);
+        Assert.Contains("Importação removida com sucesso.", refreshedQueueHtml);
+
+        using var verifyScope = factory.Services.CreateScope();
+        var context = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var deletedImport = await context.PrintImports.SingleOrDefaultAsync(printImport => printImport.Id == failedImportId);
+        var remainingImport = await context.PrintImports.SingleOrDefaultAsync(printImport => printImport.Id == otherFailedImportId);
+
+        Assert.Null(deletedImport);
+        Assert.NotNull(remainingImport);
+    }
+
+    [Fact]
     public async Task PrintImportDetails_PreservesFilteredQueueForBackAndRetryActions()
     {
         using var factory = new ThreeDManagerWebFactory();
