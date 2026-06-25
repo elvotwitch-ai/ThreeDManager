@@ -1943,13 +1943,17 @@ public class PrintJobControllerIntegrationTests
         var detailsResponse = await client.GetAsync($"/PrintJobs/Details/{completedPrintJobId}");
         var detailsHtml = WebUtility.HtmlDecode(await detailsResponse.Content.ReadAsStringAsync());
         Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        Assert.Contains("Status da produção", detailsHtml);
         Assert.Contains("Concluída", detailsHtml);
+        Assert.DoesNotContain(">Status</dt>", detailsHtml);
         Assert.DoesNotContain(">Completed<", detailsHtml);
 
         var deleteResponse = await client.GetAsync($"/PrintJobs/Delete/{canceledPrintJobId}");
         var deleteHtml = WebUtility.HtmlDecode(await deleteResponse.Content.ReadAsStringAsync());
         Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
+        Assert.Contains("Status da produção", deleteHtml);
         Assert.Contains("Cancelada", deleteHtml);
+        Assert.DoesNotContain(">Status</dt>", deleteHtml);
         Assert.DoesNotContain(">Canceled<", deleteHtml);
 
         var editResponse = await client.GetAsync($"/PrintJobs/Edit/{completedPrintJobId}");
