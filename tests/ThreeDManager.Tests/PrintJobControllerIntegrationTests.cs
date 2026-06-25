@@ -1955,8 +1955,10 @@ public class PrintJobControllerIntegrationTests
         var editResponse = await client.GetAsync($"/PrintJobs/Edit/{completedPrintJobId}");
         var editHtml = WebUtility.HtmlDecode(await editResponse.Content.ReadAsStringAsync());
         Assert.Equal(HttpStatusCode.OK, editResponse.StatusCode);
+        Assert.Contains("Status da produção", editHtml);
         Assert.Contains(">Concluída</option>", editHtml);
         Assert.Contains(">Cancelada</option>", editHtml);
+        Assert.DoesNotContain(">Status</label>", editHtml);
     }
 
     [Fact]
