@@ -2014,7 +2014,11 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("dashboard-canceled.gcode", dashboardHtml);
         Assert.Contains("badge bg-success", dashboardHtml);
         Assert.Contains("badge bg-dark", dashboardHtml);
+        Assert.Contains("<th>Tempo estimado</th>", recentPrintJobsSection);
+        Assert.Contains("<th>Custos da produção</th>", recentPrintJobsSection);
         Assert.Contains("<th>Status da produção</th>", recentPrintJobsSection);
+        Assert.DoesNotContain("<th>Tempo</th>", recentPrintJobsSection);
+        Assert.DoesNotContain("<th>Custo</th>", recentPrintJobsSection);
         Assert.Contains("Concluída", dashboardHtml);
         Assert.Contains("Cancelada", dashboardHtml);
         Assert.DoesNotContain("<th>Status</th>", recentPrintJobsSection);

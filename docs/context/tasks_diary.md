@@ -366,3 +366,10 @@
 - Validation run: focused `dotnet test tests\ThreeDManager.Tests\ThreeDManager.Tests.csproj --filter "PrintJobsViews_ShowLocalizedStatusLabels_InIndexDetailsDeleteAndEdit|Dashboard_ShowsLocalizedStatusLabels_InRecentPrintJobsTable"` passed with 2 tests; `dotnet build ThreeDManager.slnx` passed with 0 warnings and 0 errors; `dotnet test ThreeDManager.slnx --no-build` passed with 37 tests; `git diff --check` reported line-ending warnings only; live `ASPNETCORE_ENVIRONMENT=Testing` smoke on `http://127.0.0.1:5460` confirmed `/PrintJobs` and `/Dashboard` loaded, while the exact table-header text remained verified by the focused integration tests because the live Testing host had no seeded production rows.
 - Blockers: none.
 - Next recommended task: inspect the next smallest production-facing copy gap outside status labels, such as clarifying the dashboard recent-productions `Tempo`/`Custo` headings or another single operator-facing wording inconsistency.
+
+- Summary: Clarified the dashboard recent-productions table headers so the operator view now says `Tempo estimado` and `Custos da produção` instead of the generic `Tempo` and `Custo`.
+- Timestamp: 2026-06-25 17:02:50 -03:00
+- Files changed: `src/ThreeDManager.Web/Views/Dashboard/Index.cshtml`, `tests/ThreeDManager.Tests/PrintJobControllerIntegrationTests.cs`, `docs/context/tasks_diary.md`
+- Validation run: focused `dotnet test tests\ThreeDManager.Tests\ThreeDManager.Tests.csproj --filter Dashboard_ShowsLocalizedStatusLabels_InRecentPrintJobsTable` passed with 1 test; `dotnet build ThreeDManager.slnx` passed with transient `MSB3026` retry warnings caused by `testhost` holding copied test assemblies; `dotnet test ThreeDManager.slnx --no-build` passed with 37 tests; live `ASPNETCORE_ENVIRONMENT=Testing` smoke on `http://127.0.0.1:5472/Dashboard` returned HTTP 200.
+- Blockers: none.
+- Next recommended task: inspect the next smallest production-facing copy gap on the dashboard or `PrintJobs`, such as renaming the recent-productions `Arquivo`/`Material` cost labels if a more explicit operator wording is warranted.
