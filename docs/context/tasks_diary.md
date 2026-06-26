@@ -380,3 +380,10 @@
 - Validation run: focused `dotnet test tests\ThreeDManager.Tests\ThreeDManager.Tests.csproj --filter Dashboard_ShowsLocalizedStatusLabels_InRecentPrintJobsTable` passed with 1 test; `dotnet build ThreeDManager.slnx` passed with transient `MSB3026` retry warnings caused by `testhost` holding copied test assemblies; `dotnet test ThreeDManager.slnx --no-build` passed with 37 tests; `git diff --check` reported line-ending warnings only; isolated `ASPNETCORE_ENVIRONMENT=Testing` smoke on `http://127.0.0.1:5488/Dashboard` returned HTTP 200 and rendered the dashboard recent-productions section.
 - Blockers: none.
 - Next recommended task: inspect the next smallest dashboard or `PrintJobs` production-copy gap, such as clarifying the recent-productions `Filamento` label if a more explicit operator wording is still needed.
+
+- Summary: Clarified the dashboard recent-productions filament column so it now says `Filamento usado`, matching the production forms and details page wording already used elsewhere in the flow.
+- Timestamp: 2026-06-25 21:01:42 -03:00
+- Files changed: `src/ThreeDManager.Web/Views/Dashboard/Index.cshtml`, `tests/ThreeDManager.Tests/PrintJobControllerIntegrationTests.cs`, `docs/context/tasks_diary.md`
+- Validation run: focused `dotnet test tests\ThreeDManager.Tests\ThreeDManager.Tests.csproj --filter Dashboard_ShowsLocalizedStatusLabels_InRecentPrintJobsTable` passed with 1 test; an initial validation attempt was blocked by local `ThreeDManager.Web` file locks on `bin\Debug`, so the session-local web hosts were stopped and `dotnet build ThreeDManager.slnx` then passed with 0 warnings and 0 errors; `dotnet test ThreeDManager.slnx --no-build` passed with 37 tests; `git diff --check` reported line-ending warnings only; isolated `ASPNETCORE_ENVIRONMENT=Testing` smoke on `http://127.0.0.1:5504/Dashboard` returned HTTP 200 and rendered both `Últimas produções` and `Filamento usado`.
+- Blockers: none.
+- Next recommended task: inspect the next smallest production-facing wording gap, such as whether `src/ThreeDManager.Web/Views/PrintJobs/Index.cshtml` should spell out `Custo mat.` in a separate tiny batch.
