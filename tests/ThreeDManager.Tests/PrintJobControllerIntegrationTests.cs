@@ -1935,9 +1935,11 @@ public class PrintJobControllerIntegrationTests
         var indexResponse = await client.GetAsync("/PrintJobs");
         var indexHtml = WebUtility.HtmlDecode(await indexResponse.Content.ReadAsStringAsync());
         Assert.Equal(HttpStatusCode.OK, indexResponse.StatusCode);
+        Assert.Contains("<th>Custo calculado do material</th>", indexHtml);
         Assert.Contains("<th>Status da produção</th>", indexHtml);
         Assert.Contains("Concluída", indexHtml);
         Assert.Contains("Cancelada", indexHtml);
+        Assert.DoesNotContain("<th>Custo mat.</th>", indexHtml);
         Assert.DoesNotContain("<th>Status</th>", indexHtml);
         Assert.DoesNotContain(">Completed<", indexHtml);
         Assert.DoesNotContain(">Canceled<", indexHtml);
