@@ -20,14 +20,19 @@ public class PrintJobFromImportViewModel
     [Required(ErrorMessage = "Selecione um material.")]
     public Guid? MaterialId { get; set; }
 
+    [Range(0, double.MaxValue, ErrorMessage = "O filamento usado (g) não pode ser negativo.")]
     public decimal? FilamentUsedGrams { get; set; }
 
+    [Range(0, double.MaxValue, ErrorMessage = "O filamento usado (m) não pode ser negativo.")]
     public decimal? FilamentUsedMeters { get; set; }
 
+    [Range(0, int.MaxValue, ErrorMessage = "O tempo estimado não pode ser negativo.")]
     public int? EstimatedTimeMinutes { get; set; }
 
+    [Range(0, int.MaxValue, ErrorMessage = "O tempo real não pode ser negativo.")]
     public int? ActualTimeMinutes { get; set; }
 
+    [Range(0, double.MaxValue, ErrorMessage = "O custo informado não pode ser negativo.")]
     public decimal? ReportedCost { get; set; }
 
     public string Status { get; set; } = "Imported";
