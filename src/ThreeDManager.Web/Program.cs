@@ -22,7 +22,9 @@ if (builder.Environment.IsEnvironment("Testing"))
 else
 {
     builder.Services.AddDbContext<AppDbContext>(options =>
-        options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+        options.UseNpgsql(
+            builder.Configuration.GetConnectionString("Default"),
+            npgsql => npgsql.EnableRetryOnFailure()));
 }
 
 builder.Services.AddScoped<IPrintFileParser, GCodePrintFileParser>();
