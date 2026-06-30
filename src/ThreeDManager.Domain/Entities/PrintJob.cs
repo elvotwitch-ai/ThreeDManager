@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace ThreeDManager.Domain.Entities;
 
 public class PrintJob
@@ -8,10 +10,20 @@ public class PrintJob
     public Guid? MaterialId {get; set; }
     public Guid? PrintImportId {get; set; }
     public string? SourceFileName {get; set; }
+
+    [Range(0, double.MaxValue, ErrorMessage = "O filamento usado (g) não pode ser negativo.")]
     public decimal? FilamentUsedGrams {get; set; }
+
+    [Range(0, double.MaxValue, ErrorMessage = "O filamento usado (m) não pode ser negativo.")]
     public decimal? FilamentUsedMeters {get; set; }
+
+    [Range(0, int.MaxValue, ErrorMessage = "O tempo estimado não pode ser negativo.")]
     public int? EstimatedTimeMinutes {get; set; }
+
+    [Range(0, int.MaxValue, ErrorMessage = "O tempo real não pode ser negativo.")]
     public int? ActualTimeMinutes {get; set; }
+
+    [Range(0, double.MaxValue, ErrorMessage = "O custo informado não pode ser negativo.")]
     public decimal? ReportedCost {get; set; }
     public decimal? CalculatedMaterialCost {get; set; }
     public DateTime? StockDeductedAt {get; set; }

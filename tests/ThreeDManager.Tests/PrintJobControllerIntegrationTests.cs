@@ -2008,6 +2008,69 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task EditPrintJob_RejectsNegativeFilamentGrams_WithoutPersistingChange()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        var printJobId = Guid.NewGuid();
+        await factory.SeedAsync(async context =>
+        {
+            context.PrintJobs.Add(new PrintJob
+            {
+                Id = printJobId,
+                ProductId = ids.ProductId,
+                PrinterId = ids.PrinterId,
+                MaterialId = ids.MaterialId,
+                SourceFileName = "legacy.gcode",
+                FilamentUsedGrams = 12.45m,
+                FilamentUsedMeters = 1.23m,
+                ReportedCost = 2.50m,
+                Status = "Imported",
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+        var getResponse = await client.GetAsync($"/PrintJobs/Edit/{printJobId}");
+        Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+
+        var token = ExtractAntiForgeryToken(await getResponse.Content.ReadAsStringAsync());
+        var postResponse = await client.PostAsync(
+            $"/PrintJobs/Edit/{printJobId}",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = token,
+                ["Id"] = printJobId.ToString(),
+                ["ProductId"] = ids.ProductId.ToString(),
+                ["PrinterId"] = ids.PrinterId.ToString(),
+                ["MaterialId"] = ids.MaterialId.ToString(),
+                ["PrintImportId"] = "",
+                ["SourceFileName"] = "legacy.gcode",
+                ["CreatedAt"] = "2026-06-19T02:00:00Z",
+                ["FilamentUsedGrams"] = "-5.00",
+                ["FilamentUsedMeters"] = "1.23",
+                ["EstimatedTimeMinutes"] = "60",
+                ["ActualTimeMinutes"] = "",
+                ["ReportedCost"] = "2.50",
+                ["Status"] = "Imported"
+            }));
+
+        var responseHtml = WebUtility.HtmlDecode(await postResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, postResponse.StatusCode);
+        Assert.Contains("O filamento usado (g) não pode ser negativo.", responseHtml);
+
+        using var verifyScope = factory.Services.CreateScope();
+        var context = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var printJob = await context.PrintJobs.SingleAsync(printJob => printJob.Id == printJobId);
+
+        Assert.Equal(12.45m, printJob.FilamentUsedGrams);
+        Assert.Equal(2.50m, printJob.ReportedCost);
+    }
+
+    [Fact]
     public async Task PrintJobsViews_ShowLocalizedStatusLabels_InIndexDetailsDeleteAndEdit()
     {
         using var factory = new ThreeDManagerWebFactory();
