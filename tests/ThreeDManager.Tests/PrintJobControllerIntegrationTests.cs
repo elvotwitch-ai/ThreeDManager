@@ -1749,6 +1749,42 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task PrinterEdit_RejectsMissingName_WithoutPersistingChange()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+        using var client = factory.CreateTestClient();
+
+        var editPage = await client.GetAsync($"/Printers/Edit/{ids.PrinterId}");
+        Assert.Equal(HttpStatusCode.OK, editPage.StatusCode);
+
+        var token = ExtractAntiForgeryToken(await editPage.Content.ReadAsStringAsync());
+        var postResponse = await client.PostAsync(
+            $"/Printers/Edit/{ids.PrinterId}",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = token,
+                ["Id"] = ids.PrinterId.ToString(),
+                ["Name"] = "",
+                ["Brand"] = "Alterada",
+                ["Model"] = "Model B",
+                ["Notes"] = "Sem nome",
+                ["CreatedAt"] = "2026-06-30T02:00:00Z"
+            }));
+
+        var responseHtml = WebUtility.HtmlDecode(await postResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, postResponse.StatusCode);
+        Assert.Contains("Informe o nome da impressora.", responseHtml);
+
+        using var verifyScope = factory.Services.CreateScope();
+        var context = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var printer = await context.Printers.SingleAsync(printer => printer.Id == ids.PrinterId);
+
+        Assert.Equal("Printer A", printer.Name);
+        Assert.Equal("E2E", printer.Brand);
+    }
+
+    [Fact]
     public async Task MaterialsIndex_ShowsLatestStockMovementSummary_AfterManualAdjustment()
     {
         using var factory = new ThreeDManagerWebFactory();
