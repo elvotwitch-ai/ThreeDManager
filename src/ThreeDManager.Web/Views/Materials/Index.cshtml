@@ -46,6 +46,7 @@ else
                 <th>Marca</th>
                 <th>Cor</th>
                 <th>Custo por kg (R$)</th>
+                <th>Custo por grama</th>
                 <th>Estoque atual</th>
                 <th>Estoque mínimo</th>
                 <th>Status estoque</th>
@@ -74,6 +75,16 @@ else
                         @if (material.CostPerKg.HasValue)
                         {
                             <span>@material.CostPerKg.Value.ToString("C")</span>
+                        }
+                        else
+                        {
+                            <span class="badge text-bg-light">Não informado</span>
+                        }
+                    </td>
+                    <td>
+                        @if (material.CostPerKg.HasValue)
+                        {
+                            <span>@((material.CostPerKg.Value / 1000m).ToString("C4"))</span>
                         }
                         else
                         {

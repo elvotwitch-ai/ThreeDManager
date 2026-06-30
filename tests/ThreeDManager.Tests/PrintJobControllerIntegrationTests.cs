@@ -1821,6 +1821,21 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task MaterialsIndex_ShowsDerivedCostPerGram_FromCostPerKg()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        await SeedCommonAsync(factory);
+        using var client = factory.CreateTestClient();
+
+        var indexResponse = await client.GetAsync("/Materials");
+        var indexHtml = WebUtility.HtmlDecode(await indexResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, indexResponse.StatusCode);
+        Assert.Contains("Custo por grama", indexHtml);
+        // Seeded material has CostPerKg = 80, so cost per gram = 80 / 1000 = R$ 0,0800.
+        Assert.Contains("R$ 0,0800", indexHtml);
+    }
+
+    [Fact]
     public async Task LowStockAlert_IsShown_OnMaterialsAndDashboard_WhenBelowMinimum()
     {
         using var factory = new ThreeDManagerWebFactory();
