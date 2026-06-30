@@ -1712,6 +1712,43 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task ProductEdit_RejectsNegativeSalePrice_WithoutPersistingChange()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+        using var client = factory.CreateTestClient();
+
+        var editPage = await client.GetAsync($"/Products/Edit/{ids.ProductId}");
+        Assert.Equal(HttpStatusCode.OK, editPage.StatusCode);
+
+        var token = ExtractAntiForgeryToken(await editPage.Content.ReadAsStringAsync());
+        var postResponse = await client.PostAsync(
+            $"/Products/Edit/{ids.ProductId}",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = token,
+                ["Id"] = ids.ProductId.ToString(),
+                ["Name"] = "Product A",
+                ["Sku"] = "E2E-PROD",
+                ["Category"] = "Brindes",
+                ["Description"] = "Produto de teste",
+                ["SalePrice"] = "-10.00",
+                ["IsActive"] = "true",
+                ["CreatedAt"] = "2026-06-30T02:00:00Z"
+            }));
+
+        var responseHtml = WebUtility.HtmlDecode(await postResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, postResponse.StatusCode);
+        Assert.Contains("O preço de venda não pode ser negativo.", responseHtml);
+
+        using var verifyScope = factory.Services.CreateScope();
+        var context = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var product = await context.Products.SingleAsync(product => product.Id == ids.ProductId);
+
+        Assert.Null(product.SalePrice);
+    }
+
+    [Fact]
     public async Task MaterialsIndex_ShowsLatestStockMovementSummary_AfterManualAdjustment()
     {
         using var factory = new ThreeDManagerWebFactory();
