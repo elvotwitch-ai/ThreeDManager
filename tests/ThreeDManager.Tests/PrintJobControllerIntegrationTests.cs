@@ -1574,6 +1574,8 @@ public class PrintJobControllerIntegrationTests
         Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
         Assert.Contains("Ajuste manual", detailsHtml);
         Assert.Contains("900,00 g", detailsHtml);
+        Assert.Contains("Custo por grama", detailsHtml);
+        Assert.Contains((80m / 1000m).ToString("C4"), detailsHtml);
 
         using var verifyScope = factory.Services.CreateScope();
         var context = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();

@@ -41,6 +41,18 @@
                 }
             </dd>
 
+            <dt class="col-sm-3">Custo por grama</dt>
+            <dd class="col-sm-9">
+                @if (Model.CostPerKg.HasValue)
+                {
+                    <span>@((Model.CostPerKg.Value / 1000m).ToString("C4"))</span>
+                }
+                else
+                {
+                    <span class="text-muted">Não informado</span>
+                }
+            </dd>
+
             <dt class="col-sm-3">Estoque atual</dt>
             <dd class="col-sm-9">
                 @if (Model.CurrentStockGrams.HasValue)
