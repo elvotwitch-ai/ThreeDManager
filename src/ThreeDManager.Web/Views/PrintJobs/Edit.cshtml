@@ -41,9 +41,29 @@
 
     <div class="mb-3">
         <label asp-for="MaterialId" class="form-label">Material</label>
-        <select asp-for="MaterialId" asp-items="ViewBag.MaterialOptions" class="form-select">
+        <select asp-for="MaterialId" class="form-select" id="materialSelect">
             <option value="">Selecione um material</option>
+            @{
+                var materialOptions = ViewBag.MaterialOptions as Microsoft.AspNetCore.Mvc.Rendering.SelectList;
+                var materialCostPerGramById = ViewBag.MaterialCostPerGramById as IDictionary<string, decimal?>;
+            }
+            @if (materialOptions is not null)
+            {
+                foreach (var option in materialOptions)
+                {
+                    decimal? costPerGram = null;
+                    if (materialCostPerGramById is not null && materialCostPerGramById.TryGetValue(option.Value, out var cost))
+                    {
+                        costPerGram = cost;
+                    }
+                    var costAttribute = costPerGram.HasValue
+                        ? costPerGram.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                        : string.Empty;
+                    <option value="@option.Value" data-cost-per-gram="@costAttribute">@option.Text</option>
+                }
+            }
         </select>
+        <div class="form-text" id="materialCostPerGramHint">Custo por grama do material: <span>Não informado</span></div>
     </div>
 
     <hr />
@@ -51,7 +71,8 @@
     <div class="row">
         <div class="col-md-4 mb-3">
             <label asp-for="FilamentUsedGrams" class="form-label">Filamento usado (g)</label>
-            <input asp-for="FilamentUsedGrams" class="form-control" type="number" step="0.01" />
+            <input asp-for="FilamentUsedGrams" class="form-control" type="number" step="0.01" id="filamentUsedGrams" />
+            <div class="form-text" id="estimatedMaterialCostHint">Custo estimado do material: <span>Não informado</span></div>
         </div>
 
         <div class="col-md-4 mb-3">
@@ -95,4 +116,49 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        (function () {
+            var materialSelect = document.getElementById("materialSelect");
+            var filamentUsedGrams = document.getElementById("filamentUsedGrams");
+            var costPerGramHint = document.getElementById("materialCostPerGramHint");
+            var estimatedCostHint = document.getElementById("estimatedMaterialCostHint");
+
+            if (!materialSelect || !filamentUsedGrams || !costPerGramHint || !estimatedCostHint) {
+                return;
+            }
+
+            var costPerGramValue = costPerGramHint.querySelector("span");
+            var estimatedCostValue = estimatedCostHint.querySelector("span");
+
+            function updateCostHints() {
+                var selectedOption = materialSelect.options[materialSelect.selectedIndex];
+                var raw = selectedOption ? selectedOption.getAttribute("data-cost-per-gram") : "";
+                var costPerGram = raw ? parseFloat(raw) : NaN;
+                var grams = filamentUsedGrams.value ? parseFloat(filamentUsedGrams.value) : NaN;
+
+                if (isNaN(costPerGram)) {
+                    costPerGramValue.textContent = "Não informado";
+                    estimatedCostValue.textContent = "Não informado";
+                    return;
+                }
+
+                costPerGramValue.textContent = "R$ " + costPerGram.toLocaleString("pt-BR", {
+                    minimumFractionDigits: 4,
+                    maximumFractionDigits: 4
+                });
+
+                estimatedCostValue.textContent = isNaN(grams)
+                    ? "Não informado"
+                    : "R$ " + (grams * costPerGram).toLocaleString("pt-BR", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+            }
+
+            materialSelect.addEventListener("change", updateCostHints);
+            filamentUsedGrams.addEventListener("input", updateCostHints);
+            updateCostHints();
+        })();
+    </script>
 }

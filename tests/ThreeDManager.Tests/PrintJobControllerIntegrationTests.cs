@@ -2295,6 +2295,43 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task EditPrintJob_ShowsDerivedMaterialCostPerGram_FromMaterialCostPerKg()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        var printJobId = Guid.NewGuid();
+
+        await factory.SeedAsync(async context =>
+        {
+            context.PrintJobs.Add(new PrintJob
+            {
+                Id = printJobId,
+                ProductId = ids.ProductId,
+                PrinterId = ids.PrinterId,
+                MaterialId = ids.MaterialId,
+                SourceFileName = "edit-cost-per-gram.gcode",
+                Status = PrintJobStatus.Planned,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var editResponse = await client.GetAsync($"/PrintJobs/Edit/{printJobId}");
+        var editHtml = WebUtility.HtmlDecode(await editResponse.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, editResponse.StatusCode);
+        Assert.Contains("Custo por grama do material", editHtml);
+        Assert.Contains("Custo estimado do material", editHtml);
+        // Seeded material CostPerKg = 80 -> 80 / 1000 = 0.08 (invariant) in the option data attribute.
+        Assert.Contains("data-cost-per-gram=\"0.08\"", editHtml);
+        Assert.Contains("filamentUsedGrams.addEventListener(\"input\", updateCostHints)", editHtml);
+    }
+
+    [Fact]
     public async Task Dashboard_ShowsLocalizedStatusLabels_InRecentPrintJobsTable()
     {
         using var factory = new ThreeDManagerWebFactory();

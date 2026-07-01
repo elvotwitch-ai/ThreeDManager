@@ -262,6 +262,9 @@ public class PrintJobsController : Controller
         ViewBag.ProductOptions = new SelectList(products, "Id", "Name", printJob.ProductId);
         ViewBag.PrinterOptions = new SelectList(printers, "Id", "Name", printJob.PrinterId);
         ViewBag.MaterialOptions = new SelectList(materials, "Id", "Name", printJob.MaterialId);
+        ViewBag.MaterialCostPerGramById = materials.ToDictionary(
+            material => material.Id.ToString(),
+            material => material.CostPerKg.HasValue ? material.CostPerKg.Value / 1000m : (decimal?)null);
         ViewBag.StatusOptions = new SelectList(
             PrintJobStatus.All.Select(status => new
             {
