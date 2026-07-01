@@ -152,6 +152,23 @@
                 }
             </dd>
 
+            <dt class="col-sm-3">Custo total estimado da produção</dt>
+            <dd class="col-sm-9">
+                @if (Model.CalculatedMaterialCost.HasValue && estimatedMachineCost.HasValue)
+                {
+                    var materialCost = Model.CalculatedMaterialCost.Value;
+                    var machineCost = estimatedMachineCost.Value;
+                    <span>@((materialCost + machineCost).ToString("C"))</span>
+                    <small class="text-muted d-block">
+                        material @materialCost.ToString("C") + máquina @machineCost.ToString("C")
+                    </small>
+                }
+                else
+                {
+                    <span class="text-muted">Não disponível</span>
+                }
+            </dd>
+
             <dt class="col-sm-3">Diferença de custo</dt>
             <dd class="col-sm-9">
                 @if (Model.ReportedCost.HasValue && Model.CalculatedMaterialCost.HasValue)
