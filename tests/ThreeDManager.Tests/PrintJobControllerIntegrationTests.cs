@@ -2678,6 +2678,9 @@ public class PrintJobControllerIntegrationTests
             var printer = await context.Printers.FirstAsync(printer => printer.Id == ids.PrinterId);
             printer.CostPerHour = 5.00m;
 
+            var product = await context.Products.FirstAsync(product => product.Id == ids.ProductId);
+            product.SalePrice = 20.00m;
+
             context.PrintJobs.Add(new PrintJob
             {
                 Id = printJobId,
@@ -2705,6 +2708,10 @@ public class PrintJobControllerIntegrationTests
         // material R$ 1,00 + máquina (120/60 * R$ 5,00/h = R$ 10,00) + embalagem R$ 2,50 = R$ 13,50.
         Assert.Contains("R$ 13,50", indexHtml);
         Assert.Contains("+ embalagem R$ 2,50", indexHtml);
+        // margin = R$ 20,00 - R$ 13,50 = R$ 6,50.
+        Assert.Contains("Margem estimada", indexHtml);
+        Assert.Contains("R$ 6,50", indexHtml);
+        Assert.Contains("lucro estimado", indexHtml);
     }
 
     [Fact]

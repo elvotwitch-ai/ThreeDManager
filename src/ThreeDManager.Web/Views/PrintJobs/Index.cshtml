@@ -8,6 +8,7 @@
     var materials = ViewBag.Materials as Dictionary<Guid, string> ?? new Dictionary<Guid, string>();
     var printers = ViewBag.Printers as Dictionary<Guid, string> ?? new Dictionary<Guid, string>();
     var printerCostPerHour = ViewBag.PrinterCostPerHour as Dictionary<Guid, decimal?> ?? new Dictionary<Guid, decimal?>();
+    var productSalePriceById = ViewBag.ProductSalePriceById as Dictionary<Guid, decimal?> ?? new Dictionary<Guid, decimal?>();
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -45,6 +46,7 @@ else
                 <th>Custo de embalagem</th>
                 <th>Custo de máquina estimado</th>
                 <th>Custo total estimado da produção</th>
+                <th>Margem estimada</th>
                 <th>Diferença de custo</th>
                 <th>Status da produção</th>
                 <th class="text-end">Ações</th>
@@ -133,15 +135,44 @@ else
                         }
                     </td>
                     <td>
-                        @if (job.CalculatedMaterialCost.HasValue && estimatedMachineCost.HasValue)
+                        @{
+                            decimal? estimatedTotalProductionCost = (job.CalculatedMaterialCost.HasValue && estimatedMachineCost.HasValue)
+                                ? job.CalculatedMaterialCost.Value + estimatedMachineCost.Value + (job.PackagingCost ?? 0m)
+                                : (decimal?)null;
+                        }
+                        @if (estimatedTotalProductionCost.HasValue)
                         {
-                            var materialCost = job.CalculatedMaterialCost.Value;
-                            var machineCost = estimatedMachineCost.Value;
-                            var packagingCost = job.PackagingCost ?? 0m;
-                            <span>@((materialCost + machineCost + packagingCost).ToString("C"))</span>
+                            var materialCost = job.CalculatedMaterialCost!.Value;
+                            var machineCost = estimatedMachineCost!.Value;
+                            <span>@estimatedTotalProductionCost.Value.ToString("C")</span>
                             <small class="text-muted d-block">
                                 material @materialCost.ToString("C") + máquina @machineCost.ToString("C")@(job.PackagingCost.HasValue ? $" + embalagem {job.PackagingCost.Value.ToString("C")}" : string.Empty)
                             </small>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Não disponível</span>
+                        }
+                    </td>
+                    <td>
+                        @{
+                            decimal? productSalePrice = job.ProductId.HasValue && productSalePriceById.TryGetValue(job.ProductId.Value, out var salePriceValue)
+                                ? salePriceValue
+                                : null;
+                            decimal? estimatedMargin = (productSalePrice.HasValue && estimatedTotalProductionCost.HasValue)
+                                ? productSalePrice.Value - estimatedTotalProductionCost.Value
+                                : (decimal?)null;
+                        }
+                        @if (estimatedMargin.HasValue)
+                        {
+                            var marginClass = estimatedMargin.Value > 0 ? "text-success" : estimatedMargin.Value < 0 ? "text-danger" : "text-muted";
+                            var marginLabel = estimatedMargin.Value > 0 ? "lucro estimado" : estimatedMargin.Value < 0 ? "prejuízo estimado" : "sem margem";
+                            <span class="@marginClass fw-semibold">@estimatedMargin.Value.ToString("C")</span>
+                            <small class="text-muted d-block">@marginLabel</small>
+                        }
+                        else if (!productSalePrice.HasValue)
+                        {
+                            <span class="text-muted">Sem preço de venda</span>
                         }
                         else
                         {

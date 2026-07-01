@@ -30,6 +30,9 @@ public class PrintJobsController : Controller
         ViewBag.Products = await _context.Products
             .ToDictionaryAsync(product => product.Id, product => product.Name);
 
+        ViewBag.ProductSalePriceById = await _context.Products
+            .ToDictionaryAsync(product => product.Id, product => product.SalePrice);
+
         ViewBag.Materials = await _context.Materials
             .ToDictionaryAsync(material => material.Id, material => material.Name);
 
