@@ -2178,8 +2178,10 @@ public class PrintJobControllerIntegrationTests
 
         Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
         Assert.Contains("Custo por grama do material", html);
+        Assert.Contains("Custo estimado do material", html);
         // Seeded material CostPerKg = 80 -> 80 / 1000 = 0.08 (invariant) in the option data attribute.
         Assert.Contains("data-cost-per-gram=\"0.08\"", html);
+        Assert.Contains("filamentUsedGrams.addEventListener(\"input\", updateCostHints)", html);
     }
 
     [Fact]
