@@ -125,6 +125,10 @@
         </div>
     </div>
 
+    <div class="alert alert-light border" id="estimatedTotalProductionCostHint">
+        Custo total estimado da produção: <strong>Não informado</strong>
+    </div>
+
     <div class="alert alert-light border">
         Arquivo origem: <strong>@Model.SourceFileName</strong>
     </div>
@@ -233,6 +237,53 @@
             estimatedTimeMinutes.addEventListener("input", updateMachineCostHints);
             actualTimeMinutes.addEventListener("input", updateMachineCostHints);
             updateMachineCostHints();
+        })();
+
+        (function () {
+            var materialSelect = document.getElementById("materialSelect");
+            var printerSelect = document.getElementById("printerSelect");
+            var filamentUsedGrams = document.getElementById("filamentUsedGrams");
+            var estimatedTimeMinutes = document.getElementById("estimatedTimeMinutes");
+            var actualTimeMinutes = document.getElementById("actualTimeMinutes");
+            var totalCostHint = document.getElementById("estimatedTotalProductionCostHint");
+
+            if (!materialSelect || !printerSelect || !filamentUsedGrams || !estimatedTimeMinutes || !actualTimeMinutes || !totalCostHint) {
+                return;
+            }
+
+            var totalCostValue = totalCostHint.querySelector("strong");
+
+            function updateTotalProductionCostHint() {
+                var materialOption = materialSelect.options[materialSelect.selectedIndex];
+                var printerOption = printerSelect.options[printerSelect.selectedIndex];
+                var costPerGramRaw = materialOption ? materialOption.getAttribute("data-cost-per-gram") : "";
+                var costPerHourRaw = printerOption ? printerOption.getAttribute("data-cost-per-hour") : "";
+                var costPerGram = costPerGramRaw ? parseFloat(costPerGramRaw) : NaN;
+                var costPerHour = costPerHourRaw ? parseFloat(costPerHourRaw) : NaN;
+                var grams = filamentUsedGrams.value ? parseFloat(filamentUsedGrams.value) : NaN;
+                var actual = actualTimeMinutes.value ? parseFloat(actualTimeMinutes.value) : NaN;
+                var estimated = estimatedTimeMinutes.value ? parseFloat(estimatedTimeMinutes.value) : NaN;
+                var minutes = !isNaN(actual) ? actual : estimated;
+
+                if (isNaN(costPerGram) || isNaN(grams) || isNaN(costPerHour) || isNaN(minutes)) {
+                    totalCostValue.textContent = "Não informado";
+                    return;
+                }
+
+                var materialCost = grams * costPerGram;
+                var machineCost = (minutes / 60) * costPerHour;
+                totalCostValue.textContent = "R$ " + (materialCost + machineCost).toLocaleString("pt-BR", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            }
+
+            materialSelect.addEventListener("change", updateTotalProductionCostHint);
+            printerSelect.addEventListener("change", updateTotalProductionCostHint);
+            filamentUsedGrams.addEventListener("input", updateTotalProductionCostHint);
+            estimatedTimeMinutes.addEventListener("input", updateTotalProductionCostHint);
+            actualTimeMinutes.addEventListener("input", updateTotalProductionCostHint);
+            updateTotalProductionCostHint();
         })();
     </script>
 }
