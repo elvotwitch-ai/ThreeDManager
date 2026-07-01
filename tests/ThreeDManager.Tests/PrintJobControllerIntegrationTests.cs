@@ -2581,8 +2581,9 @@ public class PrintJobControllerIntegrationTests
 
         Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
         Assert.Contains("Margem estimada", detailsHtml);
-        // total cost R$ 13,50 (material R$ 1,00 + máquina R$ 10,00 + embalagem R$ 2,50); margin = R$ 20,00 - R$ 13,50 = R$ 6,50.
+        // total cost R$ 13,50 (material R$ 1,00 + máquina R$ 10,00 + embalagem R$ 2,50); margin = R$ 20,00 - R$ 13,50 = R$ 6,50 (32,5%).
         Assert.Contains("R$ 6,50", detailsHtml);
+        Assert.Contains("32,5%", detailsHtml);
         Assert.Contains("lucro estimado", detailsHtml);
     }
 
