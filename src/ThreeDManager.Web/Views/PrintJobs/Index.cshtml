@@ -43,6 +43,7 @@ else
                 <th>Tempo estimado</th>
                 <th>Custo calculado do material</th>
                 <th>Custo de máquina estimado</th>
+                <th>Custo total estimado da produção</th>
                 <th>Diferença de custo</th>
                 <th>Status da produção</th>
                 <th class="text-end">Ações</th>
@@ -113,6 +114,21 @@ else
                             <span>@estimatedMachineCost.Value.ToString("C")</span>
                             <small class="text-muted d-block">
                                 @(job.ActualTimeMinutes.HasValue ? "tempo real" : "tempo estimado"): @machineTimeMinutes min
+                            </small>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Não disponível</span>
+                        }
+                    </td>
+                    <td>
+                        @if (job.CalculatedMaterialCost.HasValue && estimatedMachineCost.HasValue)
+                        {
+                            var materialCost = job.CalculatedMaterialCost.Value;
+                            var machineCost = estimatedMachineCost.Value;
+                            <span>@((materialCost + machineCost).ToString("C"))</span>
+                            <small class="text-muted d-block">
+                                material @materialCost.ToString("C") + máquina @machineCost.ToString("C")
                             </small>
                         }
                         else
