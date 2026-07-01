@@ -34,9 +34,29 @@
 
     <div class="mb-3">
         <label asp-for="PrinterId" class="form-label">Impressora</label>
-        <select asp-for="PrinterId" asp-items="ViewBag.PrinterOptions" class="form-select">
+        <select asp-for="PrinterId" class="form-select" id="printerSelect">
             <option value="">Selecione uma impressora</option>
+            @{
+                var printerOptions = ViewBag.PrinterOptions as Microsoft.AspNetCore.Mvc.Rendering.SelectList;
+                var printerCostPerHourById = ViewBag.PrinterCostPerHourById as IDictionary<string, decimal?>;
+            }
+            @if (printerOptions is not null)
+            {
+                foreach (var option in printerOptions)
+                {
+                    decimal? costPerHour = null;
+                    if (printerCostPerHourById is not null && printerCostPerHourById.TryGetValue(option.Value, out var cost))
+                    {
+                        costPerHour = cost;
+                    }
+                    var costAttribute = costPerHour.HasValue
+                        ? costPerHour.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                        : string.Empty;
+                    <option value="@option.Value" data-cost-per-hour="@costAttribute">@option.Text</option>
+                }
+            }
         </select>
+        <div class="form-text" id="printerCostPerHourHint">Custo por hora da impressora: <span>Não informado</span></div>
     </div>
 
     <div class="mb-3">
@@ -89,12 +109,13 @@
     <div class="row">
         <div class="col-md-4 mb-3">
             <label asp-for="EstimatedTimeMinutes" class="form-label">Tempo estimado (min)</label>
-            <input asp-for="EstimatedTimeMinutes" class="form-control" type="number" />
+            <input asp-for="EstimatedTimeMinutes" class="form-control" type="number" id="estimatedTimeMinutes" />
+            <div class="form-text" id="estimatedMachineCostHint">Custo de máquina estimado: <span>Não informado</span></div>
         </div>
 
         <div class="col-md-4 mb-3">
             <label asp-for="ActualTimeMinutes" class="form-label">Tempo real (min)</label>
-            <input asp-for="ActualTimeMinutes" class="form-control" type="number" />
+            <input asp-for="ActualTimeMinutes" class="form-control" type="number" id="actualTimeMinutes" />
         </div>
 
         <div class="col-md-4 mb-3">
@@ -159,6 +180,59 @@
             materialSelect.addEventListener("change", updateCostHints);
             filamentUsedGrams.addEventListener("input", updateCostHints);
             updateCostHints();
+        })();
+
+        (function () {
+            var printerSelect = document.getElementById("printerSelect");
+            var estimatedTimeMinutes = document.getElementById("estimatedTimeMinutes");
+            var actualTimeMinutes = document.getElementById("actualTimeMinutes");
+            var costPerHourHint = document.getElementById("printerCostPerHourHint");
+            var machineCostHint = document.getElementById("estimatedMachineCostHint");
+
+            if (!printerSelect || !estimatedTimeMinutes || !actualTimeMinutes || !costPerHourHint || !machineCostHint) {
+                return;
+            }
+
+            var costPerHourValue = costPerHourHint.querySelector("span");
+            var machineCostValue = machineCostHint.querySelector("span");
+
+            function updateMachineCostHints() {
+                var selectedOption = printerSelect.options[printerSelect.selectedIndex];
+                var raw = selectedOption ? selectedOption.getAttribute("data-cost-per-hour") : "";
+                var costPerHour = raw ? parseFloat(raw) : NaN;
+
+                var actual = actualTimeMinutes.value ? parseFloat(actualTimeMinutes.value) : NaN;
+                var estimated = estimatedTimeMinutes.value ? parseFloat(estimatedTimeMinutes.value) : NaN;
+                var usingActual = !isNaN(actual);
+                var minutes = usingActual ? actual : estimated;
+
+                if (isNaN(costPerHour)) {
+                    costPerHourValue.textContent = "Não informado";
+                    machineCostValue.textContent = "Não informado";
+                    return;
+                }
+
+                costPerHourValue.textContent = "R$ " + costPerHour.toLocaleString("pt-BR", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+
+                if (isNaN(minutes)) {
+                    machineCostValue.textContent = "Não informado";
+                    return;
+                }
+
+                var note = usingActual ? " (tempo real)" : " (tempo estimado)";
+                machineCostValue.textContent = "R$ " + ((minutes / 60) * costPerHour).toLocaleString("pt-BR", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }) + note;
+            }
+
+            printerSelect.addEventListener("change", updateMachineCostHints);
+            estimatedTimeMinutes.addEventListener("input", updateMachineCostHints);
+            actualTimeMinutes.addEventListener("input", updateMachineCostHints);
+            updateMachineCostHints();
         })();
     </script>
 }

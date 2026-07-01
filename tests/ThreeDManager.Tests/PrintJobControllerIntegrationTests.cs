@@ -2533,6 +2533,47 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task EditPrintJob_ShowsDerivedMachineCost_FromPrinterCostPerHourAndTime()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        var printJobId = Guid.NewGuid();
+
+        await factory.SeedAsync(async context =>
+        {
+            var printer = await context.Printers.FirstAsync(printer => printer.Id == ids.PrinterId);
+            printer.CostPerHour = 5.00m;
+
+            context.PrintJobs.Add(new PrintJob
+            {
+                Id = printJobId,
+                ProductId = ids.ProductId,
+                PrinterId = ids.PrinterId,
+                MaterialId = ids.MaterialId,
+                SourceFileName = "edit-machine-cost.gcode",
+                EstimatedTimeMinutes = 120,
+                Status = PrintJobStatus.Planned,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var editResponse = await client.GetAsync($"/PrintJobs/Edit/{printJobId}");
+        var editHtml = WebUtility.HtmlDecode(await editResponse.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, editResponse.StatusCode);
+        Assert.Contains("Custo por hora da impressora", editHtml);
+        Assert.Contains("Custo de máquina estimado", editHtml);
+        // Seeded printer CostPerHour = 5.00 -> invariant string in the option data attribute.
+        Assert.Contains("data-cost-per-hour=\"5.00\"", editHtml);
+        Assert.Contains("actualTimeMinutes.addEventListener(\"input\", updateMachineCostHints)", editHtml);
+    }
+
+    [Fact]
     public async Task Dashboard_ShowsTotalCostDifference_FromReportedAndCalculatedCosts()
     {
         using var factory = new ThreeDManagerWebFactory();

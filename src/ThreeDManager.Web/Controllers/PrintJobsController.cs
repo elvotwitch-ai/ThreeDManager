@@ -273,6 +273,9 @@ public class PrintJobsController : Controller
         ViewBag.MaterialCostPerGramById = materials.ToDictionary(
             material => material.Id.ToString(),
             material => material.CostPerKg.HasValue ? material.CostPerKg.Value / 1000m : (decimal?)null);
+        ViewBag.PrinterCostPerHourById = printers.ToDictionary(
+            printer => printer.Id.ToString(),
+            printer => printer.CostPerHour);
         ViewBag.StatusOptions = new SelectList(
             PrintJobStatus.All.Select(status => new
             {
