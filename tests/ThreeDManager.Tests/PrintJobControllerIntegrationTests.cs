@@ -2289,11 +2289,20 @@ public class PrintJobControllerIntegrationTests
 
         var indexResponse = await client.GetAsync("/PrintJobs");
         var indexHtml = WebUtility.HtmlDecode(await indexResponse.Content.ReadAsStringAsync());
+        var detailsResponse = await client.GetAsync($"/PrintJobs/Details/{printJobId}");
+        var detailsHtml = WebUtility.HtmlDecode(await detailsResponse.Content.ReadAsStringAsync());
 
         Assert.Equal(HttpStatusCode.OK, indexResponse.StatusCode);
         Assert.Contains("Diferença de custo", indexHtml);
         // ReportedCost 3.45 - CalculatedMaterialCost 1.11 = 2.34 formatted as currency (C).
         Assert.Contains("2,34", indexHtml);
+        Assert.Contains("acima do calculado", indexHtml);
+        Assert.Contains("text-danger", indexHtml);
+
+        Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        Assert.Contains("2,34", detailsHtml);
+        Assert.Contains("acima do calculado", detailsHtml);
+        Assert.Contains("text-danger", detailsHtml);
     }
 
     [Fact]

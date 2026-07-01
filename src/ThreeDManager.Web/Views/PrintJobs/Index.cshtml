@@ -100,7 +100,11 @@ else
                         @if (job.ReportedCost.HasValue && job.CalculatedMaterialCost.HasValue)
                         {
                             var costDifference = job.ReportedCost.Value - job.CalculatedMaterialCost.Value;
-                            @costDifference.ToString("C")
+                            var differenceClass = costDifference > 0 ? "text-danger" : costDifference < 0 ? "text-warning" : "text-muted";
+                            var differenceLabel = costDifference > 0 ? "acima do calculado" : costDifference < 0 ? "abaixo do calculado" : "sem diferença";
+                            <span class="@differenceClass">
+                                @costDifference.ToString("C") — @differenceLabel
+                            </span>
                         }
                         else
                         {

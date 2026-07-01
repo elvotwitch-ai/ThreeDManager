@@ -125,7 +125,11 @@
                 @if (Model.ReportedCost.HasValue && Model.CalculatedMaterialCost.HasValue)
                 {
                     var difference = Model.ReportedCost.Value - Model.CalculatedMaterialCost.Value;
-                    @difference.ToString("C")
+                    var differenceClass = difference > 0 ? "text-danger" : difference < 0 ? "text-warning" : "text-muted";
+                    var differenceLabel = difference > 0 ? "acima do calculado" : difference < 0 ? "abaixo do calculado" : "sem diferença";
+                    <span class="@differenceClass">
+                        @difference.ToString("C") — @differenceLabel
+                    </span>
                 }
                 else
                 {
