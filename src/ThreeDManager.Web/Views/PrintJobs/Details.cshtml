@@ -8,9 +8,16 @@
     var returnTo = ViewData["ReturnTo"] as string;
     var materialCostPerKg = ViewBag.MaterialCostPerKg as decimal?;
     var printerCostPerHour = ViewBag.PrinterCostPerHour as decimal?;
+    var productSalePrice = ViewBag.ProductSalePrice as decimal?;
     var machineTimeMinutes = Model.ActualTimeMinutes ?? Model.EstimatedTimeMinutes;
     decimal? estimatedMachineCost = (printerCostPerHour.HasValue && machineTimeMinutes.HasValue)
         ? Math.Round((machineTimeMinutes.Value / 60m) * printerCostPerHour.Value, 2)
+        : (decimal?)null;
+    decimal? estimatedTotalProductionCost = (Model.CalculatedMaterialCost.HasValue && estimatedMachineCost.HasValue)
+        ? Model.CalculatedMaterialCost.Value + estimatedMachineCost.Value + (Model.PackagingCost ?? 0m)
+        : (decimal?)null;
+    decimal? estimatedMargin = (productSalePrice.HasValue && estimatedTotalProductionCost.HasValue)
+        ? productSalePrice.Value - estimatedTotalProductionCost.Value
         : (decimal?)null;
 }
 
@@ -175,6 +182,27 @@
                     <small class="text-muted d-block">
                         material @materialCost.ToString("C") + máquina @machineCost.ToString("C")@(Model.PackagingCost.HasValue ? $" + embalagem {Model.PackagingCost.Value.ToString("C")}" : string.Empty)
                     </small>
+                }
+                else
+                {
+                    <span class="text-muted">Não disponível</span>
+                }
+            </dd>
+
+            <dt class="col-sm-3">Margem estimada</dt>
+            <dd class="col-sm-9">
+                @if (estimatedMargin.HasValue)
+                {
+                    var marginClass = estimatedMargin.Value > 0 ? "text-success" : estimatedMargin.Value < 0 ? "text-danger" : "text-muted";
+                    var marginLabel = estimatedMargin.Value > 0 ? "lucro estimado" : estimatedMargin.Value < 0 ? "prejuízo estimado" : "sem margem";
+                    <span class="@marginClass fw-semibold">@estimatedMargin.Value.ToString("C") — @marginLabel</span>
+                    <small class="text-muted d-block">
+                        preço de venda @productSalePrice!.Value.ToString("C") − custo total estimado @estimatedTotalProductionCost!.Value.ToString("C")
+                    </small>
+                }
+                else if (!productSalePrice.HasValue)
+                {
+                    <span class="text-muted">Produto sem preço de venda informado</span>
                 }
                 else
                 {

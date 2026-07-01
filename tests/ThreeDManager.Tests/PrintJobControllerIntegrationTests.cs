@@ -2542,6 +2542,90 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task PrintJobsDetails_ShowsEstimatedMargin_FromProductSalePriceAndTotalProductionCost()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        var printJobId = Guid.NewGuid();
+
+        await factory.SeedAsync(async context =>
+        {
+            var printer = await context.Printers.FirstAsync(printer => printer.Id == ids.PrinterId);
+            printer.CostPerHour = 5.00m;
+
+            var product = await context.Products.FirstAsync(product => product.Id == ids.ProductId);
+            product.SalePrice = 20.00m;
+
+            context.PrintJobs.Add(new PrintJob
+            {
+                Id = printJobId,
+                ProductId = ids.ProductId,
+                PrinterId = ids.PrinterId,
+                MaterialId = ids.MaterialId,
+                SourceFileName = "margin.gcode",
+                EstimatedTimeMinutes = 120,
+                CalculatedMaterialCost = 1.00m,
+                PackagingCost = 2.50m,
+                Status = PrintJobStatus.Completed,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var detailsResponse = await client.GetAsync($"/PrintJobs/Details/{printJobId}");
+        var detailsHtml = WebUtility.HtmlDecode(await detailsResponse.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        Assert.Contains("Margem estimada", detailsHtml);
+        // total cost R$ 13,50 (material R$ 1,00 + máquina R$ 10,00 + embalagem R$ 2,50); margin = R$ 20,00 - R$ 13,50 = R$ 6,50.
+        Assert.Contains("R$ 6,50", detailsHtml);
+        Assert.Contains("lucro estimado", detailsHtml);
+    }
+
+    [Fact]
+    public async Task PrintJobsDetails_ShowsMissingSalePriceHint_ForMarginWhenProductHasNoSalePrice()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        var printJobId = Guid.NewGuid();
+
+        await factory.SeedAsync(async context =>
+        {
+            var printer = await context.Printers.FirstAsync(printer => printer.Id == ids.PrinterId);
+            printer.CostPerHour = 5.00m;
+
+            context.PrintJobs.Add(new PrintJob
+            {
+                Id = printJobId,
+                ProductId = ids.ProductId,
+                PrinterId = ids.PrinterId,
+                MaterialId = ids.MaterialId,
+                SourceFileName = "no-sale-price.gcode",
+                EstimatedTimeMinutes = 120,
+                CalculatedMaterialCost = 1.00m,
+                Status = PrintJobStatus.Completed,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var detailsResponse = await client.GetAsync($"/PrintJobs/Details/{printJobId}");
+        var detailsHtml = WebUtility.HtmlDecode(await detailsResponse.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        Assert.Contains("Margem estimada", detailsHtml);
+        Assert.Contains("Produto sem preço de venda informado", detailsHtml);
+    }
+
+    [Fact]
     public async Task PrintJobsIndex_ShowsEstimatedMachineCost_FromPrinterCostPerHourAndTime()
     {
         using var factory = new ThreeDManagerWebFactory();
