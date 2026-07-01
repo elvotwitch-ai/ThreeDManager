@@ -111,6 +111,12 @@
         </div>
 
         <div class="col-md-4 mb-3">
+            <label asp-for="PackagingCost" class="form-label">Custo de embalagem (R$)</label>
+            <input asp-for="PackagingCost" class="form-control" type="number" step="0.01" />
+            <span asp-validation-for="PackagingCost" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-4 mb-3">
             <label asp-for="Status" class="form-label">Status da produção</label>
             <select asp-for="Status" asp-items="Model.StatusOptions" class="form-select"></select>
         </div>

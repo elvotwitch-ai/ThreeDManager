@@ -42,6 +42,7 @@ else
                 <th>Filamento</th>
                 <th>Tempo estimado</th>
                 <th>Custo calculado do material</th>
+                <th>Custo de embalagem</th>
                 <th>Custo de máquina estimado</th>
                 <th>Custo total estimado da produção</th>
                 <th>Diferença de custo</th>
@@ -97,6 +98,16 @@ else
                         else
                         {
                             <span class="text-muted">Não calc.</span>
+                        }
+                    </td>
+                    <td>
+                        @if (job.PackagingCost.HasValue)
+                        {
+                            @job.PackagingCost.Value.ToString("C")
+                        }
+                        else
+                        {
+                            <span class="text-muted">Não informado</span>
                         }
                     </td>
                     <td>

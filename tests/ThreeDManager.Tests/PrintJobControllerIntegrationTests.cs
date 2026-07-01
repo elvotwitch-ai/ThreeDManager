@@ -2902,6 +2902,59 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task PrintJobPackagingCost_PersistsAndRendersAcrossProductionFlow()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+        var printJobId = Guid.NewGuid();
+
+        await factory.SeedAsync(async context =>
+        {
+            context.PrintJobs.Add(new PrintJob
+            {
+                Id = printJobId,
+                ProductId = ids.ProductId,
+                PrinterId = ids.PrinterId,
+                MaterialId = ids.MaterialId,
+                PackagingCost = 1.75m,
+                Status = PrintJobStatus.Imported,
+                CreatedAt = DateTime.UtcNow
+            });
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+        var detailsHtml = WebUtility.HtmlDecode(await client.GetStringAsync($"/PrintJobs/Details/{printJobId}"));
+        var indexHtml = WebUtility.HtmlDecode(await client.GetStringAsync("/PrintJobs"));
+        var editResponse = await client.GetAsync($"/PrintJobs/Edit/{printJobId}");
+        var editHtml = WebUtility.HtmlDecode(await editResponse.Content.ReadAsStringAsync());
+
+        Assert.Contains("Custo de embalagem", detailsHtml);
+        Assert.Contains("1,75", detailsHtml);
+        Assert.Contains("<th>Custo de embalagem</th>", indexHtml);
+        Assert.Contains("name=\"PackagingCost\"", editHtml);
+
+        var token = ExtractAntiForgeryToken(editHtml);
+        var postResponse = await client.PostAsync(
+            $"/PrintJobs/Edit/{printJobId}",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = token,
+                ["Id"] = printJobId.ToString(),
+                ["ProductId"] = ids.ProductId.ToString(),
+                ["PrinterId"] = ids.PrinterId.ToString(),
+                ["MaterialId"] = ids.MaterialId.ToString(),
+                ["PackagingCost"] = "2.25",
+                ["Status"] = PrintJobStatus.Imported
+            }));
+
+        Assert.Equal(HttpStatusCode.Redirect, postResponse.StatusCode);
+        await using var scope = factory.Services.CreateAsyncScope();
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        Assert.Equal(2.25m, (await context.PrintJobs.SingleAsync(job => job.Id == printJobId)).PackagingCost);
+    }
+
+    [Fact]
     public async Task CreatePrintJob_View_UsesLocalizedStatusOptions()
     {
         using var factory = new ThreeDManagerWebFactory();
