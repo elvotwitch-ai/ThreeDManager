@@ -2149,6 +2149,40 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task CreatePrintJob_FromImport_ShowsDerivedMaterialCostPerGram_FromMaterialCostPerKg()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        await SeedCommonAsync(factory);
+
+        var importId = Guid.NewGuid();
+        await factory.SeedAsync(async context =>
+        {
+            context.PrintImports.Add(new PrintImport
+            {
+                Id = importId,
+                FileName = "sample.gcode",
+                FileType = "gcode",
+                ParsedDataJson = """
+                {"filamentUsedGrams":12.45,"filamentUsedMeters":1.23,"estimatedTimeMinutes":60,"reportedCost":2.5,"materialType":"PLA","warnings":[]}
+                """,
+                Status = PrintImportStatus.Parsed,
+                ImportedAt = DateTime.UtcNow
+            });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+        var getResponse = await client.GetAsync($"/PrintImports/CreatePrintJob/{importId}");
+        var html = WebUtility.HtmlDecode(await getResponse.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+        Assert.Contains("Custo por grama do material", html);
+        // Seeded material CostPerKg = 80 -> 80 / 1000 = 0.08 (invariant) in the option data attribute.
+        Assert.Contains("data-cost-per-gram=\"0.08\"", html);
+    }
+
+    [Fact]
     public async Task PrintJobsViews_ShowLocalizedStatusLabels_InIndexDetailsDeleteAndEdit()
     {
         using var factory = new ThreeDManagerWebFactory();

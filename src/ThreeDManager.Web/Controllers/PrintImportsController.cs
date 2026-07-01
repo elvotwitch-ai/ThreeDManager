@@ -545,6 +545,10 @@ public class PrintImportsController : Controller
             Text = $"{material.Name} - {material.Type} {material.Color}".Trim()
         });
 
+        viewModel.MaterialCostPerGramById = materials.ToDictionary(
+            material => material.Id.ToString(),
+            material => material.CostPerKg.HasValue ? material.CostPerKg.Value / 1000m : (decimal?)null);
+
         viewModel.StatusOptions = PrintJobStatus.All.Select(status => new SelectListItem
         {
             Value = status,

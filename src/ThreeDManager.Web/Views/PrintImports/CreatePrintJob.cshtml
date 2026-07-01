@@ -43,10 +43,20 @@
 
     <div class="mb-3">
         <label asp-for="MaterialId" class="form-label">Material</label>
-        <select asp-for="MaterialId" asp-items="Model.MaterialOptions" class="form-select">
+        <select asp-for="MaterialId" class="form-select" id="materialSelect">
             <option value="">Selecione um material</option>
+            @foreach (var option in Model.MaterialOptions)
+            {
+                var costPerGram = Model.MaterialCostPerGramById.TryGetValue(option.Value, out var cost) ? cost : null;
+                var costAttribute = costPerGram.HasValue
+                    ? costPerGram.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                    : string.Empty;
+                <option value="@option.Value" data-cost-per-gram="@costAttribute">@option.Text</option>
+            }
         </select>
         <span asp-validation-for="MaterialId" class="text-danger"></span>
+
+        <div class="form-text" id="materialCostPerGramHint">Custo por grama do material: <span>Não informado</span></div>
 
         @if (!string.IsNullOrWhiteSpace(Model.ParsedMaterialType))
         {
@@ -114,4 +124,36 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        (function () {
+            var materialSelect = document.getElementById("materialSelect");
+            var hint = document.getElementById("materialCostPerGramHint");
+
+            if (!materialSelect || !hint) {
+                return;
+            }
+
+            var hintValue = hint.querySelector("span");
+
+            function updateHint() {
+                var selectedOption = materialSelect.options[materialSelect.selectedIndex];
+                var raw = selectedOption ? selectedOption.getAttribute("data-cost-per-gram") : "";
+                var value = raw ? parseFloat(raw) : NaN;
+
+                if (isNaN(value)) {
+                    hintValue.textContent = "Não informado";
+                    return;
+                }
+
+                hintValue.textContent = "R$ " + value.toLocaleString("pt-BR", {
+                    minimumFractionDigits: 4,
+                    maximumFractionDigits: 4
+                });
+            }
+
+            materialSelect.addEventListener("change", updateHint);
+            updateHint();
+        })();
+    </script>
 }
