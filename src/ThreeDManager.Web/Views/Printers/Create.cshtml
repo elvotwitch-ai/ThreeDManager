@@ -27,6 +27,15 @@
     </div>
 
     <div class="mb-3">
+        <label asp-for="CostPerHour" class="form-label">Custo por hora (R$)</label>
+        <input asp-for="CostPerHour" class="form-control" type="number" step="0.01" placeholder="Ex: 2,50 por hora de impressão" />
+        <span asp-validation-for="CostPerHour" class="text-danger"></span>
+        <div class="form-text">
+            Custo operacional estimado por hora de impressão (energia, desgaste e manutenção).
+        </div>
+    </div>
+
+    <div class="mb-3">
         <label asp-for="Notes" class="form-label">Observações</label>
         <textarea asp-for="Notes" class="form-control" rows="4" placeholder="Ex: Usa Creality Print 7.1, bico 0.4mm, filamento 1.75mm"></textarea>
     </div>

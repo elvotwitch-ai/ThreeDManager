@@ -106,6 +106,7 @@ public class PrintersController : Controller
         existingPrinter.Name = printer.Name;
         existingPrinter.Model = printer.Model;
         existingPrinter.Brand = printer.Brand;
+        existingPrinter.CostPerHour = printer.CostPerHour;
         existingPrinter.Notes = printer.Notes;
 
         await _context.SaveChangesAsync();

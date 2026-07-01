@@ -1787,6 +1787,80 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task PrinterEdit_PersistsCostPerHour_AndShowsOnPrintersList()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+        using var client = factory.CreateTestClient();
+
+        var editPage = await client.GetAsync($"/Printers/Edit/{ids.PrinterId}");
+        Assert.Equal(HttpStatusCode.OK, editPage.StatusCode);
+
+        var token = ExtractAntiForgeryToken(await editPage.Content.ReadAsStringAsync());
+        var postResponse = await client.PostAsync(
+            $"/Printers/Edit/{ids.PrinterId}",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = token,
+                ["Id"] = ids.PrinterId.ToString(),
+                ["Name"] = "Printer A",
+                ["Brand"] = "E2E",
+                ["Model"] = "Model A",
+                ["CostPerHour"] = "2.50",
+                ["Notes"] = "Custo operacional",
+                ["CreatedAt"] = "2026-06-30T02:00:00Z"
+            }));
+
+        Assert.Equal(HttpStatusCode.Redirect, postResponse.StatusCode);
+
+        using var verifyScope = factory.Services.CreateScope();
+        var context = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var printer = await context.Printers.SingleAsync(printer => printer.Id == ids.PrinterId);
+        Assert.Equal(2.50m, printer.CostPerHour);
+
+        var indexResponse = await client.GetAsync("/Printers");
+        var indexHtml = WebUtility.HtmlDecode(await indexResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, indexResponse.StatusCode);
+        Assert.Contains("Custo por hora", indexHtml);
+        Assert.Contains("2,50", indexHtml);
+    }
+
+    [Fact]
+    public async Task PrinterEdit_RejectsNegativeCostPerHour_WithoutPersistingChange()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+        using var client = factory.CreateTestClient();
+
+        var editPage = await client.GetAsync($"/Printers/Edit/{ids.PrinterId}");
+        Assert.Equal(HttpStatusCode.OK, editPage.StatusCode);
+
+        var token = ExtractAntiForgeryToken(await editPage.Content.ReadAsStringAsync());
+        var postResponse = await client.PostAsync(
+            $"/Printers/Edit/{ids.PrinterId}",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = token,
+                ["Id"] = ids.PrinterId.ToString(),
+                ["Name"] = "Printer A",
+                ["Brand"] = "E2E",
+                ["Model"] = "Model A",
+                ["CostPerHour"] = "-1.00",
+                ["Notes"] = "Custo negativo",
+                ["CreatedAt"] = "2026-06-30T02:00:00Z"
+            }));
+
+        var responseHtml = WebUtility.HtmlDecode(await postResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, postResponse.StatusCode);
+        Assert.Contains("O custo por hora não pode ser negativo.", responseHtml);
+
+        using var verifyScope = factory.Services.CreateScope();
+        var context = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var printer = await context.Printers.SingleAsync(printer => printer.Id == ids.PrinterId);
+        Assert.Null(printer.CostPerHour);
+    }
+
+    [Fact]
     public async Task MaterialsIndex_ShowsLatestStockMovementSummary_AfterManualAdjustment()
     {
         using var factory = new ThreeDManagerWebFactory();

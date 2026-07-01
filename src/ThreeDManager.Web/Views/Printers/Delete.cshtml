@@ -22,6 +22,18 @@
             <dt class="col-sm-3">Modelo</dt>
             <dd class="col-sm-9">@Model.Model</dd>
 
+            <dt class="col-sm-3">Custo por hora</dt>
+            <dd class="col-sm-9">
+                @if (Model.CostPerHour.HasValue)
+                {
+                    <span>@Model.CostPerHour.Value.ToString("C")</span>
+                }
+                else
+                {
+                    <span class="text-muted">Não informado</span>
+                }
+            </dd>
+
             <dt class="col-sm-3">Observações</dt>
             <dd class="col-sm-9">@Model.Notes</dd>
         </dl>

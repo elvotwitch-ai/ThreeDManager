@@ -10,6 +10,10 @@ public class Printer
     public string Name {get; set; } = string.Empty;
     public string? Model {get; set; }
     public string? Brand {get; set; }
+
+    [Range(0, double.MaxValue, ErrorMessage = "O custo por hora não pode ser negativo.")]
+    public decimal? CostPerHour {get; set; }
+
     public string? Notes {get; set; }
     public DateTime CreatedAt {get; set; } = DateTime.UtcNow;
 }

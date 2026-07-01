@@ -41,6 +41,7 @@ else
                 <th>Nome</th>
                 <th>Marca</th>
                 <th>Modelo</th>
+                <th>Custo por hora</th>
                 <th>Observações</th>
                 <th class="text-end">Ações</th>
             </tr>
@@ -52,6 +53,16 @@ else
                     <td>@printer.Name</td>
                     <td>@printer.Brand</td>
                     <td>@printer.Model</td>
+                    <td>
+                        @if (printer.CostPerHour.HasValue)
+                        {
+                            <span>@printer.CostPerHour.Value.ToString("C")</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Não informado</span>
+                        }
+                    </td>
                     <td>@printer.Notes</td>
                     <td class="text-end">
                         <div class="d-flex justify-content-end gap-1">
