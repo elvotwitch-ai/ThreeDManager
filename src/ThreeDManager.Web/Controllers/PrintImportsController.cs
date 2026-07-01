@@ -549,6 +549,10 @@ public class PrintImportsController : Controller
             material => material.Id.ToString(),
             material => material.CostPerKg.HasValue ? material.CostPerKg.Value / 1000m : (decimal?)null);
 
+        viewModel.PrinterCostPerHourById = printers.ToDictionary(
+            printer => printer.Id.ToString(),
+            printer => printer.CostPerHour);
+
         viewModel.StatusOptions = PrintJobStatus.All.Select(status => new SelectListItem
         {
             Value = status,

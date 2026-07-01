@@ -2259,6 +2259,47 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task CreatePrintJob_FromImport_ShowsDerivedMachineAndTotalCost_FromPrinterCostPerHour()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        var importId = Guid.NewGuid();
+        await factory.SeedAsync(async context =>
+        {
+            var printer = await context.Printers.FirstAsync(printer => printer.Id == ids.PrinterId);
+            printer.CostPerHour = 5.00m;
+
+            context.PrintImports.Add(new PrintImport
+            {
+                Id = importId,
+                FileName = "machine-cost.gcode",
+                FileType = "gcode",
+                ParsedDataJson = """
+                {"filamentUsedGrams":12.45,"filamentUsedMeters":1.23,"estimatedTimeMinutes":120,"reportedCost":2.5,"materialType":"PLA","warnings":[]}
+                """,
+                Status = PrintImportStatus.Parsed,
+                ImportedAt = DateTime.UtcNow
+            });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+        var getResponse = await client.GetAsync($"/PrintImports/CreatePrintJob/{importId}");
+        var html = WebUtility.HtmlDecode(await getResponse.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+        Assert.Contains("Custo por hora da impressora", html);
+        Assert.Contains("Custo de máquina estimado", html);
+        Assert.Contains("Custo total estimado da produção", html);
+        // Seeded printer CostPerHour = 5.00 -> invariant string in the option data attribute.
+        Assert.Contains("data-cost-per-hour=\"5.00\"", html);
+        Assert.Contains("actualTimeMinutes.addEventListener(\"input\", updateMachineCostHints)", html);
+        Assert.Contains("printerSelect.addEventListener(\"change\", updateTotalProductionCostHint)", html);
+    }
+
+    [Fact]
     public async Task PrintJobsViews_ShowLocalizedStatusLabels_InIndexDetailsDeleteAndEdit()
     {
         using var factory = new ThreeDManagerWebFactory();
