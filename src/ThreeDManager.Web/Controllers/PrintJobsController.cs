@@ -82,6 +82,13 @@ public class PrintJobsController : Controller
                 .FirstOrDefaultAsync()
             : null;
 
+        ViewBag.PrinterCostPerHour = printJob.PrinterId.HasValue
+            ? await _context.Printers
+                .Where(printer => printer.Id == printJob.PrinterId.Value)
+                .Select(printer => printer.CostPerHour)
+                .FirstOrDefaultAsync()
+            : null;
+
         ViewBag.StockMovement = await _context.MaterialStockMovements
             .Where(movement => movement.PrintJobId == printJob.Id)
             .OrderByDescending(movement => movement.CreatedAt)

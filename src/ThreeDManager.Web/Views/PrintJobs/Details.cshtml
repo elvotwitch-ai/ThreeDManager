@@ -7,6 +7,11 @@
     var stockMovement = ViewBag.StockMovement as MaterialStockMovement;
     var returnTo = ViewData["ReturnTo"] as string;
     var materialCostPerKg = ViewBag.MaterialCostPerKg as decimal?;
+    var printerCostPerHour = ViewBag.PrinterCostPerHour as decimal?;
+    var machineTimeMinutes = Model.ActualTimeMinutes ?? Model.EstimatedTimeMinutes;
+    decimal? estimatedMachineCost = (printerCostPerHour.HasValue && machineTimeMinutes.HasValue)
+        ? Math.Round((machineTimeMinutes.Value / 60m) * printerCostPerHour.Value, 2)
+        : (decimal?)null;
 }
 
 <h1>Detalhes da produção</h1>
@@ -117,6 +122,33 @@
                 else
                 {
                     <span class="text-muted">Não calculado</span>
+                }
+            </dd>
+
+            <dt class="col-sm-3">Custo por hora da impressora</dt>
+            <dd class="col-sm-9">
+                @if (printerCostPerHour.HasValue)
+                {
+                    <span>@printerCostPerHour.Value.ToString("C")</span>
+                }
+                else
+                {
+                    <span class="text-muted">Não informado</span>
+                }
+            </dd>
+
+            <dt class="col-sm-3">Custo de máquina estimado</dt>
+            <dd class="col-sm-9">
+                @if (estimatedMachineCost.HasValue)
+                {
+                    <span>@estimatedMachineCost.Value.ToString("C")</span>
+                    <small class="text-muted d-block">
+                        @(Model.ActualTimeMinutes.HasValue ? "tempo real" : "tempo estimado"): @machineTimeMinutes min
+                    </small>
+                }
+                else
+                {
+                    <span class="text-muted">Não disponível</span>
                 }
             </dd>
 

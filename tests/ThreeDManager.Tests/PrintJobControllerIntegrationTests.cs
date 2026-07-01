@@ -2415,6 +2415,47 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task PrintJobsDetails_ShowsEstimatedMachineCost_FromPrinterCostPerHourAndTime()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        var printJobId = Guid.NewGuid();
+
+        await factory.SeedAsync(async context =>
+        {
+            var printer = await context.Printers.FirstAsync(printer => printer.Id == ids.PrinterId);
+            printer.CostPerHour = 5.00m;
+
+            context.PrintJobs.Add(new PrintJob
+            {
+                Id = printJobId,
+                ProductId = ids.ProductId,
+                PrinterId = ids.PrinterId,
+                MaterialId = ids.MaterialId,
+                SourceFileName = "machine-cost.gcode",
+                EstimatedTimeMinutes = 120,
+                Status = PrintJobStatus.Completed,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var detailsResponse = await client.GetAsync($"/PrintJobs/Details/{printJobId}");
+        var detailsHtml = WebUtility.HtmlDecode(await detailsResponse.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        Assert.Contains("Custo por hora da impressora", detailsHtml);
+        Assert.Contains("Custo de máquina estimado", detailsHtml);
+        // 120 min / 60 * R$ 5,00/h = R$ 10,00; no actual time -> falls back to estimated time.
+        Assert.Contains("R$ 10,00", detailsHtml);
+        Assert.Contains("tempo estimado", detailsHtml);
+    }
+
+    [Fact]
     public async Task EditPrintJob_ShowsDerivedMaterialCostPerGram_FromMaterialCostPerKg()
     {
         using var factory = new ThreeDManagerWebFactory();
