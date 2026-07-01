@@ -2297,6 +2297,9 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("data-cost-per-hour=\"5.00\"", html);
         Assert.Contains("actualTimeMinutes.addEventListener(\"input\", updateMachineCostHints)", html);
         Assert.Contains("printerSelect.addEventListener(\"change\", updateTotalProductionCostHint)", html);
+        Assert.Contains("materialCost + machineCost + packagingAmount", html);
+        Assert.Contains("id=\"PackagingCost\"", html);
+        Assert.Contains("packagingCost.addEventListener(\"input\", updateTotalProductionCostHint)", html);
     }
 
     [Fact]
