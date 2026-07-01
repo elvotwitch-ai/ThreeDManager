@@ -36,6 +36,10 @@ public class DashboardViewModel
 
     public decimal TotalEstimatedProductionCost { get; set; }
 
+    public decimal TotalEstimatedMargin { get; set; }
+
+    public int ProductionsWithEstimatedMargin { get; set; }
+
     public int LowStockMaterialsCount { get; set; }
 
     public List<DashboardRecentPrintJobViewModel> RecentPrintJobs { get; set; } = new();

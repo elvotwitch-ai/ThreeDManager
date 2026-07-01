@@ -45,6 +45,9 @@ public class DashboardController : Controller
         var printerCostPerHour = await _context.Printers
             .ToDictionaryAsync(printer => printer.Id, printer => printer.CostPerHour);
 
+        var productSalePriceById = await _context.Products
+            .ToDictionaryAsync(product => product.Id, product => product.SalePrice);
+
         var lowStockMaterials = await _context.Materials
             .Where(material =>
                 material.CurrentStockGrams.HasValue
@@ -61,23 +64,54 @@ public class DashboardController : Controller
         var totalCalculatedMaterialCost = printJobs.Sum(printJob => printJob.CalculatedMaterialCost ?? 0);
         var totalPackagingCost = printJobs.Sum(printJob => printJob.PackagingCost ?? 0);
 
-        var totalEstimatedMachineCost = printJobs.Sum(printJob =>
+        decimal? EstimatedMachineCost(PrintJob printJob)
         {
             if (!printJob.PrinterId.HasValue
                 || !printerCostPerHour.TryGetValue(printJob.PrinterId.Value, out var costPerHour)
                 || !costPerHour.HasValue)
             {
-                return 0m;
+                return null;
             }
 
             var machineTimeMinutes = printJob.ActualTimeMinutes ?? printJob.EstimatedTimeMinutes;
             if (!machineTimeMinutes.HasValue)
             {
-                return 0m;
+                return null;
             }
 
             return Math.Round((machineTimeMinutes.Value / 60m) * costPerHour.Value, 2);
-        });
+        }
+
+        var totalEstimatedMachineCost = printJobs.Sum(printJob => EstimatedMachineCost(printJob) ?? 0);
+
+        var totalEstimatedMargin = 0m;
+        var productionsWithEstimatedMargin = 0;
+
+        foreach (var printJob in printJobs)
+        {
+            var estimatedMachineCost = EstimatedMachineCost(printJob);
+            if (!printJob.CalculatedMaterialCost.HasValue || !estimatedMachineCost.HasValue)
+            {
+                continue;
+            }
+
+            decimal? productSalePrice = printJob.ProductId.HasValue
+                && productSalePriceById.TryGetValue(printJob.ProductId.Value, out var salePrice)
+                ? salePrice
+                : null;
+
+            if (!productSalePrice.HasValue)
+            {
+                continue;
+            }
+
+            var estimatedTotalProductionCost = printJob.CalculatedMaterialCost.Value
+                + estimatedMachineCost.Value
+                + (printJob.PackagingCost ?? 0);
+
+            totalEstimatedMargin += productSalePrice.Value - estimatedTotalProductionCost;
+            productionsWithEstimatedMargin++;
+        }
 
         var viewModel = new DashboardViewModel
         {
@@ -106,6 +140,8 @@ public class DashboardController : Controller
             TotalEstimatedMachineCost = totalEstimatedMachineCost,
             TotalPackagingCost = totalPackagingCost,
             TotalEstimatedProductionCost = totalCalculatedMaterialCost + totalEstimatedMachineCost + totalPackagingCost,
+            TotalEstimatedMargin = totalEstimatedMargin,
+            ProductionsWithEstimatedMargin = productionsWithEstimatedMargin,
 
             LowStockMaterialsCount = lowStockMaterials.Count,
             LowStockMaterials = lowStockMaterials

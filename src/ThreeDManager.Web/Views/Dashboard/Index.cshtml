@@ -166,6 +166,20 @@
                 <div class="text-muted small">
                     Diferença de custo: @((Model.TotalReportedCost - Model.TotalCalculatedMaterialCost).ToString("C"))
                 </div>
+                @if (Model.ProductionsWithEstimatedMargin > 0)
+                {
+                    var marginClass = Model.TotalEstimatedMargin > 0 ? "text-success" : Model.TotalEstimatedMargin < 0 ? "text-danger" : "text-muted";
+                    <div class="small">
+                        Margem estimada: <span class="@marginClass fw-semibold">@Model.TotalEstimatedMargin.ToString("C")</span>
+                        <span class="text-muted">(@Model.ProductionsWithEstimatedMargin produções)</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-muted small">
+                        Margem estimada: sem produções com preço de venda e custo total disponíveis
+                    </div>
+                }
             </div>
         </div>
     </div>

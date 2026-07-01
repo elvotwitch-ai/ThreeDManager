@@ -2902,6 +2902,9 @@ public class PrintJobControllerIntegrationTests
             var printer = await context.Printers.FirstAsync(printer => printer.Id == ids.PrinterId);
             printer.CostPerHour = 5.00m;
 
+            var product = await context.Products.FirstAsync(product => product.Id == ids.ProductId);
+            product.SalePrice = 20.00m;
+
             context.PrintJobs.Add(new PrintJob
             {
                 Id = Guid.NewGuid(),
@@ -2925,10 +2928,13 @@ public class PrintJobControllerIntegrationTests
         var dashboardHtml = WebUtility.HtmlDecode(await dashboardResponse.Content.ReadAsStringAsync());
 
         // The cost card must surface a total estimated machine cost (sum of per-job
-        // (ActualTimeMinutes ?? EstimatedTimeMinutes) / 60 * printer CostPerHour) and a combined
-        // total estimated production cost (material + machine + packaging). Currency formatting is culture
-        // dependent (NBSP separator) and the in-memory totals accumulate across the shared test
-        // run, so scope to the cost card and assert the labels render a numeric value.
+        // (ActualTimeMinutes ?? EstimatedTimeMinutes) / 60 * printer CostPerHour), a combined
+        // total estimated production cost (material + machine + packaging), and an aggregate
+        // estimated margin (sum of product SalePrice - total estimated cost, only for productions
+        // where both a complete cost total and a linked product sale price exist). Currency
+        // formatting is culture dependent (NBSP separator) and the in-memory totals accumulate
+        // across the shared test run, so scope to the cost card and assert the labels render a
+        // numeric value.
         var costCard = dashboardHtml[dashboardHtml.IndexOf("Custo informado", StringComparison.Ordinal)..];
 
         Assert.Equal(HttpStatusCode.OK, dashboardResponse.StatusCode);
@@ -2938,6 +2944,9 @@ public class PrintJobControllerIntegrationTests
         Assert.Matches(@"Embalagem:[^<]*\d", costCard);
         Assert.Contains("Custo total estimado:", costCard);
         Assert.Matches(@"Custo total estimado:[^<]*\d", costCard);
+        Assert.Contains("Margem estimada:", costCard);
+        Assert.Matches(@"Margem estimada:(.|\n){0,60}?\d", costCard);
+        Assert.Matches(@"\(\d+ produções\)", costCard);
     }
 
     [Fact]
