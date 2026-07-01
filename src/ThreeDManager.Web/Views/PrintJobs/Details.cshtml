@@ -6,6 +6,7 @@
     ViewData["Title"] = "Detalhes da produção";
     var stockMovement = ViewBag.StockMovement as MaterialStockMovement;
     var returnTo = ViewData["ReturnTo"] as string;
+    var materialCostPerKg = ViewBag.MaterialCostPerKg as decimal?;
 }
 
 <h1>Detalhes da produção</h1>
@@ -88,6 +89,18 @@
                 @if (Model.ReportedCost.HasValue)
                 {
                     @Model.ReportedCost.Value.ToString("C")
+                }
+                else
+                {
+                    <span class="text-muted">Não informado</span>
+                }
+            </dd>
+
+            <dt class="col-sm-3">Custo por grama do material</dt>
+            <dd class="col-sm-9">
+                @if (materialCostPerKg.HasValue)
+                {
+                    <span>@((materialCostPerKg.Value / 1000m).ToString("C4"))</span>
                 }
                 else
                 {

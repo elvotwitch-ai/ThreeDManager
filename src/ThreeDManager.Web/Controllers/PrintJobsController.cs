@@ -68,6 +68,13 @@ public class PrintJobsController : Controller
                 .FirstOrDefaultAsync()
             : null;
 
+        ViewBag.MaterialCostPerKg = printJob.MaterialId.HasValue
+            ? await _context.Materials
+                .Where(material => material.Id == printJob.MaterialId.Value)
+                .Select(material => material.CostPerKg)
+                .FirstOrDefaultAsync()
+            : null;
+
         ViewBag.PrinterName = printJob.PrinterId.HasValue
             ? await _context.Printers
                 .Where(printer => printer.Id == printJob.PrinterId.Value)
