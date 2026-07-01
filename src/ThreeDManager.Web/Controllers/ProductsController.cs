@@ -109,6 +109,7 @@ public class ProductsController : Controller
         existingProduct.Description = product.Description;
         existingProduct.SalePrice = product.SalePrice;
         existingProduct.StockQuantity = product.StockQuantity;
+        existingProduct.MinimumStockQuantity = product.MinimumStockQuantity;
         existingProduct.IsActive = product.IsActive;
 
         await _context.SaveChangesAsync();

@@ -44,6 +44,8 @@ else
                     <th>Categoria</th>
                     <th>Preço de venda</th>
                     <th>Estoque</th>
+                    <th>Estoque mínimo</th>
+                    <th>Status estoque</th>
                     <th>Status</th>
                     <th class="text-end">Ações</th>
                 </tr>
@@ -73,6 +75,38 @@ else
                             else
                             {
                                 <span class="badge text-bg-light">Não informado</span>
+                            }
+                        </td>
+                        <td>
+                            @if (product.MinimumStockQuantity.HasValue)
+                            {
+                                <span>@product.MinimumStockQuantity.Value un.</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Não definido</span>
+                            }
+                        </td>
+                        <td>
+                            @{
+                                var hasStockQuantity = product.StockQuantity.HasValue;
+                                var hasMinimumStockQuantity = product.MinimumStockQuantity.HasValue;
+                                var isLowStockQuantity = hasStockQuantity
+                                    && hasMinimumStockQuantity
+                                    && product.StockQuantity!.Value <= product.MinimumStockQuantity!.Value;
+                            }
+
+                            @if (isLowStockQuantity)
+                            {
+                                <span class="badge bg-danger">Baixo estoque</span>
+                            }
+                            else if (hasStockQuantity && hasMinimumStockQuantity)
+                            {
+                                <span class="badge bg-success">Ok</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Sem alerta</span>
                             }
                         </td>
                         <td>

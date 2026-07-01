@@ -48,6 +48,42 @@
                 }
             </dd>
 
+            <dt class="col-sm-3">Estoque mínimo</dt>
+            <dd class="col-sm-9">
+                @if (Model.MinimumStockQuantity.HasValue)
+                {
+                    <span>@Model.MinimumStockQuantity.Value un.</span>
+                }
+                else
+                {
+                    <span class="text-muted">Não definido</span>
+                }
+            </dd>
+
+            <dt class="col-sm-3">Status estoque</dt>
+            <dd class="col-sm-9">
+                @{
+                    var hasStockQuantity = Model.StockQuantity.HasValue;
+                    var hasMinimumStockQuantity = Model.MinimumStockQuantity.HasValue;
+                    var isLowStockQuantity = hasStockQuantity
+                        && hasMinimumStockQuantity
+                        && Model.StockQuantity!.Value <= Model.MinimumStockQuantity!.Value;
+                }
+
+                @if (isLowStockQuantity)
+                {
+                    <span class="badge bg-danger">Baixo estoque</span>
+                }
+                else if (hasStockQuantity && hasMinimumStockQuantity)
+                {
+                    <span class="badge bg-success">Ok</span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary">Sem alerta</span>
+                }
+            </dd>
+
             <dt class="col-sm-3">Status</dt>
             <dd class="col-sm-9">
                 @if (Model.IsActive)

@@ -1831,6 +1831,56 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task ProductLowStockAlert_IsShown_OnDetailsAndIndex_WhenBelowMinimum()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+        using var client = factory.CreateTestClient();
+
+        var editPage = await client.GetAsync($"/Products/Edit/{ids.ProductId}");
+        Assert.Equal(HttpStatusCode.OK, editPage.StatusCode);
+
+        var token = ExtractAntiForgeryToken(await editPage.Content.ReadAsStringAsync());
+        var postResponse = await client.PostAsync(
+            $"/Products/Edit/{ids.ProductId}",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = token,
+                ["Id"] = ids.ProductId.ToString(),
+                ["Name"] = "Product A",
+                ["Sku"] = "E2E-PROD",
+                ["Category"] = "Brindes",
+                ["Description"] = "Produto de teste",
+                ["StockQuantity"] = "3",
+                ["MinimumStockQuantity"] = "10",
+                ["IsActive"] = "true",
+                ["CreatedAt"] = "2026-06-30T02:00:00Z"
+            }));
+
+        Assert.Equal(HttpStatusCode.Redirect, postResponse.StatusCode);
+
+        var detailsResponse = await client.GetAsync($"/Products/Details/{ids.ProductId}");
+        var detailsHtml = WebUtility.HtmlDecode(await detailsResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        Assert.Contains("Estoque mínimo", detailsHtml);
+        Assert.Contains("Baixo estoque", detailsHtml);
+
+        var indexResponse = await client.GetAsync("/Products");
+        var indexHtml = WebUtility.HtmlDecode(await indexResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, indexResponse.StatusCode);
+        Assert.Contains("Baixo estoque", indexHtml);
+        Assert.Contains("3 un.", indexHtml);
+        Assert.Contains("10 un.", indexHtml);
+
+        using var verifyScope = factory.Services.CreateScope();
+        var context = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var product = await context.Products.SingleAsync(product => product.Id == ids.ProductId);
+
+        Assert.Equal(3, product.StockQuantity);
+        Assert.Equal(10, product.MinimumStockQuantity);
+    }
+
+    [Fact]
     public async Task PrinterEdit_RejectsMissingName_WithoutPersistingChange()
     {
         using var factory = new ThreeDManagerWebFactory();
