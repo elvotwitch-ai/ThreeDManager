@@ -155,6 +155,12 @@
                     Material calculado: @Model.TotalCalculatedMaterialCost.ToString("C")
                 </div>
                 <div class="text-muted small">
+                    Máquina estimada: @Model.TotalEstimatedMachineCost.ToString("C")
+                </div>
+                <div class="text-muted small">
+                    Custo total estimado: @Model.TotalEstimatedProductionCost.ToString("C")
+                </div>
+                <div class="text-muted small">
                     Diferença de custo: @((Model.TotalReportedCost - Model.TotalCalculatedMaterialCost).ToString("C"))
                 </div>
             </div>

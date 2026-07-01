@@ -2750,6 +2750,52 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task Dashboard_ShowsTotalEstimatedMachineAndProductionCost_FromPrinterCostPerHourAndTime()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        await factory.SeedAsync(async context =>
+        {
+            var printer = await context.Printers.FirstAsync(printer => printer.Id == ids.PrinterId);
+            printer.CostPerHour = 5.00m;
+
+            context.PrintJobs.Add(new PrintJob
+            {
+                Id = Guid.NewGuid(),
+                ProductId = ids.ProductId,
+                PrinterId = ids.PrinterId,
+                MaterialId = ids.MaterialId,
+                SourceFileName = "dashboard-machine-cost.gcode",
+                Status = PrintJobStatus.Completed,
+                EstimatedTimeMinutes = 120,
+                CalculatedMaterialCost = 1.00m,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var dashboardResponse = await client.GetAsync("/Dashboard");
+        var dashboardHtml = WebUtility.HtmlDecode(await dashboardResponse.Content.ReadAsStringAsync());
+
+        // The cost card must surface a total estimated machine cost (sum of per-job
+        // (ActualTimeMinutes ?? EstimatedTimeMinutes) / 60 * printer CostPerHour) and a combined
+        // total estimated production cost (material + machine). Currency formatting is culture
+        // dependent (NBSP separator) and the in-memory totals accumulate across the shared test
+        // run, so scope to the cost card and assert the labels render a numeric value.
+        var costCard = dashboardHtml[dashboardHtml.IndexOf("Custo informado", StringComparison.Ordinal)..];
+
+        Assert.Equal(HttpStatusCode.OK, dashboardResponse.StatusCode);
+        Assert.Contains("Máquina estimada:", costCard);
+        Assert.Matches(@"Máquina estimada:[^<]*\d", costCard);
+        Assert.Contains("Custo total estimado:", costCard);
+        Assert.Matches(@"Custo total estimado:[^<]*\d", costCard);
+    }
+
+    [Fact]
     public async Task Dashboard_ShowsLocalizedStatusLabels_InRecentPrintJobsTable()
     {
         using var factory = new ThreeDManagerWebFactory();

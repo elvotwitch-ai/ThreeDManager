@@ -42,6 +42,9 @@ public class DashboardController : Controller
         var printerNames = await _context.Printers
             .ToDictionaryAsync(printer => printer.Id, printer => printer.Name);
 
+        var printerCostPerHour = await _context.Printers
+            .ToDictionaryAsync(printer => printer.Id, printer => printer.CostPerHour);
+
         var lowStockMaterials = await _context.Materials
             .Where(material =>
                 material.CurrentStockGrams.HasValue
@@ -54,6 +57,26 @@ public class DashboardController : Controller
             .OrderByDescending(movement => movement.CreatedAt)
             .Take(5)
             .ToListAsync();
+
+        var totalCalculatedMaterialCost = printJobs.Sum(printJob => printJob.CalculatedMaterialCost ?? 0);
+
+        var totalEstimatedMachineCost = printJobs.Sum(printJob =>
+        {
+            if (!printJob.PrinterId.HasValue
+                || !printerCostPerHour.TryGetValue(printJob.PrinterId.Value, out var costPerHour)
+                || !costPerHour.HasValue)
+            {
+                return 0m;
+            }
+
+            var machineTimeMinutes = printJob.ActualTimeMinutes ?? printJob.EstimatedTimeMinutes;
+            if (!machineTimeMinutes.HasValue)
+            {
+                return 0m;
+            }
+
+            return Math.Round((machineTimeMinutes.Value / 60m) * costPerHour.Value, 2);
+        });
 
         var viewModel = new DashboardViewModel
         {
@@ -78,7 +101,9 @@ public class DashboardController : Controller
             TotalEstimatedTimeMinutes = printJobs.Sum(printJob => printJob.EstimatedTimeMinutes ?? 0),
             TotalActualTimeMinutes = printJobs.Sum(printJob => printJob.ActualTimeMinutes ?? 0),
             TotalReportedCost = printJobs.Sum(printJob => printJob.ReportedCost ?? 0),
-            TotalCalculatedMaterialCost = printJobs.Sum(printJob => printJob.CalculatedMaterialCost ?? 0),
+            TotalCalculatedMaterialCost = totalCalculatedMaterialCost,
+            TotalEstimatedMachineCost = totalEstimatedMachineCost,
+            TotalEstimatedProductionCost = totalCalculatedMaterialCost + totalEstimatedMachineCost,
 
             LowStockMaterialsCount = lowStockMaterials.Count,
             LowStockMaterials = lowStockMaterials
