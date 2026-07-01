@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "web",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "src/ThreeDManager.Web", "--no-launch-profile", "--urls", "http://127.0.0.1:5900"],
+      "port": 5900
+    }
+  ]
+}

@@ -251,9 +251,10 @@
             var filamentUsedGrams = document.getElementById("filamentUsedGrams");
             var estimatedTimeMinutes = document.getElementById("estimatedTimeMinutes");
             var actualTimeMinutes = document.getElementById("actualTimeMinutes");
+            var packagingCost = document.getElementById("PackagingCost");
             var totalCostHint = document.getElementById("estimatedTotalProductionCostHint");
 
-            if (!materialSelect || !printerSelect || !filamentUsedGrams || !estimatedTimeMinutes || !actualTimeMinutes || !totalCostHint) {
+            if (!materialSelect || !printerSelect || !filamentUsedGrams || !estimatedTimeMinutes || !actualTimeMinutes || !packagingCost || !totalCostHint) {
                 return;
             }
 
@@ -270,6 +271,7 @@
                 var actual = actualTimeMinutes.value ? parseFloat(actualTimeMinutes.value) : NaN;
                 var estimated = estimatedTimeMinutes.value ? parseFloat(estimatedTimeMinutes.value) : NaN;
                 var minutes = !isNaN(actual) ? actual : estimated;
+                var packaging = packagingCost.value ? parseFloat(packagingCost.value) : NaN;
 
                 if (isNaN(costPerGram) || isNaN(grams) || isNaN(costPerHour) || isNaN(minutes)) {
                     totalCostValue.textContent = "Não informado";
@@ -278,7 +280,8 @@
 
                 var materialCost = grams * costPerGram;
                 var machineCost = (minutes / 60) * costPerHour;
-                totalCostValue.textContent = "R$ " + (materialCost + machineCost).toLocaleString("pt-BR", {
+                var packagingAmount = isNaN(packaging) ? 0 : packaging;
+                totalCostValue.textContent = "R$ " + (materialCost + machineCost + packagingAmount).toLocaleString("pt-BR", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                 });
@@ -289,6 +292,7 @@
             filamentUsedGrams.addEventListener("input", updateTotalProductionCostHint);
             estimatedTimeMinutes.addEventListener("input", updateTotalProductionCostHint);
             actualTimeMinutes.addEventListener("input", updateTotalProductionCostHint);
+            packagingCost.addEventListener("input", updateTotalProductionCostHint);
             updateTotalProductionCostHint();
         })();
     </script>

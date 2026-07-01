@@ -2720,6 +2720,7 @@ public class PrintJobControllerIntegrationTests
                 SourceFileName = "edit-total-cost.gcode",
                 FilamentUsedGrams = 12.50m,
                 EstimatedTimeMinutes = 120,
+                PackagingCost = 2.50m,
                 Status = PrintJobStatus.Planned,
                 CreatedAt = DateTime.UtcNow
             });
@@ -2736,8 +2737,10 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("Custo total estimado da produção", editHtml);
         Assert.Contains("data-cost-per-gram=\"0.08\"", editHtml);
         Assert.Contains("data-cost-per-hour=\"5.00\"", editHtml);
-        Assert.Contains("materialCost + machineCost", editHtml);
+        Assert.Contains("materialCost + machineCost + packagingAmount", editHtml);
+        Assert.Contains("id=\"PackagingCost\"", editHtml);
         Assert.Contains("actualTimeMinutes.addEventListener(\"input\", updateTotalProductionCostHint)", editHtml);
+        Assert.Contains("packagingCost.addEventListener(\"input\", updateTotalProductionCostHint)", editHtml);
     }
 
     [Fact]
