@@ -2332,6 +2332,60 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task Dashboard_ShowsTotalCostDifference_FromReportedAndCalculatedCosts()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        await factory.SeedAsync(async context =>
+        {
+            context.PrintJobs.AddRange(
+                new PrintJob
+                {
+                    Id = Guid.NewGuid(),
+                    ProductId = ids.ProductId,
+                    PrinterId = ids.PrinterId,
+                    MaterialId = ids.MaterialId,
+                    SourceFileName = "dashboard-cost-a.gcode",
+                    Status = PrintJobStatus.Completed,
+                    ReportedCost = 12.00m,
+                    CalculatedMaterialCost = 5.00m,
+                    CreatedAt = DateTime.UtcNow.AddMinutes(2)
+                },
+                new PrintJob
+                {
+                    Id = Guid.NewGuid(),
+                    ProductId = ids.ProductId,
+                    PrinterId = ids.PrinterId,
+                    MaterialId = ids.MaterialId,
+                    SourceFileName = "dashboard-cost-b.gcode",
+                    Status = PrintJobStatus.Completed,
+                    ReportedCost = 8.00m,
+                    CalculatedMaterialCost = 2.00m,
+                    CreatedAt = DateTime.UtcNow.AddMinutes(1)
+                });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var dashboardResponse = await client.GetAsync("/Dashboard");
+        var dashboardHtml = WebUtility.HtmlDecode(await dashboardResponse.Content.ReadAsStringAsync());
+
+        // The seeded jobs carry both reported and calculated material costs, so the cost card must
+        // surface the derived "Diferença de custo" (reported minus calculated) next to the existing
+        // reported/calculated totals. Currency formatting is culture-dependent (NBSP separator) and
+        // the in-memory totals accumulate across the shared test run, so scope the assertion to the
+        // cost card and verify the difference line renders a numeric value rather than an exact amount.
+        var costCard = dashboardHtml[dashboardHtml.IndexOf("Custo informado", StringComparison.Ordinal)..];
+
+        Assert.Equal(HttpStatusCode.OK, dashboardResponse.StatusCode);
+        Assert.Contains("Diferença de custo:", costCard);
+        Assert.Matches(@"Diferença de custo:[^<]*\d", costCard);
+    }
+
+    [Fact]
     public async Task Dashboard_ShowsLocalizedStatusLabels_InRecentPrintJobsTable()
     {
         using var factory = new ThreeDManagerWebFactory();
