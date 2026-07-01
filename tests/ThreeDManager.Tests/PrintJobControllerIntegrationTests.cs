@@ -2518,6 +2518,7 @@ public class PrintJobControllerIntegrationTests
                 SourceFileName = "total-cost.gcode",
                 EstimatedTimeMinutes = 120,
                 CalculatedMaterialCost = 1.00m,
+                PackagingCost = 2.50m,
                 Status = PrintJobStatus.Completed,
                 CreatedAt = DateTime.UtcNow
             });
@@ -2532,8 +2533,9 @@ public class PrintJobControllerIntegrationTests
 
         Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
         Assert.Contains("Custo total estimado da produção", detailsHtml);
-        // material R$ 1,00 + máquina (120/60 * R$ 5,00/h = R$ 10,00) = R$ 11,00.
-        Assert.Contains("R$ 11,00", detailsHtml);
+        // material R$ 1,00 + máquina (120/60 * R$ 5,00/h = R$ 10,00) + embalagem R$ 2,50 = R$ 13,50.
+        Assert.Contains("R$ 13,50", detailsHtml);
+        Assert.Contains("embalagem", detailsHtml);
     }
 
     [Fact]
