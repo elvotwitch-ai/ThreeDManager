@@ -137,9 +137,10 @@ else
                         {
                             var materialCost = job.CalculatedMaterialCost.Value;
                             var machineCost = estimatedMachineCost.Value;
-                            <span>@((materialCost + machineCost).ToString("C"))</span>
+                            var packagingCost = job.PackagingCost ?? 0m;
+                            <span>@((materialCost + machineCost + packagingCost).ToString("C"))</span>
                             <small class="text-muted d-block">
-                                material @materialCost.ToString("C") + máquina @machineCost.ToString("C")
+                                material @materialCost.ToString("C") + máquina @machineCost.ToString("C")@(job.PackagingCost.HasValue ? $" + embalagem {job.PackagingCost.Value.ToString("C")}" : string.Empty)
                             </small>
                         }
                         else
