@@ -32,6 +32,8 @@ public class DashboardViewModel
 
     public decimal TotalEstimatedMachineCost { get; set; }
 
+    public decimal TotalPackagingCost { get; set; }
+
     public decimal TotalEstimatedProductionCost { get; set; }
 
     public int LowStockMaterialsCount { get; set; }

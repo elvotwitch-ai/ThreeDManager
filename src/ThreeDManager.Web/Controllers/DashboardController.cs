@@ -59,6 +59,7 @@ public class DashboardController : Controller
             .ToListAsync();
 
         var totalCalculatedMaterialCost = printJobs.Sum(printJob => printJob.CalculatedMaterialCost ?? 0);
+        var totalPackagingCost = printJobs.Sum(printJob => printJob.PackagingCost ?? 0);
 
         var totalEstimatedMachineCost = printJobs.Sum(printJob =>
         {
@@ -103,7 +104,8 @@ public class DashboardController : Controller
             TotalReportedCost = printJobs.Sum(printJob => printJob.ReportedCost ?? 0),
             TotalCalculatedMaterialCost = totalCalculatedMaterialCost,
             TotalEstimatedMachineCost = totalEstimatedMachineCost,
-            TotalEstimatedProductionCost = totalCalculatedMaterialCost + totalEstimatedMachineCost,
+            TotalPackagingCost = totalPackagingCost,
+            TotalEstimatedProductionCost = totalCalculatedMaterialCost + totalEstimatedMachineCost + totalPackagingCost,
 
             LowStockMaterialsCount = lowStockMaterials.Count,
             LowStockMaterials = lowStockMaterials

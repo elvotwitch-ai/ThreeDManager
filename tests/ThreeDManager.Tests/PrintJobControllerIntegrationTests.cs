@@ -2815,6 +2815,7 @@ public class PrintJobControllerIntegrationTests
                 Status = PrintJobStatus.Completed,
                 EstimatedTimeMinutes = 120,
                 CalculatedMaterialCost = 1.00m,
+                PackagingCost = 2.50m,
                 CreatedAt = DateTime.UtcNow
             });
 
@@ -2828,7 +2829,7 @@ public class PrintJobControllerIntegrationTests
 
         // The cost card must surface a total estimated machine cost (sum of per-job
         // (ActualTimeMinutes ?? EstimatedTimeMinutes) / 60 * printer CostPerHour) and a combined
-        // total estimated production cost (material + machine). Currency formatting is culture
+        // total estimated production cost (material + machine + packaging). Currency formatting is culture
         // dependent (NBSP separator) and the in-memory totals accumulate across the shared test
         // run, so scope to the cost card and assert the labels render a numeric value.
         var costCard = dashboardHtml[dashboardHtml.IndexOf("Custo informado", StringComparison.Ordinal)..];
@@ -2836,6 +2837,8 @@ public class PrintJobControllerIntegrationTests
         Assert.Equal(HttpStatusCode.OK, dashboardResponse.StatusCode);
         Assert.Contains("Máquina estimada:", costCard);
         Assert.Matches(@"Máquina estimada:[^<]*\d", costCard);
+        Assert.Contains("Embalagem:", costCard);
+        Assert.Matches(@"Embalagem:[^<]*\d", costCard);
         Assert.Contains("Custo total estimado:", costCard);
         Assert.Matches(@"Custo total estimado:[^<]*\d", costCard);
     }
