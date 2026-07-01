@@ -162,12 +162,21 @@ else
                             decimal? estimatedMargin = (productSalePrice.HasValue && estimatedTotalProductionCost.HasValue)
                                 ? productSalePrice.Value - estimatedTotalProductionCost.Value
                                 : (decimal?)null;
+                            decimal? estimatedMarginPercentage = (estimatedMargin.HasValue && productSalePrice > 0m)
+                                ? Math.Round((estimatedMargin.Value / productSalePrice.Value) * 100m, 1)
+                                : (decimal?)null;
                         }
                         @if (estimatedMargin.HasValue)
                         {
                             var marginClass = estimatedMargin.Value > 0 ? "text-success" : estimatedMargin.Value < 0 ? "text-danger" : "text-muted";
                             var marginLabel = estimatedMargin.Value > 0 ? "lucro estimado" : estimatedMargin.Value < 0 ? "prejuízo estimado" : "sem margem";
-                            <span class="@marginClass fw-semibold">@estimatedMargin.Value.ToString("C")</span>
+                            <span class="@marginClass fw-semibold">
+                                @estimatedMargin.Value.ToString("C")
+                                @if (estimatedMarginPercentage.HasValue)
+                                {
+                                    <span>(@estimatedMarginPercentage.Value.ToString("N1")%)</span>
+                                }
+                            </span>
                             <small class="text-muted d-block">@marginLabel</small>
                         }
                         else if (!productSalePrice.HasValue)
