@@ -36,6 +36,18 @@
                 }
             </dd>
 
+            <dt class="col-sm-3">Estoque de produtos acabados</dt>
+            <dd class="col-sm-9">
+                @if (Model.StockQuantity.HasValue)
+                {
+                    <span>@Model.StockQuantity.Value un.</span>
+                }
+                else
+                {
+                    <span class="text-muted">Não informado</span>
+                }
+            </dd>
+
             <dt class="col-sm-3">Status</dt>
             <dd class="col-sm-9">
                 @if (Model.IsActive)

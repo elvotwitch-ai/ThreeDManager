@@ -43,6 +43,7 @@ else
                     <th>SKU</th>
                     <th>Categoria</th>
                     <th>Preço de venda</th>
+                    <th>Estoque</th>
                     <th>Status</th>
                     <th class="text-end">Ações</th>
                 </tr>
@@ -58,6 +59,16 @@ else
                             @if (product.SalePrice.HasValue)
                             {
                                 <span>@product.SalePrice.Value.ToString("C")</span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-light">Não informado</span>
+                            }
+                        </td>
+                        <td>
+                            @if (product.StockQuantity.HasValue)
+                            {
+                                <span>@product.StockQuantity.Value un.</span>
                             }
                             else
                             {

@@ -108,6 +108,7 @@ public class ProductsController : Controller
         existingProduct.Category = product.Category;
         existingProduct.Description = product.Description;
         existingProduct.SalePrice = product.SalePrice;
+        existingProduct.StockQuantity = product.StockQuantity;
         existingProduct.IsActive = product.IsActive;
 
         await _context.SaveChangesAsync();
