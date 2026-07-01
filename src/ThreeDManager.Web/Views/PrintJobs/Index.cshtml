@@ -41,6 +41,7 @@ else
                 <th>Filamento</th>
                 <th>Tempo estimado</th>
                 <th>Custo calculado do material</th>
+                <th>Diferença de custo</th>
                 <th>Status da produção</th>
                 <th class="text-end">Ações</th>
             </tr>
@@ -93,6 +94,17 @@ else
                         else
                         {
                             <span class="text-muted">Não calc.</span>
+                        }
+                    </td>
+                    <td>
+                        @if (job.ReportedCost.HasValue && job.CalculatedMaterialCost.HasValue)
+                        {
+                            var costDifference = job.ReportedCost.Value - job.CalculatedMaterialCost.Value;
+                            @costDifference.ToString("C")
+                        }
+                        else
+                        {
+                            <span class="text-muted">Não disponível</span>
                         }
                     </td>
                     <td>

@@ -2260,6 +2260,43 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task PrintJobsIndex_ShowsCostDifference_FromReportedAndCalculatedCosts()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        var printJobId = Guid.NewGuid();
+
+        await factory.SeedAsync(async context =>
+        {
+            context.PrintJobs.Add(new PrintJob
+            {
+                Id = printJobId,
+                ProductId = ids.ProductId,
+                PrinterId = ids.PrinterId,
+                MaterialId = ids.MaterialId,
+                SourceFileName = "cost-difference.gcode",
+                Status = PrintJobStatus.Completed,
+                ReportedCost = 3.45m,
+                CalculatedMaterialCost = 1.11m,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var indexResponse = await client.GetAsync("/PrintJobs");
+        var indexHtml = WebUtility.HtmlDecode(await indexResponse.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, indexResponse.StatusCode);
+        Assert.Contains("Diferença de custo", indexHtml);
+        // ReportedCost 3.45 - CalculatedMaterialCost 1.11 = 2.34 formatted as currency (C).
+        Assert.Contains("2,34", indexHtml);
+    }
+
+    [Fact]
     public async Task PrintJobsDetails_ShowsDerivedMaterialCostPerGram_FromMaterialCostPerKg()
     {
         using var factory = new ThreeDManagerWebFactory();
