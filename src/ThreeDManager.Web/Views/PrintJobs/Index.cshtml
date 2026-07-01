@@ -7,6 +7,7 @@
     var products = ViewBag.Products as Dictionary<Guid, string> ?? new Dictionary<Guid, string>();
     var materials = ViewBag.Materials as Dictionary<Guid, string> ?? new Dictionary<Guid, string>();
     var printers = ViewBag.Printers as Dictionary<Guid, string> ?? new Dictionary<Guid, string>();
+    var printerCostPerHour = ViewBag.PrinterCostPerHour as Dictionary<Guid, decimal?> ?? new Dictionary<Guid, decimal?>();
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -41,6 +42,7 @@ else
                 <th>Filamento</th>
                 <th>Tempo estimado</th>
                 <th>Custo calculado do material</th>
+                <th>Custo de máquina estimado</th>
                 <th>Diferença de custo</th>
                 <th>Status da produção</th>
                 <th class="text-end">Ações</th>
@@ -94,6 +96,28 @@ else
                         else
                         {
                             <span class="text-muted">Não calc.</span>
+                        }
+                    </td>
+                    <td>
+                        @{
+                            decimal? jobCostPerHour = job.PrinterId.HasValue && printerCostPerHour.TryGetValue(job.PrinterId.Value, out var costPerHourValue)
+                                ? costPerHourValue
+                                : null;
+                            var machineTimeMinutes = job.ActualTimeMinutes ?? job.EstimatedTimeMinutes;
+                            decimal? estimatedMachineCost = (jobCostPerHour.HasValue && machineTimeMinutes.HasValue)
+                                ? Math.Round((machineTimeMinutes.Value / 60m) * jobCostPerHour.Value, 2)
+                                : (decimal?)null;
+                        }
+                        @if (estimatedMachineCost.HasValue)
+                        {
+                            <span>@estimatedMachineCost.Value.ToString("C")</span>
+                            <small class="text-muted d-block">
+                                @(job.ActualTimeMinutes.HasValue ? "tempo real" : "tempo estimado"): @machineTimeMinutes min
+                            </small>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Não disponível</span>
                         }
                     </td>
                     <td>

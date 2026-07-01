@@ -33,8 +33,9 @@ public class PrintJobsController : Controller
         ViewBag.Materials = await _context.Materials
             .ToDictionaryAsync(material => material.Id, material => material.Name);
 
-        ViewBag.Printers = await _context.Printers
-            .ToDictionaryAsync(printer => printer.Id, printer => printer.Name);
+        var printers = await _context.Printers.ToListAsync();
+        ViewBag.Printers = printers.ToDictionary(printer => printer.Id, printer => printer.Name);
+        ViewBag.PrinterCostPerHour = printers.ToDictionary(printer => printer.Id, printer => printer.CostPerHour);
 
         return View(printJobs);
     }
