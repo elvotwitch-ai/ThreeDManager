@@ -17,10 +17,21 @@ public class PrintJobStockService : IPrintJobStockService
 
     public async Task<PrintJobStockResult> ApplyForNewPrintJobAsync(PrintJob printJob)
     {
-        return await TryApplyStockDeductionAsync(
+        var materialResult = await TryApplyStockDeductionAsync(
             printJob,
             printJob.MaterialId,
             printJob.FilamentUsedGrams,
+            printJob.Status);
+
+        if (!materialResult.Succeeded)
+        {
+            return materialResult;
+        }
+
+        return await TryApplyProductStockCreditAsync(
+            printJob,
+            printJob.ProductId,
+            printJob.UnitsProduced,
             printJob.Status);
     }
 
@@ -28,20 +39,35 @@ public class PrintJobStockService : IPrintJobStockService
         PrintJob existingPrintJob,
         Guid? newMaterialId,
         decimal? newFilamentUsedGrams,
-        string newStatus)
+        string newStatus,
+        Guid? newProductId,
+        int newUnitsProduced)
     {
         await RestoreStockDeductionAsync(existingPrintJob);
+        await RestoreProductStockCreditAsync(existingPrintJob);
 
-        return await TryApplyStockDeductionAsync(
+        var materialResult = await TryApplyStockDeductionAsync(
             existingPrintJob,
             newMaterialId,
             newFilamentUsedGrams,
+            newStatus);
+
+        if (!materialResult.Succeeded)
+        {
+            return materialResult;
+        }
+
+        return await TryApplyProductStockCreditAsync(
+            existingPrintJob,
+            newProductId,
+            newUnitsProduced,
             newStatus);
     }
 
     public async Task RestoreForDeletedPrintJobAsync(PrintJob printJob)
     {
         await RestoreStockDeductionAsync(printJob);
+        await RestoreProductStockCreditAsync(printJob);
     }
 
     private async Task RestoreStockDeductionAsync(PrintJob printJob)
@@ -150,6 +176,101 @@ public class PrintJobStockService : IPrintJobStockService
         printJob.StockDeductedAt = DateTime.UtcNow;
         printJob.StockDeductedMaterialId = material.Id;
         printJob.StockDeductedGrams = quantity;
+
+        return PrintJobStockResult.Success;
+    }
+
+    private async Task RestoreProductStockCreditAsync(PrintJob printJob)
+    {
+        if (printJob.StockCreditedProductId is null || printJob.StockCreditedUnits is null)
+        {
+            return;
+        }
+
+        var product = await _context.Products.FindAsync(printJob.StockCreditedProductId.Value);
+
+        if (product is not null)
+        {
+            product.StockQuantity ??= 0;
+
+            var stockBefore = product.StockQuantity.Value;
+            var quantity = printJob.StockCreditedUnits.Value;
+            var stockAfter = stockBefore - quantity;
+
+            product.StockQuantity = stockAfter;
+
+            _context.ProductStockMovements.Add(new ProductStockMovement
+            {
+                ProductId = product.Id,
+                PrintJobId = printJob.Id,
+                MovementType = "PrintJobStockCreditReverted",
+                QuantityUnits = -quantity,
+                StockBeforeUnits = stockBefore,
+                StockAfterUnits = stockAfter,
+                Notes = $"Reversão automática de estoque da produção {printJob.SourceFileName} ({quantity} un.).",
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+
+        printJob.StockCreditedAt = null;
+        printJob.StockCreditedProductId = null;
+        printJob.StockCreditedUnits = null;
+    }
+
+    private async Task<PrintJobStockResult> TryApplyProductStockCreditAsync(
+        PrintJob printJob,
+        Guid? productId,
+        int unitsProduced,
+        string status)
+    {
+        if (!string.Equals(status, PrintJobStatus.Completed, StringComparison.OrdinalIgnoreCase))
+        {
+            return PrintJobStockResult.Success;
+        }
+
+        if (productId is null)
+        {
+            return PrintJobStockResult.Success;
+        }
+
+        if (unitsProduced <= 0)
+        {
+            return PrintJobStockResult.Failure(
+                nameof(PrintJob.UnitsProduced),
+                "Informe as unidades produzidas para concluir e creditar estoque do produto.");
+        }
+
+        var product = await _context.Products
+            .FirstOrDefaultAsync(product => product.Id == productId.Value);
+
+        if (product is null)
+        {
+            return PrintJobStockResult.Failure(
+                nameof(PrintJob.ProductId),
+                "Produto não encontrado para creditar estoque.");
+        }
+
+        product.StockQuantity ??= 0;
+
+        var stockBefore = product.StockQuantity.Value;
+        var stockAfter = stockBefore + unitsProduced;
+
+        product.StockQuantity = stockAfter;
+        _context.ProductStockMovements.Add(new ProductStockMovement
+        {
+            ProductId = product.Id,
+            PrintJobId = printJob.Id,
+            MovementType = "PrintJobCompleted",
+            QuantityUnits = unitsProduced,
+            StockBeforeUnits = stockBefore,
+            StockAfterUnits = stockAfter,
+            Notes = $"Crédito automático de estoque pela produção {printJob.SourceFileName} ({unitsProduced} un.).",
+            CreatedAt = DateTime.UtcNow
+        });
+
+        printJob.StockCreditedAt = DateTime.UtcNow;
+        printJob.StockCreditedProductId = product.Id;
+        printJob.StockCreditedUnits = unitsProduced;
 
         return PrintJobStockResult.Success;
     }

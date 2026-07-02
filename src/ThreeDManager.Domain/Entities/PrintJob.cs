@@ -35,6 +35,10 @@ public class PrintJob
     public DateTime? StockDeductedAt {get; set; }
     public Guid? StockDeductedMaterialId {get; set; }
     public decimal? StockDeductedGrams {get; set; }
+
+    public DateTime? StockCreditedAt {get; set; }
+    public Guid? StockCreditedProductId {get; set; }
+    public int? StockCreditedUnits {get; set; }
     public string Status {get; set; } = PrintJobStatus.Imported;
     public DateTime CreatedAt {get; set; } = DateTime.UtcNow;
 }

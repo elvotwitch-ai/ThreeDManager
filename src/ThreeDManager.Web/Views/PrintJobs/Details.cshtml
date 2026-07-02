@@ -5,6 +5,7 @@
 @{
     ViewData["Title"] = "Detalhes da produção";
     var stockMovement = ViewBag.StockMovement as MaterialStockMovement;
+    var productStockMovement = ViewBag.ProductStockMovement as ProductStockMovement;
     var returnTo = ViewData["ReturnTo"] as string;
     var materialCostPerKg = ViewBag.MaterialCostPerKg as decimal?;
     var printerCostPerHour = ViewBag.PrinterCostPerHour as decimal?;
@@ -252,6 +253,18 @@
                 }
             </dd>
 
+            <dt class="col-sm-3">Crédito de estoque do produto</dt>
+            <dd class="col-sm-9">
+                @if (Model.StockCreditedAt.HasValue && Model.StockCreditedUnits.HasValue)
+                {
+                    <span>@Model.StockCreditedUnits.Value un. em @Model.StockCreditedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                }
+                else
+                {
+                    <span class="text-muted">Não realizado</span>
+                }
+            </dd>
+
             <dt class="col-sm-3">Status da produção</dt>
             <dd class="col-sm-9">
                 <span class="badge @PrintJobStatusPresentation.GetBadgeClass(Model.Status)">
@@ -310,6 +323,56 @@
 
                 <dt class="col-sm-3">Observações</dt>
                 <dd class="col-sm-9">@(string.IsNullOrWhiteSpace(stockMovement.Notes) ? "Sem observações" : stockMovement.Notes)</dd>
+            </dl>
+        }
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <strong>Movimentação de estoque de produto vinculada</strong>
+    </div>
+
+    <div class="card-body">
+        @if (productStockMovement is null)
+        {
+            <div class="alert alert-info mb-0">
+                Nenhuma movimentação de estoque de produto registrada para esta produção.
+            </div>
+        }
+        else
+        {
+            var productMovementLabel = productStockMovement.MovementType switch
+            {
+                "PrintJobCompleted" => "Crédito automático",
+                "PrintJobStockCreditReverted" => "Reversão automática",
+                "ManualAdjustment" => "Ajuste manual",
+                _ => productStockMovement.MovementType
+            };
+
+            <dl class="row mb-0">
+                <dt class="col-sm-3">Tipo</dt>
+                <dd class="col-sm-9">@productMovementLabel</dd>
+
+                <dt class="col-sm-3">Quantidade</dt>
+                <dd class="col-sm-9">
+                    <span class="@(productStockMovement.QuantityUnits < 0 ? "text-danger" : "text-success") fw-semibold">
+                        @(productStockMovement.QuantityUnits > 0 ? "+" : string.Empty)@productStockMovement.QuantityUnits un.
+                    </span>
+                </dd>
+
+                <dt class="col-sm-3">Antes</dt>
+                <dd class="col-sm-9">
+                    @(productStockMovement.StockBeforeUnits.HasValue ? $"{productStockMovement.StockBeforeUnits.Value} un." : "N/A")
+                </dd>
+
+                <dt class="col-sm-3">Depois</dt>
+                <dd class="col-sm-9">
+                    @(productStockMovement.StockAfterUnits.HasValue ? $"{productStockMovement.StockAfterUnits.Value} un." : "N/A")
+                </dd>
+
+                <dt class="col-sm-3">Observações</dt>
+                <dd class="col-sm-9">@(string.IsNullOrWhiteSpace(productStockMovement.Notes) ? "Sem observações" : productStockMovement.Notes)</dd>
             </dl>
         }
     </div>

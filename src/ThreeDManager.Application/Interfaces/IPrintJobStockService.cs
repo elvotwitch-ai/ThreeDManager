@@ -10,7 +10,9 @@ public interface IPrintJobStockService
         PrintJob existingPrintJob,
         Guid? newMaterialId,
         decimal? newFilamentUsedGrams,
-        string newStatus);
+        string newStatus,
+        Guid? newProductId,
+        int newUnitsProduced);
 
     Task RestoreForDeletedPrintJobAsync(PrintJob printJob);
 }

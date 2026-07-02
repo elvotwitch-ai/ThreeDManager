@@ -104,6 +104,11 @@ public class PrintJobsController : Controller
             .Where(movement => movement.PrintJobId == printJob.Id)
             .OrderByDescending(movement => movement.CreatedAt)
             .FirstOrDefaultAsync();
+
+        ViewBag.ProductStockMovement = await _context.ProductStockMovements
+            .Where(movement => movement.PrintJobId == printJob.Id)
+            .OrderByDescending(movement => movement.CreatedAt)
+            .FirstOrDefaultAsync();
         ViewData["ReturnTo"] = NormalizeReturnTo(returnTo);
 
         return View(printJob);
@@ -166,7 +171,9 @@ public class PrintJobsController : Controller
             existingPrintJob,
             printJob.MaterialId,
             printJob.FilamentUsedGrams,
-            printJob.Status);
+            printJob.Status,
+            printJob.ProductId,
+            printJob.UnitsProduced);
 
         existingPrintJob.ProductId = printJob.ProductId;
         existingPrintJob.PrinterId = printJob.PrinterId;
