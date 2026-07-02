@@ -28,6 +28,10 @@ public class PrintJob
     [Range(0, double.MaxValue, ErrorMessage = "O custo de embalagem não pode ser negativo.")]
     public decimal? PackagingCost {get; set; }
     public decimal? CalculatedMaterialCost {get; set; }
+
+    [Range(0, int.MaxValue, ErrorMessage = "As unidades produzidas não podem ser negativas.")]
+    public int UnitsProduced {get; set; } = 1;
+
     public DateTime? StockDeductedAt {get; set; }
     public Guid? StockDeductedMaterialId {get; set; }
     public decimal? StockDeductedGrams {get; set; }

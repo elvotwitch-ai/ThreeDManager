@@ -177,6 +177,7 @@ public class PrintJobsController : Controller
         existingPrintJob.ActualTimeMinutes = printJob.ActualTimeMinutes;
         existingPrintJob.ReportedCost = printJob.ReportedCost;
         existingPrintJob.PackagingCost = printJob.PackagingCost;
+        existingPrintJob.UnitsProduced = printJob.UnitsProduced;
         existingPrintJob.CalculatedMaterialCost = await CalculateMaterialCostAsync(
             printJob.MaterialId,
             printJob.FilamentUsedGrams);

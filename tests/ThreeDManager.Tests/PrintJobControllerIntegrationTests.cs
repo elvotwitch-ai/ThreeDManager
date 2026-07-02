@@ -3249,6 +3249,133 @@ public class PrintJobControllerIntegrationTests
         Assert.DoesNotContain(">Canceled<", html);
     }
 
+    [Fact]
+    public async Task EditPrintJob_PersistsAndRendersUnitsProduced_OnDetailsAndIndex()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        var printJobId = Guid.NewGuid();
+        await factory.SeedAsync(async context =>
+        {
+            context.PrintJobs.Add(new PrintJob
+            {
+                Id = printJobId,
+                ProductId = ids.ProductId,
+                PrinterId = ids.PrinterId,
+                MaterialId = ids.MaterialId,
+                SourceFileName = "units-produced.gcode",
+                Status = PrintJobStatus.Planned,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var getResponse = await client.GetAsync($"/PrintJobs/Edit/{printJobId}");
+        var getHtml = WebUtility.HtmlDecode(await getResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+        Assert.Contains("Unidades produzidas", getHtml);
+
+        var token = ExtractAntiForgeryToken(await getResponse.Content.ReadAsStringAsync());
+        var postResponse = await client.PostAsync(
+            $"/PrintJobs/Edit/{printJobId}",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = token,
+                ["Id"] = printJobId.ToString(),
+                ["ProductId"] = ids.ProductId.ToString(),
+                ["PrinterId"] = ids.PrinterId.ToString(),
+                ["MaterialId"] = ids.MaterialId.ToString(),
+                ["PrintImportId"] = "",
+                ["SourceFileName"] = "units-produced.gcode",
+                ["CreatedAt"] = "2026-06-19T02:00:00Z",
+                ["FilamentUsedGrams"] = "5.00",
+                ["Status"] = PrintJobStatus.Completed,
+                ["UnitsProduced"] = "4"
+            }));
+
+        Assert.Equal(HttpStatusCode.Redirect, postResponse.StatusCode);
+
+        using var verifyScope = factory.Services.CreateScope();
+        var context = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var printJob = await context.PrintJobs.SingleAsync(printJob => printJob.Id == printJobId);
+        Assert.Equal(4, printJob.UnitsProduced);
+
+        var detailsResponse = await client.GetAsync($"/PrintJobs/Details/{printJobId}");
+        var detailsHtml = WebUtility.HtmlDecode(await detailsResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        Assert.Contains("Unidades produzidas", detailsHtml);
+        Assert.Contains("<dd class=\"col-sm-9\">4</dd>", detailsHtml);
+
+        var indexResponse = await client.GetAsync("/PrintJobs");
+        var indexHtml = WebUtility.HtmlDecode(await indexResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, indexResponse.StatusCode);
+        Assert.Contains("Unidades", indexHtml);
+        Assert.Contains("<td>4</td>", indexHtml);
+    }
+
+    [Fact]
+    public async Task CreatePrintJob_FromImport_PersistsUnitsProduced_DefaultingToOne()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        var importId = Guid.NewGuid();
+        await factory.SeedAsync(async context =>
+        {
+            context.PrintImports.Add(new PrintImport
+            {
+                Id = importId,
+                FileName = "units-produced-import.gcode",
+                FileType = "gcode",
+                ParsedDataJson = """
+                {"filamentUsedGrams":12.45,"filamentUsedMeters":1.23,"estimatedTimeMinutes":60,"reportedCost":2.5,"materialType":"PLA","warnings":[]}
+                """,
+                Status = PrintImportStatus.Parsed,
+                ImportedAt = DateTime.UtcNow
+            });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+        var getResponse = await client.GetAsync($"/PrintImports/CreatePrintJob/{importId}");
+        var getHtml = WebUtility.HtmlDecode(await getResponse.Content.ReadAsStringAsync());
+        Assert.Contains("Unidades produzidas", getHtml);
+
+        var token = ExtractAntiForgeryToken(await getResponse.Content.ReadAsStringAsync());
+        var form = new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = token,
+            ["ImportId"] = importId.ToString(),
+            ["FileName"] = "units-produced-import.gcode",
+            ["ParsedMaterialType"] = "PLA",
+            ["ProductId"] = ids.ProductId.ToString(),
+            ["PrinterId"] = ids.PrinterId.ToString(),
+            ["MaterialId"] = ids.MaterialId.ToString(),
+            ["FilamentUsedGrams"] = "12.45",
+            ["FilamentUsedMeters"] = "1.23",
+            ["EstimatedTimeMinutes"] = "60",
+            ["ActualTimeMinutes"] = "",
+            ["ReportedCost"] = "2.50",
+            ["Status"] = "Completed"
+        };
+
+        var postResponse = await client.PostAsync(
+            "/PrintImports/CreatePrintJob",
+            new FormUrlEncodedContent(form));
+
+        Assert.Equal(HttpStatusCode.Redirect, postResponse.StatusCode);
+
+        using var verifyScope = factory.Services.CreateScope();
+        var context = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var printJob = await context.PrintJobs.SingleAsync(printJob => printJob.PrintImportId == importId);
+        Assert.Equal(1, printJob.UnitsProduced);
+    }
+
     private static async Task<(Guid MaterialId, Guid ProductId, Guid PrinterId)> SeedCommonAsync(
         ThreeDManagerWebFactory factory,
         decimal stockGrams = 1000m)

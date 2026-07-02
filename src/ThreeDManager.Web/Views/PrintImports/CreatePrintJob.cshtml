@@ -120,6 +120,12 @@
             <label asp-for="Status" class="form-label">Status da produção</label>
             <select asp-for="Status" asp-items="Model.StatusOptions" class="form-select"></select>
         </div>
+
+        <div class="col-md-4 mb-3">
+            <label asp-for="UnitsProduced" class="form-label">Unidades produzidas</label>
+            <input asp-for="UnitsProduced" class="form-control" type="number" />
+            <span asp-validation-for="UnitsProduced" class="text-danger"></span>
+        </div>
     </div>
 
     <div class="alert alert-light border" id="estimatedTotalProductionCostHint">

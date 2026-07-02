@@ -356,6 +356,7 @@ public class PrintImportsController : Controller
             ActualTimeMinutes = viewModel.ActualTimeMinutes,
             ReportedCost = viewModel.ReportedCost,
             PackagingCost = viewModel.PackagingCost,
+            UnitsProduced = viewModel.UnitsProduced,
             CalculatedMaterialCost = await CalculateMaterialCostAsync(viewModel.MaterialId, viewModel.FilamentUsedGrams),
             Status = viewModel.Status,
             CreatedAt = DateTime.UtcNow

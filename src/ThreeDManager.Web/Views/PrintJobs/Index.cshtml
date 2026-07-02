@@ -42,6 +42,7 @@ else
                 <th>Arquivo</th>
                 <th>Filamento</th>
                 <th>Tempo estimado</th>
+                <th>Unidades</th>
                 <th>Custo calculado do material</th>
                 <th>Custo de embalagem</th>
                 <th>Custo de máquina estimado</th>
@@ -92,6 +93,7 @@ else
                             <span class="text-muted">Não informado</span>
                         }
                     </td>
+                    <td>@job.UnitsProduced</td>
                     <td>
                         @if (job.CalculatedMaterialCost.HasValue)
                         {
