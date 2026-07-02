@@ -1674,6 +1674,104 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task ProductAdjustStock_AddRemoveAndSet_UpdatesProductStockAndRecordsMovement()
+    {
+        var scenarios = new[]
+        {
+            new { InitialStock = 10, AdjustmentType = "Add", Quantity = 5, ExpectedStock = 15, ExpectedMovement = 5 },
+            new { InitialStock = 10, AdjustmentType = "Remove", Quantity = 3, ExpectedStock = 7, ExpectedMovement = -3 },
+            new { InitialStock = 12, AdjustmentType = "Set", Quantity = 20, ExpectedStock = 20, ExpectedMovement = 8 }
+        };
+
+        foreach (var scenario in scenarios)
+        {
+            using var factory = new ThreeDManagerWebFactory();
+            var ids = await SeedCommonAsync(factory);
+            await factory.SeedAsync(async context =>
+            {
+                var product = await context.Products.SingleAsync(product => product.Id == ids.ProductId);
+                product.StockQuantity = scenario.InitialStock;
+                await context.SaveChangesAsync();
+            });
+            using var client = factory.CreateTestClient();
+
+            var getResponse = await client.GetAsync($"/Products/AdjustStock/{ids.ProductId}");
+            Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+
+            var token = ExtractAntiForgeryToken(await getResponse.Content.ReadAsStringAsync());
+            var postResponse = await client.PostAsync(
+                "/Products/AdjustStock",
+                new FormUrlEncodedContent(new Dictionary<string, string>
+                {
+                    ["__RequestVerificationToken"] = token,
+                    ["ProductId"] = ids.ProductId.ToString(),
+                    ["ProductName"] = "Product A",
+                    ["CurrentStockQuantity"] = scenario.InitialStock.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    ["AdjustmentType"] = scenario.AdjustmentType,
+                    ["QuantityUnits"] = scenario.Quantity.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    ["Notes"] = $"Operação {scenario.AdjustmentType}"
+                }));
+
+            Assert.Equal(HttpStatusCode.Redirect, postResponse.StatusCode);
+            Assert.Equal($"/Products/Details/{ids.ProductId}", postResponse.Headers.Location?.ToString());
+
+            using var verifyScope = factory.Services.CreateScope();
+            var context = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var product = await context.Products.SingleAsync(product => product.Id == ids.ProductId);
+            var movement = await context.ProductStockMovements.SingleAsync(movement => movement.ProductId == ids.ProductId);
+
+            Assert.Equal(scenario.ExpectedStock, product.StockQuantity);
+            Assert.Equal("ManualAdjustment", movement.MovementType);
+            Assert.Equal(scenario.ExpectedMovement, movement.QuantityUnits);
+            Assert.Equal(scenario.InitialStock, movement.StockBeforeUnits);
+            Assert.Equal(scenario.ExpectedStock, movement.StockAfterUnits);
+        }
+    }
+
+    [Fact]
+    public async Task ProductAdjustStock_RemoveRejects_WhenItWouldMakeStockNegative()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+        await factory.SeedAsync(async context =>
+        {
+            var product = await context.Products.SingleAsync(product => product.Id == ids.ProductId);
+            product.StockQuantity = 2;
+            await context.SaveChangesAsync();
+        });
+        using var client = factory.CreateTestClient();
+
+        var getResponse = await client.GetAsync($"/Products/AdjustStock/{ids.ProductId}");
+        Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+
+        var token = ExtractAntiForgeryToken(await getResponse.Content.ReadAsStringAsync());
+        var postResponse = await client.PostAsync(
+            "/Products/AdjustStock",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = token,
+                ["ProductId"] = ids.ProductId.ToString(),
+                ["ProductName"] = "Product A",
+                ["CurrentStockQuantity"] = "2",
+                ["AdjustmentType"] = "Remove",
+                ["QuantityUnits"] = "5",
+                ["Notes"] = "Teste de proteção"
+            }));
+
+        var responseHtml = WebUtility.HtmlDecode(await postResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, postResponse.StatusCode);
+        Assert.Contains("A remoção não pode deixar o estoque negativo.", responseHtml);
+
+        using var verifyScope = factory.Services.CreateScope();
+        var context = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var product = await context.Products.SingleAsync(product => product.Id == ids.ProductId);
+        var movements = await context.ProductStockMovements.Where(movement => movement.ProductId == ids.ProductId).ToListAsync();
+
+        Assert.Equal(2, product.StockQuantity);
+        Assert.Empty(movements);
+    }
+
+    [Fact]
     public async Task MaterialEdit_RejectsNegativeStock_WithoutPersistingChangeOrMovement()
     {
         using var factory = new ThreeDManagerWebFactory();

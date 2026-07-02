@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ThreeDManager.Domain.Entities;
 using ThreeDManager.Infrastructure.Data;
+using ThreeDManager.Web.ViewModels;
 
 namespace ThreeDManager.Web.Controllers;
 
@@ -115,6 +116,101 @@ public class ProductsController : Controller
         await _context.SaveChangesAsync();
 
         return RedirectToAction(nameof(Index));
+    }
+
+    public async Task<IActionResult> AdjustStock(Guid? id)
+    {
+        if (id is null)
+        {
+            return NotFound();
+        }
+
+        var product = await _context.Products.FindAsync(id);
+
+        if (product is null)
+        {
+            return NotFound();
+        }
+
+        var viewModel = new ProductStockAdjustmentViewModel
+        {
+            ProductId = product.Id,
+            ProductName = product.Name,
+            CurrentStockQuantity = product.StockQuantity
+        };
+
+        return View(viewModel);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AdjustStock(ProductStockAdjustmentViewModel viewModel)
+    {
+        var product = await _context.Products.FindAsync(viewModel.ProductId);
+
+        if (product is null)
+        {
+            return NotFound();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            viewModel.ProductName = product.Name;
+            viewModel.CurrentStockQuantity = product.StockQuantity;
+            return View(viewModel);
+        }
+
+        var stockBefore = product.StockQuantity ?? 0;
+        int stockAfter;
+        int movementQuantity;
+
+        switch (viewModel.AdjustmentType)
+        {
+            case "Add":
+                movementQuantity = viewModel.QuantityUnits;
+                stockAfter = stockBefore + viewModel.QuantityUnits;
+                break;
+            case "Remove":
+                movementQuantity = -viewModel.QuantityUnits;
+                stockAfter = stockBefore - viewModel.QuantityUnits;
+                if (stockAfter < 0)
+                {
+                    ModelState.AddModelError(nameof(viewModel.QuantityUnits), "A remoção não pode deixar o estoque negativo.");
+                    viewModel.ProductName = product.Name;
+                    viewModel.CurrentStockQuantity = product.StockQuantity;
+                    return View(viewModel);
+                }
+                break;
+            case "Set":
+                stockAfter = viewModel.QuantityUnits;
+                movementQuantity = stockAfter - stockBefore;
+                break;
+            default:
+                ModelState.AddModelError(nameof(viewModel.AdjustmentType), "Tipo de ajuste inválido.");
+                viewModel.ProductName = product.Name;
+                viewModel.CurrentStockQuantity = product.StockQuantity;
+                return View(viewModel);
+        }
+
+        product.StockQuantity = stockAfter;
+
+        _context.ProductStockMovements.Add(new ProductStockMovement
+        {
+            ProductId = product.Id,
+            MovementType = "ManualAdjustment",
+            QuantityUnits = movementQuantity,
+            StockBeforeUnits = stockBefore,
+            StockAfterUnits = stockAfter,
+            Notes = string.IsNullOrWhiteSpace(viewModel.Notes)
+                ? $"Ajuste manual de estoque ({(movementQuantity > 0 ? "+" : string.Empty)}{movementQuantity} un.)."
+                : viewModel.Notes.Trim(),
+            CreatedAt = DateTime.UtcNow
+        });
+
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = "Estoque ajustado com sucesso.";
+        return RedirectToAction(nameof(Details), new { id = product.Id });
     }
 
     [HttpPost]

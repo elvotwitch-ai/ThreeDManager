@@ -1,0 +1,77 @@
+@model ThreeDManager.Web.ViewModels.ProductStockAdjustmentViewModel
+
+@{
+    ViewData["Title"] = "Ajustar estoque";
+}
+
+<div class="mb-4">
+    <h1 class="mb-1">Ajustar estoque</h1>
+    <p class="text-muted mb-0">Registre uma entrada, saída ou correção manual de estoque de produtos acabados.</p>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="alert alert-info mb-0">
+            Produto: <strong>@Model.ProductName</strong><br />
+            Estoque atual:
+            <strong>
+                @if (Model.CurrentStockQuantity.HasValue)
+                {
+                    <span>@Model.CurrentStockQuantity.Value un.</span>
+                }
+                else
+                {
+                    <span>0 un.</span>
+                }
+            </strong>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form asp-action="AdjustStock" method="post">
+            @Html.AntiForgeryToken()
+
+            <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+
+            <input type="hidden" asp-for="ProductId" />
+            <input type="hidden" asp-for="ProductName" />
+            <input type="hidden" asp-for="CurrentStockQuantity" />
+
+            <div class="mb-3">
+                <label asp-for="AdjustmentType" class="form-label">Tipo de ajuste</label>
+                <select asp-for="AdjustmentType" class="form-select">
+                    <option value="Add">Adicionar ao estoque</option>
+                    <option value="Remove">Remover do estoque</option>
+                    <option value="Set">Definir estoque exato</option>
+                </select>
+                <span asp-validation-for="AdjustmentType" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="QuantityUnits" class="form-label">Quantidade (un.)</label>
+                <input asp-for="QuantityUnits" class="form-control" type="number" step="1" min="1" />
+                <span asp-validation-for="QuantityUnits" class="text-danger"></span>
+                <div class="form-text">
+                    Para “Definir estoque exato”, informe o novo saldo total em unidades.
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Notes" class="form-label">Observações</label>
+                <textarea asp-for="Notes" class="form-control" rows="4" placeholder="Ex: contagem de inventário, produto danificado, devolução..."></textarea>
+                <span asp-validation-for="Notes" class="text-danger"></span>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Salvar ajuste</button>
+                <a asp-action="Details" asp-route-id="@Model.ProductId" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
