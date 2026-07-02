@@ -56,6 +56,14 @@ public class DashboardController : Controller
             .OrderBy(material => material.CurrentStockGrams)
             .ToListAsync();
 
+        var lowStockProducts = await _context.Products
+            .Where(product =>
+                product.StockQuantity.HasValue
+                && product.MinimumStockQuantity.HasValue
+                && product.StockQuantity.Value <= product.MinimumStockQuantity.Value)
+            .OrderBy(product => product.StockQuantity)
+            .ToListAsync();
+
         var stockMovements = await _context.MaterialStockMovements
             .OrderByDescending(movement => movement.CreatedAt)
             .Take(5)
@@ -151,6 +159,17 @@ public class DashboardController : Controller
                     Name = material.Name,
                     CurrentStockGrams = material.CurrentStockGrams ?? 0,
                     MinimumStockGrams = material.MinimumStockGrams ?? 0
+                })
+                .ToList(),
+
+            LowStockProductsCount = lowStockProducts.Count,
+            LowStockProducts = lowStockProducts
+                .Select(product => new DashboardLowStockProductViewModel
+                {
+                    Id = product.Id,
+                    Name = product.Name,
+                    StockQuantity = product.StockQuantity ?? 0,
+                    MinimumStockQuantity = product.MinimumStockQuantity ?? 0
                 })
                 .ToList(),
 

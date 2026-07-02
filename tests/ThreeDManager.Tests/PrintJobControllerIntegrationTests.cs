@@ -1831,7 +1831,7 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
-    public async Task ProductLowStockAlert_IsShown_OnDetailsAndIndex_WhenBelowMinimum()
+    public async Task ProductLowStockAlert_IsShown_OnDetailsAndIndexAndDashboard_WhenBelowMinimum()
     {
         using var factory = new ThreeDManagerWebFactory();
         var ids = await SeedCommonAsync(factory);
@@ -1871,6 +1871,13 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("Baixo estoque", indexHtml);
         Assert.Contains("3 un.", indexHtml);
         Assert.Contains("10 un.", indexHtml);
+
+        var dashboardResponse = await client.GetAsync("/Dashboard");
+        var dashboardHtml = WebUtility.HtmlDecode(await dashboardResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, dashboardResponse.StatusCode);
+        Assert.Contains("Alertas de estoque de produtos", dashboardHtml);
+        Assert.Contains("Existem <strong>1</strong> produtos em baixo estoque.", dashboardHtml);
+        Assert.Contains("Product A", dashboardHtml);
 
         using var verifyScope = factory.Services.CreateScope();
         var context = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();

@@ -42,6 +42,8 @@ public class DashboardViewModel
 
     public int LowStockMaterialsCount { get; set; }
 
+    public int LowStockProductsCount { get; set; }
+
     public List<DashboardRecentPrintJobViewModel> RecentPrintJobs { get; set; } = new();
 
     public List<DashboardFailedPrintImportViewModel> RecentFailedImports { get; set; } = new();
@@ -49,6 +51,8 @@ public class DashboardViewModel
     public List<DashboardStockMovementViewModel> RecentStockMovements { get; set; } = new();
 
     public List<DashboardLowStockMaterialViewModel> LowStockMaterials { get; set; } = new();
+
+    public List<DashboardLowStockProductViewModel> LowStockProducts { get; set; } = new();
 }
 
 public class DashboardRecentPrintJobViewModel
@@ -119,4 +123,15 @@ public class DashboardLowStockMaterialViewModel
     public decimal CurrentStockGrams { get; set; }
 
     public decimal MinimumStockGrams { get; set; }
+}
+
+public class DashboardLowStockProductViewModel
+{
+    public Guid Id { get; set; }
+
+    public string Name { get; set; } = string.Empty;
+
+    public int StockQuantity { get; set; }
+
+    public int MinimumStockQuantity { get; set; }
 }
