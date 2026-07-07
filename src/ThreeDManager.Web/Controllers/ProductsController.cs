@@ -21,6 +21,16 @@ public class ProductsController : Controller
             .OrderByDescending(product => product.CreatedAt)
             .ToListAsync();
 
+        var productIds = products.Select(product => product.Id).ToList();
+        var latestStockMovements = await _context.ProductStockMovements
+            .Where(movement => productIds.Contains(movement.ProductId))
+            .OrderByDescending(movement => movement.CreatedAt)
+            .ToListAsync();
+
+        ViewBag.LatestStockMovements = latestStockMovements
+            .GroupBy(movement => movement.ProductId)
+            .ToDictionary(group => group.Key, group => group.First());
+
         return View(products);
     }
 

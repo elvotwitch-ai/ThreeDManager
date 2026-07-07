@@ -1724,6 +1724,14 @@ public class PrintJobControllerIntegrationTests
             Assert.Contains($"{scenario.ExpectedStock} un.", detailsHtml);
             Assert.Contains($"Operação {scenario.AdjustmentType}", detailsHtml);
 
+            var indexResponse = await client.GetAsync("/Products");
+            var indexHtml = WebUtility.HtmlDecode(await indexResponse.Content.ReadAsStringAsync());
+            Assert.Equal(HttpStatusCode.OK, indexResponse.StatusCode);
+            Assert.Contains("Movimentação recente", indexHtml);
+            Assert.Contains("Ajuste manual", indexHtml);
+            Assert.Contains($"{(scenario.ExpectedMovement > 0 ? "+" : string.Empty)}{scenario.ExpectedMovement} un.", indexHtml);
+            Assert.Contains($"Operação {scenario.AdjustmentType}", indexHtml);
+
             using var verifyScope = factory.Services.CreateScope();
             var context = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
             var product = await context.Products.SingleAsync(product => product.Id == ids.ProductId);

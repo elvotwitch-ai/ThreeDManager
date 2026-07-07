@@ -1,7 +1,9 @@
 @model IEnumerable<ThreeDManager.Domain.Entities.Product>
+@using ThreeDManager.Domain.Entities
 
 @{
     ViewData["Title"] = "Produtos";
+    var latestStockMovements = ViewBag.LatestStockMovements as Dictionary<Guid, ProductStockMovement> ?? new Dictionary<Guid, ProductStockMovement>();
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -46,6 +48,7 @@ else
                     <th>Estoque</th>
                     <th>Estoque mínimo</th>
                     <th>Status estoque</th>
+                    <th>Movimentação recente</th>
                     <th>Status</th>
                     <th class="text-end">Ações</th>
                 </tr>
@@ -53,6 +56,15 @@ else
             <tbody>
                 @foreach (var product in Model)
                 {
+                    latestStockMovements.TryGetValue(product.Id, out var latestMovement);
+                    var movementLabel = latestMovement?.MovementType switch
+                    {
+                        "PrintJobCompleted" => "Crédito automático",
+                        "PrintJobStockCreditReverted" => "Reversão automática",
+                        "ManualAdjustment" => "Ajuste manual",
+                        _ => latestMovement?.MovementType
+                    };
+
                     <tr>
                         <td class="fw-semibold">@product.Name</td>
                         <td>@(product.Sku ?? "-")</td>
@@ -107,6 +119,29 @@ else
                             else
                             {
                                 <span class="badge bg-secondary">Sem alerta</span>
+                            }
+                        </td>
+                        <td>
+                            @if (latestMovement is null)
+                            {
+                                <span class="badge text-bg-light">Sem histórico</span>
+                            }
+                            else
+                            {
+                                <div class="small fw-semibold @(latestMovement.QuantityUnits < 0 ? "text-danger" : "text-success")">
+                                    @(latestMovement.QuantityUnits > 0 ? "+" : string.Empty)@latestMovement.QuantityUnits un.
+                                </div>
+                                <div class="small text-muted">
+                                    @movementLabel
+                                    @if (latestMovement.CreatedAt != default)
+                                    {
+                                        <span>• @latestMovement.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                                    }
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(latestMovement.Notes))
+                                {
+                                    <div class="small text-muted">@latestMovement.Notes</div>
+                                }
                             }
                         </td>
                         <td>
