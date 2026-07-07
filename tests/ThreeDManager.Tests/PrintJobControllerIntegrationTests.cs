@@ -1715,6 +1715,15 @@ public class PrintJobControllerIntegrationTests
             Assert.Equal(HttpStatusCode.Redirect, postResponse.StatusCode);
             Assert.Equal($"/Products/Details/{ids.ProductId}", postResponse.Headers.Location?.ToString());
 
+            var detailsResponse = await client.GetAsync($"/Products/Details/{ids.ProductId}");
+            var detailsHtml = WebUtility.HtmlDecode(await detailsResponse.Content.ReadAsStringAsync());
+            Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+            Assert.Contains("Movimentações de estoque", detailsHtml);
+            Assert.Contains("Ajuste manual", detailsHtml);
+            Assert.Contains(scenario.ExpectedMovement < 0 ? "text-danger" : "text-success", detailsHtml);
+            Assert.Contains($"{scenario.ExpectedStock} un.", detailsHtml);
+            Assert.Contains($"Operação {scenario.AdjustmentType}", detailsHtml);
+
             using var verifyScope = factory.Services.CreateScope();
             var context = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
             var product = await context.Products.SingleAsync(product => product.Id == ids.ProductId);

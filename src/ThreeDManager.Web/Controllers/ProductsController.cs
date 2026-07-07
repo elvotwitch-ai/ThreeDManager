@@ -39,6 +39,12 @@ public class ProductsController : Controller
             return NotFound();
         }
 
+        ViewBag.StockMovements = await _context.ProductStockMovements
+            .Where(movement => movement.ProductId == product.Id)
+            .OrderByDescending(movement => movement.CreatedAt)
+            .Take(20)
+            .ToListAsync();
+
         return View(product);
     }
 
