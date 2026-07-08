@@ -50,6 +50,8 @@ public class DashboardViewModel
 
     public List<DashboardStockMovementViewModel> RecentStockMovements { get; set; } = new();
 
+    public List<DashboardProductStockMovementViewModel> RecentProductStockMovements { get; set; } = new();
+
     public List<DashboardLowStockMaterialViewModel> LowStockMaterials { get; set; } = new();
 
     public List<DashboardLowStockProductViewModel> LowStockProducts { get; set; } = new();
@@ -108,6 +110,25 @@ public class DashboardStockMovementViewModel
     public decimal? StockBeforeGrams { get; set; }
 
     public decimal? StockAfterGrams { get; set; }
+
+    public string? Notes { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+}
+
+public class DashboardProductStockMovementViewModel
+{
+    public Guid Id { get; set; }
+
+    public string ProductName { get; set; } = string.Empty;
+
+    public string MovementType { get; set; } = string.Empty;
+
+    public int QuantityUnits { get; set; }
+
+    public int? StockBeforeUnits { get; set; }
+
+    public int? StockAfterUnits { get; set; }
 
     public string? Notes { get; set; }
 

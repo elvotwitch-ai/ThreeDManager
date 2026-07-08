@@ -69,6 +69,11 @@ public class DashboardController : Controller
             .Take(5)
             .ToListAsync();
 
+        var productStockMovements = await _context.ProductStockMovements
+            .OrderByDescending(movement => movement.CreatedAt)
+            .Take(5)
+            .ToListAsync();
+
         var totalCalculatedMaterialCost = printJobs.Sum(printJob => printJob.CalculatedMaterialCost ?? 0);
         var totalPackagingCost = printJobs.Sum(printJob => printJob.PackagingCost ?? 0);
 
@@ -226,6 +231,22 @@ public class DashboardController : Controller
                     QuantityGrams = movement.QuantityGrams,
                     StockBeforeGrams = movement.StockBeforeGrams,
                     StockAfterGrams = movement.StockAfterGrams,
+                    Notes = movement.Notes,
+                    CreatedAt = movement.CreatedAt
+                })
+                .ToList(),
+
+            RecentProductStockMovements = productStockMovements
+                .Select(movement => new DashboardProductStockMovementViewModel
+                {
+                    Id = movement.Id,
+                    ProductName = productNames.TryGetValue(movement.ProductId, out var movementProductName)
+                        ? movementProductName
+                        : "Produto não encontrado",
+                    MovementType = movement.MovementType,
+                    QuantityUnits = movement.QuantityUnits,
+                    StockBeforeUnits = movement.StockBeforeUnits,
+                    StockAfterUnits = movement.StockAfterUnits,
                     Notes = movement.Notes,
                     CreatedAt = movement.CreatedAt
                 })
