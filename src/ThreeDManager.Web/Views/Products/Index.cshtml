@@ -48,6 +48,7 @@ else
                     <th>Estoque</th>
                     <th>Estoque mínimo</th>
                     <th>Status estoque</th>
+                    <th>Margem alvo</th>
                     <th>Movimentação recente</th>
                     <th>Status</th>
                     <th class="text-end">Ações</th>
@@ -119,6 +120,16 @@ else
                             else
                             {
                                 <span class="badge bg-secondary">Sem alerta</span>
+                            }
+                        </td>
+                        <td>
+                            @if (product.TargetMarginPercentage.HasValue)
+                            {
+                                <span>@product.TargetMarginPercentage.Value.ToString("N1")%</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Não definida</span>
                             }
                         </td>
                         <td>

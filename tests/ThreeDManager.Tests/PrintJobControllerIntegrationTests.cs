@@ -1980,6 +1980,7 @@ public class PrintJobControllerIntegrationTests
                 ["Description"] = "Produto de teste",
                 ["StockQuantity"] = "3",
                 ["MinimumStockQuantity"] = "10",
+                ["TargetMarginPercentage"] = "25",
                 ["IsActive"] = "true",
                 ["CreatedAt"] = "2026-06-30T02:00:00Z"
             }));
@@ -1998,6 +1999,8 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("Baixo estoque", indexHtml);
         Assert.Contains("3 un.", indexHtml);
         Assert.Contains("10 un.", indexHtml);
+        Assert.Contains("Margem alvo", indexHtml);
+        Assert.Contains("25,0%", indexHtml);
 
         var dashboardResponse = await client.GetAsync("/Dashboard");
         var dashboardHtml = WebUtility.HtmlDecode(await dashboardResponse.Content.ReadAsStringAsync());
@@ -2014,6 +2017,7 @@ public class PrintJobControllerIntegrationTests
 
         Assert.Equal(3, product.StockQuantity);
         Assert.Equal(10, product.MinimumStockQuantity);
+        Assert.Equal(25m, product.TargetMarginPercentage);
     }
 
     [Fact]
