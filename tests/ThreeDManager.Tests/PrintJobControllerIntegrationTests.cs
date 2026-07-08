@@ -3166,6 +3166,9 @@ public class PrintJobControllerIntegrationTests
             var printer = await context.Printers.FirstAsync(printer => printer.Id == ids.PrinterId);
             printer.CostPerHour = 5.00m;
 
+            var product = await context.Products.FirstAsync(product => product.Id == ids.ProductId);
+            product.TargetMarginPercentage = 50.0m;
+
             context.PrintJobs.Add(new PrintJob
             {
                 Id = printJobId,
@@ -3190,10 +3193,14 @@ public class PrintJobControllerIntegrationTests
 
         Assert.Equal(HttpStatusCode.OK, editResponse.StatusCode);
         Assert.Contains("Custo total estimado da produção", editHtml);
+        Assert.Contains("Preço de venda sugerido", editHtml);
         Assert.Contains("data-cost-per-gram=\"0.08\"", editHtml);
         Assert.Contains("data-cost-per-hour=\"5.00\"", editHtml);
+        Assert.Contains("data-target-margin-percentage=\"50.0\"", editHtml);
         Assert.Contains("materialCost + machineCost + packagingAmount", editHtml);
+        Assert.Contains("totalProductionCost * (1 + (targetMarginPercentage / 100))", editHtml);
         Assert.Contains("id=\"PackagingCost\"", editHtml);
+        Assert.Contains("productSelect.addEventListener(\"change\", updateTotalProductionCostHint)", editHtml);
         Assert.Contains("actualTimeMinutes.addEventListener(\"input\", updateTotalProductionCostHint)", editHtml);
         Assert.Contains("packagingCost.addEventListener(\"input\", updateTotalProductionCostHint)", editHtml);
     }
