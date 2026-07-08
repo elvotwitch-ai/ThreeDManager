@@ -1735,6 +1735,8 @@ public class PrintJobControllerIntegrationTests
             var dashboardResponse = await client.GetAsync("/Dashboard");
             var dashboardHtml = WebUtility.HtmlDecode(await dashboardResponse.Content.ReadAsStringAsync());
             Assert.Equal(HttpStatusCode.OK, dashboardResponse.StatusCode);
+            Assert.Contains("data-dashboard-inventory-movement-grid", dashboardHtml);
+            Assert.Contains("Movimentações de estoque recentes", dashboardHtml);
             Assert.Contains("Movimentações de estoque de produtos recentes", dashboardHtml);
             Assert.Contains("Product A", dashboardHtml);
             Assert.Contains("Ajuste manual", dashboardHtml);
