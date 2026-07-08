@@ -9,6 +9,7 @@
     var printers = ViewBag.Printers as Dictionary<Guid, string> ?? new Dictionary<Guid, string>();
     var printerCostPerHour = ViewBag.PrinterCostPerHour as Dictionary<Guid, decimal?> ?? new Dictionary<Guid, decimal?>();
     var productSalePriceById = ViewBag.ProductSalePriceById as Dictionary<Guid, decimal?> ?? new Dictionary<Guid, decimal?>();
+    var productTargetMarginPercentageById = ViewBag.ProductTargetMarginPercentageById as Dictionary<Guid, decimal?> ?? new Dictionary<Guid, decimal?>();
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -48,6 +49,7 @@ else
                 <th>Custo de máquina estimado</th>
                 <th>Custo total estimado da produção</th>
                 <th>Margem estimada</th>
+                <th>Preço de venda sugerido</th>
                 <th>Diferença de custo</th>
                 <th>Status da produção</th>
                 <th class="text-end">Ações</th>
@@ -184,6 +186,29 @@ else
                         else if (!productSalePrice.HasValue)
                         {
                             <span class="text-muted">Sem preço de venda</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Não disponível</span>
+                        }
+                    </td>
+                    <td>
+                        @{
+                            decimal? productTargetMarginPercentage = job.ProductId.HasValue && productTargetMarginPercentageById.TryGetValue(job.ProductId.Value, out var targetMarginValue)
+                                ? targetMarginValue
+                                : null;
+                            decimal? suggestedSalePrice = (estimatedTotalProductionCost.HasValue && productTargetMarginPercentage.HasValue)
+                                ? Math.Round(estimatedTotalProductionCost.Value * (1 + (productTargetMarginPercentage.Value / 100m)), 2)
+                                : (decimal?)null;
+                        }
+                        @if (suggestedSalePrice.HasValue)
+                        {
+                            <span class="fw-semibold">@suggestedSalePrice.Value.ToString("C")</span>
+                            <small class="text-muted d-block">margem alvo @productTargetMarginPercentage!.Value.ToString("N1")%</small>
+                        }
+                        else if (!productTargetMarginPercentage.HasValue)
+                        {
+                            <span class="text-muted">Sem margem alvo</span>
                         }
                         else
                         {

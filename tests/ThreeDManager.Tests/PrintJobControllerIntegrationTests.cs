@@ -3031,6 +3031,7 @@ public class PrintJobControllerIntegrationTests
 
             var product = await context.Products.FirstAsync(product => product.Id == ids.ProductId);
             product.SalePrice = 20.00m;
+            product.TargetMarginPercentage = 50.0m;
 
             context.PrintJobs.Add(new PrintJob
             {
@@ -3064,6 +3065,10 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("R$ 6,50", indexHtml);
         Assert.Contains("32,5%", indexHtml);
         Assert.Contains("lucro estimado", indexHtml);
+        // suggested sale price = R$ 13,50 * (1 + 50/100) = R$ 20,25.
+        Assert.Contains("Preço de venda sugerido", indexHtml);
+        Assert.Contains("R$ 20,25", indexHtml);
+        Assert.Contains("margem alvo 50,0%", indexHtml);
     }
 
     [Fact]
