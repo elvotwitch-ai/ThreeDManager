@@ -2003,6 +2003,8 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("Alertas de estoque de produtos", dashboardHtml);
         Assert.Contains("Existem <strong>1</strong> produtos em baixo estoque.", dashboardHtml);
         Assert.Contains("Product A", dashboardHtml);
+        Assert.Contains($"href=\"/Products/AdjustStock/{ids.ProductId}\"", dashboardHtml);
+        Assert.Contains("Ajustar estoque", dashboardHtml);
 
         using var verifyScope = factory.Services.CreateScope();
         var context = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
