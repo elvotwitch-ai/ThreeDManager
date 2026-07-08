@@ -2854,6 +2854,90 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task PrintJobsDetails_ShowsSuggestedSalePrice_FromProductTargetMarginPercentageAndTotalProductionCost()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        var printJobId = Guid.NewGuid();
+
+        await factory.SeedAsync(async context =>
+        {
+            var printer = await context.Printers.FirstAsync(printer => printer.Id == ids.PrinterId);
+            printer.CostPerHour = 5.00m;
+
+            var product = await context.Products.FirstAsync(product => product.Id == ids.ProductId);
+            product.TargetMarginPercentage = 50.0m;
+
+            context.PrintJobs.Add(new PrintJob
+            {
+                Id = printJobId,
+                ProductId = ids.ProductId,
+                PrinterId = ids.PrinterId,
+                MaterialId = ids.MaterialId,
+                SourceFileName = "suggested-price.gcode",
+                EstimatedTimeMinutes = 120,
+                CalculatedMaterialCost = 1.00m,
+                PackagingCost = 2.50m,
+                Status = PrintJobStatus.Completed,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var detailsResponse = await client.GetAsync($"/PrintJobs/Details/{printJobId}");
+        var detailsHtml = WebUtility.HtmlDecode(await detailsResponse.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        Assert.Contains("Preço de venda sugerido", detailsHtml);
+        // total cost R$ 13,50 (material R$ 1,00 + máquina R$ 10,00 + embalagem R$ 2,50); suggested price = R$ 13,50 × 1,5 = R$ 20,25.
+        Assert.Contains("R$ 20,25", detailsHtml);
+        Assert.Contains("margem alvo 50,0%", detailsHtml);
+    }
+
+    [Fact]
+    public async Task PrintJobsDetails_ShowsMissingTargetMarginHint_ForSuggestedPrice_WhenProductHasNoTargetMargin()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        var printJobId = Guid.NewGuid();
+
+        await factory.SeedAsync(async context =>
+        {
+            var printer = await context.Printers.FirstAsync(printer => printer.Id == ids.PrinterId);
+            printer.CostPerHour = 5.00m;
+
+            context.PrintJobs.Add(new PrintJob
+            {
+                Id = printJobId,
+                ProductId = ids.ProductId,
+                PrinterId = ids.PrinterId,
+                MaterialId = ids.MaterialId,
+                SourceFileName = "no-target-margin.gcode",
+                EstimatedTimeMinutes = 120,
+                CalculatedMaterialCost = 1.00m,
+                Status = PrintJobStatus.Completed,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var detailsResponse = await client.GetAsync($"/PrintJobs/Details/{printJobId}");
+        var detailsHtml = WebUtility.HtmlDecode(await detailsResponse.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        Assert.Contains("Preço de venda sugerido", detailsHtml);
+        Assert.Contains("Produto sem margem alvo informada", detailsHtml);
+    }
+
+    [Fact]
     public async Task PrintJobsDetails_ShowsMissingSalePriceHint_ForMarginWhenProductHasNoSalePrice()
     {
         using var factory = new ThreeDManagerWebFactory();

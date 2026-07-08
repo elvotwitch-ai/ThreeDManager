@@ -22,6 +22,9 @@ public class Product
     [Range(0, int.MaxValue, ErrorMessage = "O estoque mínimo não pode ser negativo.")]
     public int? MinimumStockQuantity {get; set; }
 
+    [Range(0, double.MaxValue, ErrorMessage = "A margem alvo (%) não pode ser negativa.")]
+    public decimal? TargetMarginPercentage {get; set; }
+
     public bool IsActive {get; set; } = true;
     public DateTime CreatedAt {get; set; } = DateTime.UtcNow;
     }

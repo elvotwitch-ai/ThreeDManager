@@ -127,6 +127,7 @@ public class ProductsController : Controller
         existingProduct.SalePrice = product.SalePrice;
         existingProduct.StockQuantity = product.StockQuantity;
         existingProduct.MinimumStockQuantity = product.MinimumStockQuantity;
+        existingProduct.TargetMarginPercentage = product.TargetMarginPercentage;
         existingProduct.IsActive = product.IsActive;
 
         await _context.SaveChangesAsync();

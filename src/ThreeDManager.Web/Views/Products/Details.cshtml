@@ -62,6 +62,18 @@
                 }
             </dd>
 
+            <dt class="col-sm-3">Margem alvo</dt>
+            <dd class="col-sm-9">
+                @if (Model.TargetMarginPercentage.HasValue)
+                {
+                    <span>@Model.TargetMarginPercentage.Value.ToString("N1")%</span>
+                }
+                else
+                {
+                    <span class="text-muted">Não definida</span>
+                }
+            </dd>
+
             <dt class="col-sm-3">Status estoque</dt>
             <dd class="col-sm-9">
                 @{

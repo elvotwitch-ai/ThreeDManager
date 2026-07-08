@@ -10,6 +10,7 @@
     var materialCostPerKg = ViewBag.MaterialCostPerKg as decimal?;
     var printerCostPerHour = ViewBag.PrinterCostPerHour as decimal?;
     var productSalePrice = ViewBag.ProductSalePrice as decimal?;
+    var productTargetMarginPercentage = ViewBag.ProductTargetMarginPercentage as decimal?;
     var machineTimeMinutes = Model.ActualTimeMinutes ?? Model.EstimatedTimeMinutes;
     decimal? estimatedMachineCost = (printerCostPerHour.HasValue && machineTimeMinutes.HasValue)
         ? Math.Round((machineTimeMinutes.Value / 60m) * printerCostPerHour.Value, 2)
@@ -22,6 +23,9 @@
         : (decimal?)null;
     decimal? estimatedMarginPercentage = (estimatedMargin.HasValue && productSalePrice > 0m)
         ? Math.Round((estimatedMargin.Value / productSalePrice.Value) * 100m, 1)
+        : (decimal?)null;
+    decimal? suggestedSalePrice = (estimatedTotalProductionCost.HasValue && productTargetMarginPercentage.HasValue)
+        ? Math.Round(estimatedTotalProductionCost.Value * (1 + (productTargetMarginPercentage.Value / 100m)), 2)
         : (decimal?)null;
 }
 
@@ -214,6 +218,25 @@
                 else if (!productSalePrice.HasValue)
                 {
                     <span class="text-muted">Produto sem preço de venda informado</span>
+                }
+                else
+                {
+                    <span class="text-muted">Não disponível</span>
+                }
+            </dd>
+
+            <dt class="col-sm-3">Preço de venda sugerido</dt>
+            <dd class="col-sm-9">
+                @if (suggestedSalePrice.HasValue)
+                {
+                    <span class="fw-semibold">@suggestedSalePrice.Value.ToString("C")</span>
+                    <small class="text-muted d-block">
+                        custo total estimado @estimatedTotalProductionCost!.Value.ToString("C") + margem alvo @productTargetMarginPercentage!.Value.ToString("N1")%
+                    </small>
+                }
+                else if (!productTargetMarginPercentage.HasValue)
+                {
+                    <span class="text-muted">Produto sem margem alvo informada</span>
                 }
                 else
                 {

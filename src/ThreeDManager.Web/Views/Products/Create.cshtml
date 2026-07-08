@@ -50,6 +50,13 @@
             </div>
 
             <div class="mb-3">
+                <label asp-for="TargetMarginPercentage" class="form-label">Margem alvo (%)</label>
+                <input asp-for="TargetMarginPercentage" class="form-control" type="number" step="0.1" min="0" placeholder="Ex: 50" />
+                <span asp-validation-for="TargetMarginPercentage" class="text-danger"></span>
+                <div class="form-text">Margem de lucro desejada sobre o custo total de produção, usada para sugerir o preço de venda.</div>
+            </div>
+
+            <div class="mb-3">
                 <label asp-for="Description" class="form-label">Descrição</label>
                 <textarea asp-for="Description" class="form-control" rows="4" placeholder="Descreva o produto e possíveis variações"></textarea>
             </div>

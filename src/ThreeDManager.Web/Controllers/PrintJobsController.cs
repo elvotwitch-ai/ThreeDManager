@@ -72,6 +72,13 @@ public class PrintJobsController : Controller
                 .FirstOrDefaultAsync()
             : null;
 
+        ViewBag.ProductTargetMarginPercentage = printJob.ProductId.HasValue
+            ? await _context.Products
+                .Where(product => product.Id == printJob.ProductId.Value)
+                .Select(product => product.TargetMarginPercentage)
+                .FirstOrDefaultAsync()
+            : null;
+
         ViewBag.MaterialName = printJob.MaterialId.HasValue
             ? await _context.Materials
                 .Where(material => material.Id == printJob.MaterialId.Value)
