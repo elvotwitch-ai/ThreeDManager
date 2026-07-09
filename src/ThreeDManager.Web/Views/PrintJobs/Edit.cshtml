@@ -157,6 +157,12 @@
         </div>
     </div>
 
+    <div class="mb-3">
+        <label asp-for="FailureReason" class="form-label">Motivo da falha</label>
+        <textarea asp-for="FailureReason" class="form-control" rows="2" placeholder="Obrigatório ao marcar a produção como Falhou"></textarea>
+        <span asp-validation-for="FailureReason" class="text-danger"></span>
+    </div>
+
     <div class="alert alert-light border" id="estimatedTotalProductionCostHint">
         Custo total estimado da produção: <strong>Não informado</strong>
     </div>

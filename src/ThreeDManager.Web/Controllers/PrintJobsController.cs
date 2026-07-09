@@ -161,6 +161,11 @@ public class PrintJobsController : Controller
         else
         {
             printJob.Status = normalizedStatus;
+
+            if (normalizedStatus == PrintJobStatus.Failed && string.IsNullOrWhiteSpace(printJob.FailureReason))
+            {
+                ModelState.AddModelError(nameof(PrintJob.FailureReason), "Informe o motivo da falha para marcar a produção como falha.");
+            }
         }
 
         if (!ModelState.IsValid)
@@ -199,6 +204,7 @@ public class PrintJobsController : Controller
             printJob.MaterialId,
             printJob.FilamentUsedGrams);
         existingPrintJob.Status = printJob.Status;
+        existingPrintJob.FailureReason = printJob.FailureReason;
 
         if (!stockResult.Succeeded)
         {

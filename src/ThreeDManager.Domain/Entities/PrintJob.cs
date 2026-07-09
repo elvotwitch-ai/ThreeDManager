@@ -40,5 +40,8 @@ public class PrintJob
     public Guid? StockCreditedProductId {get; set; }
     public int? StockCreditedUnits {get; set; }
     public string Status {get; set; } = PrintJobStatus.Imported;
+
+    [StringLength(500, ErrorMessage = "O motivo da falha não pode ter mais de 500 caracteres.")]
+    public string? FailureReason {get; set; }
     public DateTime CreatedAt {get; set; } = DateTime.UtcNow;
 }
