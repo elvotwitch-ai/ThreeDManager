@@ -2499,6 +2499,11 @@ public class PrintJobControllerIntegrationTests
         Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
         Assert.Contains("Motivo da falha", detailsHtml);
         Assert.Contains("Destacamento da primeira camada", detailsHtml);
+
+        var indexResponse = await client.GetAsync("/PrintJobs");
+        var indexHtml = WebUtility.HtmlDecode(await indexResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, indexResponse.StatusCode);
+        Assert.Contains("Motivo: Destacamento da primeira camada", indexHtml);
     }
 
     [Fact]
