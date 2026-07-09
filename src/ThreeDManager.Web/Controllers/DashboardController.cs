@@ -133,6 +133,24 @@ public class DashboardController : Controller
             .Select(printJob => PrintJobStatus.Normalize(printJob.Status))
             .ToList();
 
+        var printerQueue = printJobs
+            .Where(printJob =>
+            {
+                var normalizedStatus = PrintJobStatus.Normalize(printJob.Status);
+                return normalizedStatus == PrintJobStatus.Imported || normalizedStatus == PrintJobStatus.Planned;
+            })
+            .GroupBy(printJob => printJob.PrinterId)
+            .Select(group => new DashboardPrinterQueueViewModel
+            {
+                PrinterName = group.Key.HasValue && printerNames.TryGetValue(group.Key.Value, out var queuedPrinterName)
+                    ? queuedPrinterName
+                    : "Não vinculada",
+                QueuedJobsCount = group.Count(),
+                QueuedEstimatedTimeMinutes = group.Sum(printJob => printJob.EstimatedTimeMinutes ?? 0)
+            })
+            .OrderByDescending(entry => entry.QueuedEstimatedTimeMinutes)
+            .ToList();
+
         var viewModel = new DashboardViewModel
         {
             TotalPrintJobs = printJobs.Count,
@@ -184,6 +202,8 @@ public class DashboardController : Controller
                     MinimumStockQuantity = product.MinimumStockQuantity ?? 0
                 })
                 .ToList(),
+
+            PrinterQueue = printerQueue,
 
             RecentPrintJobs = printJobs
                 .Take(8)

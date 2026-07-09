@@ -55,6 +55,8 @@ public class DashboardViewModel
     public List<DashboardLowStockMaterialViewModel> LowStockMaterials { get; set; } = new();
 
     public List<DashboardLowStockProductViewModel> LowStockProducts { get; set; } = new();
+
+    public List<DashboardPrinterQueueViewModel> PrinterQueue { get; set; } = new();
 }
 
 public class DashboardRecentPrintJobViewModel
@@ -167,4 +169,13 @@ public class DashboardLowStockProductViewModel
     public int StockQuantity { get; set; }
 
     public int MinimumStockQuantity { get; set; }
+}
+
+public class DashboardPrinterQueueViewModel
+{
+    public string PrinterName { get; set; } = string.Empty;
+
+    public int QueuedJobsCount { get; set; }
+
+    public int QueuedEstimatedTimeMinutes { get; set; }
 }

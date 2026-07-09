@@ -3635,6 +3635,81 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task Dashboard_ShowsPrinterQueue_ForPlannedAndImportedProductionsOnly()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        await factory.SeedAsync(async context =>
+        {
+            context.PrintJobs.AddRange(
+                new PrintJob
+                {
+                    Id = Guid.NewGuid(),
+                    ProductId = ids.ProductId,
+                    PrinterId = ids.PrinterId,
+                    MaterialId = ids.MaterialId,
+                    SourceFileName = "queue-imported.gcode",
+                    Status = PrintJobStatus.Imported,
+                    EstimatedTimeMinutes = 60,
+                    CreatedAt = DateTime.UtcNow.AddMinutes(10)
+                },
+                new PrintJob
+                {
+                    Id = Guid.NewGuid(),
+                    ProductId = ids.ProductId,
+                    PrinterId = ids.PrinterId,
+                    MaterialId = ids.MaterialId,
+                    SourceFileName = "queue-planned.gcode",
+                    Status = PrintJobStatus.Planned,
+                    EstimatedTimeMinutes = 90,
+                    CreatedAt = DateTime.UtcNow.AddMinutes(9)
+                },
+                new PrintJob
+                {
+                    Id = Guid.NewGuid(),
+                    ProductId = ids.ProductId,
+                    PrinterId = ids.PrinterId,
+                    MaterialId = ids.MaterialId,
+                    SourceFileName = "queue-completed.gcode",
+                    Status = PrintJobStatus.Completed,
+                    EstimatedTimeMinutes = 120,
+                    CreatedAt = DateTime.UtcNow.AddMinutes(8)
+                },
+                new PrintJob
+                {
+                    Id = Guid.NewGuid(),
+                    ProductId = ids.ProductId,
+                    PrinterId = ids.PrinterId,
+                    MaterialId = ids.MaterialId,
+                    SourceFileName = "queue-failed.gcode",
+                    Status = PrintJobStatus.Failed,
+                    FailureReason = "Falha de teste da fila",
+                    EstimatedTimeMinutes = 30,
+                    CreatedAt = DateTime.UtcNow.AddMinutes(7)
+                });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var dashboardResponse = await client.GetAsync("/Dashboard");
+        var dashboardHtml = WebUtility.HtmlDecode(await dashboardResponse.Content.ReadAsStringAsync());
+
+        var queueSectionStart = dashboardHtml.IndexOf("Fila de produção por impressora", StringComparison.Ordinal);
+        var queueSectionEnd = dashboardHtml.IndexOf("Movimentações de estoque recentes", StringComparison.Ordinal);
+        var queueSection = dashboardHtml[queueSectionStart..queueSectionEnd];
+
+        Assert.Equal(HttpStatusCode.OK, dashboardResponse.StatusCode);
+        Assert.Contains("Printer A", queueSection);
+        // Only the Imported (60min) and Planned (90min) jobs belong in the queue: 2 jobs, 150 minutes = 2h 30min.
+        Assert.Matches(@"<td>Printer A</td>\s*<td>2</td>\s*<td>2h 30min</td>", queueSection);
+        Assert.DoesNotContain("queue-completed", queueSection);
+        Assert.DoesNotContain("queue-failed", queueSection);
+    }
+
+    [Fact]
     public async Task PrintJobPackagingCost_PersistsAndRendersAcrossProductionFlow()
     {
         using var factory = new ThreeDManagerWebFactory();
