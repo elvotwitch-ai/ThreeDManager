@@ -12,14 +12,18 @@
     var statusFilter = ViewData["StatusFilter"] as string;
     var pendingProductionImportCount = ViewData["PendingProductionImportCount"] as int? ?? 0;
     var failedImportCount = ViewData["FailedImportCount"] as int? ?? 0;
+    var uploadedImportCount = ViewData["UploadedImportCount"] as int? ?? 0;
     var isPendingProductionFilter = productionStateFilter == "pending";
     var isErrorStatusFilter = statusFilter == "error";
-    var isAnyFilterActive = isPendingProductionFilter || isErrorStatusFilter;
+    var isUploadedStatusFilter = statusFilter == "uploaded";
+    var isAnyFilterActive = isPendingProductionFilter || isErrorStatusFilter || isUploadedStatusFilter;
     var detailsReturnTo = isErrorStatusFilter
         ? "errorQueue"
         : isPendingProductionFilter
             ? "pendingQueue"
-            : null;
+            : isUploadedStatusFilter
+                ? "uploadedQueue"
+                : null;
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -46,6 +50,11 @@
        class="btn btn-sm @(isErrorStatusFilter ? "btn-danger" : "btn-outline-danger")">
         Falhas (@failedImportCount)
     </a>
+    <a asp-action="Index"
+       asp-route-status="uploaded"
+       class="btn btn-sm @(isUploadedStatusFilter ? "btn-info" : "btn-outline-info")">
+        Aguardando processamento (@uploadedImportCount)
+    </a>
 </div>
 
 @if (TempData["SuccessMessage"] is not null)
@@ -69,7 +78,9 @@
             ? "Nenhuma importação pendente de geração de produção."
             : isErrorStatusFilter
                 ? "Nenhuma importação com falha no momento."
-                : "Nenhum arquivo importado ainda.")
+                : isUploadedStatusFilter
+                    ? "Nenhuma importação aguardando processamento no momento."
+                    : "Nenhum arquivo importado ainda.")
     </div>
 }
 else

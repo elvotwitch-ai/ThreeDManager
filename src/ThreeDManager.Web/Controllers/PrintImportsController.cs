@@ -68,14 +68,21 @@ public class PrintImportsController : Controller
             .Where(printImport => PrintImportStatus.Normalize(printImport.Status) == PrintImportStatus.Error)
             .ToList();
 
+        var uploadedImports = allImports
+            .Where(printImport => PrintImportStatus.Normalize(printImport.Status) == PrintImportStatus.Uploaded)
+            .ToList();
+
         var isPendingProductionFilter = string.Equals(productionState, "pending", StringComparison.OrdinalIgnoreCase);
         var isErrorStatusFilter = string.Equals(status, "error", StringComparison.OrdinalIgnoreCase);
+        var isUploadedStatusFilter = string.Equals(status, "uploaded", StringComparison.OrdinalIgnoreCase);
 
         var imports = isPendingProductionFilter
             ? pendingImports
             : isErrorStatusFilter
                 ? failedImports
-                : allImports;
+                : isUploadedStatusFilter
+                    ? uploadedImports
+                    : allImports;
 
         ViewData["LinkedPrintJobIdsByImportId"] = linkedPrintJobsByImportId.ToDictionary(
             link => link.Key,
@@ -86,8 +93,9 @@ public class PrintImportsController : Controller
         ViewData["ProcessAvailabilityByImportId"] = processAvailabilityByImportId;
         ViewData["ProductionStateFilter"] = isPendingProductionFilter ? "pending" : null;
         ViewData["PendingProductionImportCount"] = pendingImports.Count;
-        ViewData["StatusFilter"] = isErrorStatusFilter ? "error" : null;
+        ViewData["StatusFilter"] = isErrorStatusFilter ? "error" : isUploadedStatusFilter ? "uploaded" : null;
         ViewData["FailedImportCount"] = failedImports.Count;
+        ViewData["UploadedImportCount"] = uploadedImports.Count;
 
         return View(imports);
     }
@@ -494,6 +502,11 @@ public class PrintImportsController : Controller
             return RedirectToAction(nameof(Index), new { productionState = "pending" });
         }
 
+        if (string.Equals(returnTo, "uploadedQueue", StringComparison.OrdinalIgnoreCase))
+        {
+            return RedirectToAction(nameof(Index), new { status = "uploaded" });
+        }
+
         return RedirectToAction(nameof(Details), new { id });
     }
 
@@ -507,6 +520,11 @@ public class PrintImportsController : Controller
         if (string.Equals(returnTo, "pendingQueue", StringComparison.OrdinalIgnoreCase))
         {
             return "pendingQueue";
+        }
+
+        if (string.Equals(returnTo, "uploadedQueue", StringComparison.OrdinalIgnoreCase))
+        {
+            return "uploadedQueue";
         }
 
         return null;
@@ -640,6 +658,11 @@ public class PrintImportsController : Controller
         if (normalizedReturnTo == "pendingQueue")
         {
             return RedirectToAction(nameof(Index), new { productionState = "pending" });
+        }
+
+        if (normalizedReturnTo == "uploadedQueue")
+        {
+            return RedirectToAction(nameof(Index), new { status = "uploaded" });
         }
 
         return RedirectToAction(nameof(Index));

@@ -153,6 +153,10 @@
     {
         <a asp-action="Index" asp-route-productionState="pending" class="btn btn-outline-secondary">Voltar para pendentes</a>
     }
+    else if (returnTo == "uploadedQueue")
+    {
+        <a asp-action="Index" asp-route-status="uploaded" class="btn btn-outline-secondary">Voltar para aguardando processamento</a>
+    }
     else
     {
         <a asp-action="Index" class="btn btn-outline-secondary">Voltar</a>

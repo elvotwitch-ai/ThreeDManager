@@ -730,6 +730,17 @@ public class PrintJobControllerIntegrationTests
         Assert.DoesNotContain("uploaded-filter.gcode", failedHtml);
         Assert.Contains("Pode tentar processar novamente.", failedHtml);
         Assert.Contains("Reimporte um arquivo compatível para seguir.", failedHtml);
+
+        var uploadedResponse = await client.GetAsync("/PrintImports?status=uploaded");
+        var uploadedHtml = WebUtility.HtmlDecode(await uploadedResponse.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, uploadedResponse.StatusCode);
+        Assert.Contains("Aguardando processamento (", uploadedHtml);
+        Assert.Contains("uploaded-filter.gcode", uploadedHtml);
+        Assert.DoesNotContain("retryable-filter-error.gcode", uploadedHtml);
+        Assert.DoesNotContain("blocked-filter-error.gcode", uploadedHtml);
+        Assert.DoesNotContain("pending-filter.gcode", uploadedHtml);
+        Assert.Contains($"/PrintImports/Details/{uploadedImportId}?returnTo=uploadedQueue", uploadedHtml);
     }
 
     [Fact]
