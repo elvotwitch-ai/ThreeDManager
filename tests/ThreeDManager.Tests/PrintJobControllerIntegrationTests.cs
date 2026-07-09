@@ -3391,6 +3391,71 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task Dashboard_NormalizesProductionStatusCounts()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        await factory.SeedAsync(async context =>
+        {
+            context.PrintJobs.AddRange(
+                new PrintJob
+                {
+                    Id = Guid.NewGuid(),
+                    ProductId = ids.ProductId,
+                    PrinterId = ids.PrinterId,
+                    MaterialId = ids.MaterialId,
+                    SourceFileName = "dashboard-lower-completed.gcode",
+                    Status = "completed",
+                    CreatedAt = DateTime.UtcNow.AddMinutes(10)
+                },
+                new PrintJob
+                {
+                    Id = Guid.NewGuid(),
+                    ProductId = ids.ProductId,
+                    PrinterId = ids.PrinterId,
+                    MaterialId = ids.MaterialId,
+                    SourceFileName = "dashboard-lower-failed.gcode",
+                    Status = "failed",
+                    CreatedAt = DateTime.UtcNow.AddMinutes(9)
+                },
+                new PrintJob
+                {
+                    Id = Guid.NewGuid(),
+                    ProductId = ids.ProductId,
+                    PrinterId = ids.PrinterId,
+                    MaterialId = ids.MaterialId,
+                    SourceFileName = "dashboard-lower-planned.gcode",
+                    Status = "planned",
+                    CreatedAt = DateTime.UtcNow.AddMinutes(8)
+                },
+                new PrintJob
+                {
+                    Id = Guid.NewGuid(),
+                    ProductId = ids.ProductId,
+                    PrinterId = ids.PrinterId,
+                    MaterialId = ids.MaterialId,
+                    SourceFileName = "dashboard-lower-imported.gcode",
+                    Status = "imported",
+                    CreatedAt = DateTime.UtcNow.AddMinutes(7)
+                });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var dashboardResponse = await client.GetAsync("/Dashboard");
+        var dashboardHtml = WebUtility.HtmlDecode(await dashboardResponse.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, dashboardResponse.StatusCode);
+        Assert.True(ExtractDashboardCardCount(dashboardHtml, "Produções totais") >= 4);
+        Assert.True(ExtractDashboardCardCount(dashboardHtml, "Concluídas") >= 1);
+        Assert.True(ExtractDashboardCardCount(dashboardHtml, "Falhas") >= 1);
+        Assert.True(ExtractDashboardCardCount(dashboardHtml, "Planejadas/importadas") >= 2);
+    }
+
+    [Fact]
     public async Task PrintJobPackagingCost_PersistsAndRendersAcrossProductionFlow()
     {
         using var factory = new ThreeDManagerWebFactory();
@@ -3674,5 +3739,14 @@ public class PrintJobControllerIntegrationTests
         var match = Regex.Match(html, "name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"");
         Assert.True(match.Success, "Could not find antiforgery token in form html.");
         return match.Groups[1].Value;
+    }
+
+    private static int ExtractDashboardCardCount(string html, string label)
+    {
+        var match = Regex.Match(
+            html,
+            $"{Regex.Escape(label)}</h6>\\s*<h2>(\\d+)</h2>");
+        Assert.True(match.Success, $"Could not find dashboard card count for '{label}'.");
+        return int.Parse(match.Groups[1].Value);
     }
 }

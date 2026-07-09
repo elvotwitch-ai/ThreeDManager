@@ -126,15 +126,19 @@ public class DashboardController : Controller
             productionsWithEstimatedMargin++;
         }
 
+        var normalizedPrintJobStatuses = printJobs
+            .Select(printJob => PrintJobStatus.Normalize(printJob.Status))
+            .ToList();
+
         var viewModel = new DashboardViewModel
         {
             TotalPrintJobs = printJobs.Count,
             TotalPrintImports = printImports.Count,
 
-            CompletedPrintJobs = printJobs.Count(printJob => printJob.Status == PrintJobStatus.Completed),
-            FailedPrintJobs = printJobs.Count(printJob => printJob.Status == PrintJobStatus.Failed),
-            PlannedPrintJobs = printJobs.Count(printJob => printJob.Status == PrintJobStatus.Planned),
-            ImportedPrintJobs = printJobs.Count(printJob => printJob.Status == PrintJobStatus.Imported),
+            CompletedPrintJobs = normalizedPrintJobStatuses.Count(status => status == PrintJobStatus.Completed),
+            FailedPrintJobs = normalizedPrintJobStatuses.Count(status => status == PrintJobStatus.Failed),
+            PlannedPrintJobs = normalizedPrintJobStatuses.Count(status => status == PrintJobStatus.Planned),
+            ImportedPrintJobs = normalizedPrintJobStatuses.Count(status => status == PrintJobStatus.Imported),
 
             ParsedPrintImports = printImports.Count(printImport =>
                 PrintImportStatus.Normalize(printImport.Status) == PrintImportStatus.Parsed),
