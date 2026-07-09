@@ -1,7 +1,22 @@
 @model IEnumerable<ThreeDManager.Domain.Entities.Printer>
+@using ThreeDManager.Web.ViewModels
 
 @{
     ViewData["Title"] = "Impressoras";
+    var printerQueue = (Dictionary<Guid, PrinterQueueSummaryViewModel>)ViewBag.PrinterQueue;
+
+    string FormatMinutes(int minutes)
+    {
+        var hours = minutes / 60;
+        var remainingMinutes = minutes % 60;
+
+        if (hours <= 0)
+        {
+            return $"{remainingMinutes} min";
+        }
+
+        return $"{hours}h {remainingMinutes}min";
+    }
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -42,6 +57,7 @@ else
                 <th>Marca</th>
                 <th>Modelo</th>
                 <th>Custo por hora</th>
+                <th>Fila de produção</th>
                 <th>Observações</th>
                 <th class="text-end">Ações</th>
             </tr>
@@ -61,6 +77,16 @@ else
                         else
                         {
                             <span class="text-muted">Não informado</span>
+                        }
+                    </td>
+                    <td>
+                        @if (printerQueue.TryGetValue(printer.Id, out var queueSummary))
+                        {
+                            <span>@queueSummary.QueuedJobsCount produção(ões) &middot; @FormatMinutes(queueSummary.QueuedEstimatedTimeMinutes)</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Sem produções na fila</span>
                         }
                     </td>
                     <td>@printer.Notes</td>

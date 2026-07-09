@@ -3710,6 +3710,64 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task PrintersIndex_ShowsQueueSummary_ForPlannedAndImportedProductionsOnly()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        await factory.SeedAsync(async context =>
+        {
+            context.PrintJobs.AddRange(
+                new PrintJob
+                {
+                    Id = Guid.NewGuid(),
+                    ProductId = ids.ProductId,
+                    PrinterId = ids.PrinterId,
+                    MaterialId = ids.MaterialId,
+                    SourceFileName = "printers-queue-imported.gcode",
+                    Status = PrintJobStatus.Imported,
+                    EstimatedTimeMinutes = 60,
+                    CreatedAt = DateTime.UtcNow.AddMinutes(10)
+                },
+                new PrintJob
+                {
+                    Id = Guid.NewGuid(),
+                    ProductId = ids.ProductId,
+                    PrinterId = ids.PrinterId,
+                    MaterialId = ids.MaterialId,
+                    SourceFileName = "printers-queue-planned.gcode",
+                    Status = PrintJobStatus.Planned,
+                    EstimatedTimeMinutes = 90,
+                    CreatedAt = DateTime.UtcNow.AddMinutes(9)
+                },
+                new PrintJob
+                {
+                    Id = Guid.NewGuid(),
+                    ProductId = ids.ProductId,
+                    PrinterId = ids.PrinterId,
+                    MaterialId = ids.MaterialId,
+                    SourceFileName = "printers-queue-completed.gcode",
+                    Status = PrintJobStatus.Completed,
+                    EstimatedTimeMinutes = 120,
+                    CreatedAt = DateTime.UtcNow.AddMinutes(8)
+                });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var response = await client.GetAsync("/Printers");
+        var html = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        // Only the Imported (60min) and Planned (90min) jobs belong in the queue: 2 jobs, 150 minutes = 2h 30min.
+        Assert.Contains("2 produção(ões)", html);
+        Assert.Contains("2h 30min", html);
+        Assert.DoesNotContain("printers-queue-completed", html);
+    }
+
+    [Fact]
     public async Task PrintJobPackagingCost_PersistsAndRendersAcrossProductionFlow()
     {
         using var factory = new ThreeDManagerWebFactory();

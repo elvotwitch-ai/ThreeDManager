@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ThreeDManager.Domain.Entities;
 using ThreeDManager.Infrastructure.Data;
+using ThreeDManager.Web.ViewModels;
 
 namespace ThreeDManager.Web.Controllers;
 
@@ -19,6 +20,26 @@ public class PrintersController : Controller
         var printers = await _context.Printers
             .OrderByDescending(printer => printer.CreatedAt)
             .ToListAsync();
+
+        var queuedPrintJobs = await _context.PrintJobs
+            .Where(printJob => printJob.PrinterId.HasValue)
+            .Select(printJob => new { printJob.PrinterId, printJob.Status, printJob.EstimatedTimeMinutes })
+            .ToListAsync();
+
+        ViewBag.PrinterQueue = queuedPrintJobs
+            .Where(printJob =>
+            {
+                var normalizedStatus = PrintJobStatus.Normalize(printJob.Status);
+                return normalizedStatus == PrintJobStatus.Imported || normalizedStatus == PrintJobStatus.Planned;
+            })
+            .GroupBy(printJob => printJob.PrinterId!.Value)
+            .ToDictionary(
+                group => group.Key,
+                group => new PrinterQueueSummaryViewModel
+                {
+                    QueuedJobsCount = group.Count(),
+                    QueuedEstimatedTimeMinutes = group.Sum(printJob => printJob.EstimatedTimeMinutes ?? 0)
+                });
 
         return View(printers);
     }
