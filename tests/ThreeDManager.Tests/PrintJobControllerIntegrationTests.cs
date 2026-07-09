@@ -3671,10 +3671,21 @@ public class PrintJobControllerIntegrationTests
                     ProductId = ids.ProductId,
                     PrinterId = ids.PrinterId,
                     MaterialId = ids.MaterialId,
+                    SourceFileName = "queue-long-planned.gcode",
+                    Status = PrintJobStatus.Planned,
+                    EstimatedTimeMinutes = 330,
+                    CreatedAt = DateTime.UtcNow.AddMinutes(8)
+                },
+                new PrintJob
+                {
+                    Id = Guid.NewGuid(),
+                    ProductId = ids.ProductId,
+                    PrinterId = ids.PrinterId,
+                    MaterialId = ids.MaterialId,
                     SourceFileName = "queue-completed.gcode",
                     Status = PrintJobStatus.Completed,
                     EstimatedTimeMinutes = 120,
-                    CreatedAt = DateTime.UtcNow.AddMinutes(8)
+                    CreatedAt = DateTime.UtcNow.AddMinutes(7)
                 },
                 new PrintJob
                 {
@@ -3686,7 +3697,7 @@ public class PrintJobControllerIntegrationTests
                     Status = PrintJobStatus.Failed,
                     FailureReason = "Falha de teste da fila",
                     EstimatedTimeMinutes = 30,
-                    CreatedAt = DateTime.UtcNow.AddMinutes(7)
+                    CreatedAt = DateTime.UtcNow.AddMinutes(6)
                 });
 
             await context.SaveChangesAsync();
@@ -3703,8 +3714,8 @@ public class PrintJobControllerIntegrationTests
 
         Assert.Equal(HttpStatusCode.OK, dashboardResponse.StatusCode);
         Assert.Contains("Printer A", queueSection);
-        // Only the Imported (60min) and Planned (90min) jobs belong in the queue: 2 jobs, 150 minutes = 2h 30min.
-        Assert.Matches(@"<td>Printer A</td>\s*<td>2</td>\s*<td>2h 30min</td>", queueSection);
+        // Only Imported/Planned jobs belong in the queue: 3 jobs, 480 minutes = 8h 0min.
+        Assert.Matches(@"<td>Printer A</td>\s*<td>3</td>\s*<td>\s*8h 0min\s*<span class=""badge bg-warning text-dark ms-1"">Fila alta</span>", queueSection);
         Assert.DoesNotContain("queue-completed", queueSection);
         Assert.DoesNotContain("queue-failed", queueSection);
     }
@@ -3746,10 +3757,21 @@ public class PrintJobControllerIntegrationTests
                     ProductId = ids.ProductId,
                     PrinterId = ids.PrinterId,
                     MaterialId = ids.MaterialId,
+                    SourceFileName = "printers-queue-long-planned.gcode",
+                    Status = PrintJobStatus.Planned,
+                    EstimatedTimeMinutes = 330,
+                    CreatedAt = DateTime.UtcNow.AddMinutes(8)
+                },
+                new PrintJob
+                {
+                    Id = Guid.NewGuid(),
+                    ProductId = ids.ProductId,
+                    PrinterId = ids.PrinterId,
+                    MaterialId = ids.MaterialId,
                     SourceFileName = "printers-queue-completed.gcode",
                     Status = PrintJobStatus.Completed,
                     EstimatedTimeMinutes = 120,
-                    CreatedAt = DateTime.UtcNow.AddMinutes(8)
+                    CreatedAt = DateTime.UtcNow.AddMinutes(7)
                 });
 
             await context.SaveChangesAsync();
@@ -3761,9 +3783,10 @@ public class PrintJobControllerIntegrationTests
         var html = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        // Only the Imported (60min) and Planned (90min) jobs belong in the queue: 2 jobs, 150 minutes = 2h 30min.
-        Assert.Contains("2 produção(ões)", html);
-        Assert.Contains("2h 30min", html);
+        // Only Imported/Planned jobs belong in the queue: 3 jobs, 480 minutes = 8h 0min.
+        Assert.Contains("3 produção(ões)", html);
+        Assert.Contains("8h 0min", html);
+        Assert.Contains("Fila alta", html);
         Assert.DoesNotContain("printers-queue-completed", html);
     }
 

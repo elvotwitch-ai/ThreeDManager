@@ -178,4 +178,6 @@ public class DashboardPrinterQueueViewModel
     public int QueuedJobsCount { get; set; }
 
     public int QueuedEstimatedTimeMinutes { get; set; }
+
+    public bool RequiresAttention => QueuedEstimatedTimeMinutes >= PrinterQueueThresholds.AttentionMinutes;
 }

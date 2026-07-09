@@ -83,6 +83,10 @@ else
                         @if (printerQueue.TryGetValue(printer.Id, out var queueSummary))
                         {
                             <span>@queueSummary.QueuedJobsCount produção(ões) &middot; @FormatMinutes(queueSummary.QueuedEstimatedTimeMinutes)</span>
+                            @if (queueSummary.RequiresAttention)
+                            {
+                                <span class="badge bg-warning text-dark ms-1">Fila alta</span>
+                            }
                         }
                         else
                         {

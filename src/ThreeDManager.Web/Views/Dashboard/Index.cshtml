@@ -322,7 +322,13 @@
                             <tr>
                                 <td>@queueEntry.PrinterName</td>
                                 <td>@queueEntry.QueuedJobsCount</td>
-                                <td>@FormatMinutes(queueEntry.QueuedEstimatedTimeMinutes)</td>
+                                <td>
+                                    @FormatMinutes(queueEntry.QueuedEstimatedTimeMinutes)
+                                    @if (queueEntry.RequiresAttention)
+                                    {
+                                        <span class="badge bg-warning text-dark ms-1">Fila alta</span>
+                                    }
+                                </td>
                             </tr>
                         }
                     </tbody>
