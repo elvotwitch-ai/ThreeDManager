@@ -79,6 +79,8 @@ public class DashboardRecentPrintJobViewModel
 
     public string Status { get; set; } = string.Empty;
 
+    public string? FailureReason { get; set; }
+
     public DateTime CreatedAt { get; set; }
 }
 

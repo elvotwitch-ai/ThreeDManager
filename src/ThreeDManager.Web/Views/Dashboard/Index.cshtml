@@ -1,4 +1,5 @@
 @model ThreeDManager.Web.ViewModels.DashboardViewModel
+@using ThreeDManager.Domain.Entities
 @using ThreeDManager.Web.Presentation
 
 @{
@@ -566,6 +567,12 @@
                                 <span class="badge @PrintJobStatusPresentation.GetBadgeClass(job.Status)">
                                     @PrintJobStatusPresentation.GetDisplayLabel(job.Status)
                                 </span>
+                                @if (string.Equals(PrintJobStatus.Normalize(job.Status), PrintJobStatus.Failed, StringComparison.Ordinal))
+                                {
+                                    <small class="text-muted d-block" title="@job.FailureReason">
+                                        Motivo: @(string.IsNullOrWhiteSpace(job.FailureReason) ? "Não informado" : job.FailureReason)
+                                    </small>
+                                }
                             </td>
                             <td class="text-end">
                                 <a asp-controller="PrintJobs" asp-action="Details" asp-route-id="@job.Id" class="btn btn-sm btn-outline-secondary">

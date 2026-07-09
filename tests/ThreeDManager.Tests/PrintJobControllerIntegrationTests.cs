@@ -3471,6 +3471,7 @@ public class PrintJobControllerIntegrationTests
 
         var completedPrintJobId = Guid.NewGuid();
         var canceledPrintJobId = Guid.NewGuid();
+        var failedPrintJobId = Guid.NewGuid();
 
         await factory.SeedAsync(async context =>
         {
@@ -3494,6 +3495,17 @@ public class PrintJobControllerIntegrationTests
                     SourceFileName = "dashboard-canceled.gcode",
                     Status = PrintJobStatus.Canceled,
                     CreatedAt = DateTime.UtcNow.AddMinutes(9)
+                },
+                new PrintJob
+                {
+                    Id = failedPrintJobId,
+                    ProductId = ids.ProductId,
+                    PrinterId = ids.PrinterId,
+                    MaterialId = ids.MaterialId,
+                    SourceFileName = "dashboard-failed.gcode",
+                    Status = PrintJobStatus.Failed,
+                    FailureReason = "Empenamento nas bordas durante teste de dashboard",
+                    CreatedAt = DateTime.UtcNow.AddMinutes(8)
                 });
 
             await context.SaveChangesAsync();
@@ -3526,6 +3538,9 @@ public class PrintJobControllerIntegrationTests
         Assert.DoesNotContain("<th>Status</th>", recentPrintJobsSection);
         Assert.DoesNotContain(">Completed<", dashboardHtml);
         Assert.DoesNotContain(">Canceled<", dashboardHtml);
+        Assert.Contains("dashboard-failed.gcode", dashboardHtml);
+        Assert.Contains("Falhou", dashboardHtml);
+        Assert.Contains("Motivo: Empenamento nas bordas durante teste de dashboard", dashboardHtml);
     }
 
     [Fact]

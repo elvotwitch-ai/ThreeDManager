@@ -206,6 +206,7 @@ public class DashboardController : Controller
                     ReportedCost = printJob.ReportedCost,
                     CalculatedMaterialCost = printJob.CalculatedMaterialCost,
                     Status = printJob.Status,
+                    FailureReason = printJob.FailureReason,
                     CreatedAt = printJob.CreatedAt
                 })
                 .ToList(),
