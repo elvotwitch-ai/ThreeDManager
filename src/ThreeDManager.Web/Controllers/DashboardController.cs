@@ -184,30 +184,40 @@ public class DashboardController : Controller
 
             RecentPrintJobs = printJobs
                 .Take(8)
-                .Select(printJob => new DashboardRecentPrintJobViewModel
+                .Select(printJob =>
                 {
-                    Id = printJob.Id,
+                    var estimatedMachineCost = EstimatedMachineCost(printJob);
 
-                    ProductName = printJob.ProductId.HasValue && productNames.TryGetValue(printJob.ProductId.Value, out var productName)
-                        ? productName
-                        : "Não vinculado",
+                    return new DashboardRecentPrintJobViewModel
+                    {
+                        Id = printJob.Id,
 
-                    MaterialName = printJob.MaterialId.HasValue && materialNames.TryGetValue(printJob.MaterialId.Value, out var materialName)
-                        ? materialName
-                        : "Não vinculado",
+                        ProductName = printJob.ProductId.HasValue && productNames.TryGetValue(printJob.ProductId.Value, out var productName)
+                            ? productName
+                            : "Não vinculado",
 
-                    PrinterName = printJob.PrinterId.HasValue && printerNames.TryGetValue(printJob.PrinterId.Value, out var printerName)
-                        ? printerName
-                        : "Não vinculada",
+                        MaterialName = printJob.MaterialId.HasValue && materialNames.TryGetValue(printJob.MaterialId.Value, out var materialName)
+                            ? materialName
+                            : "Não vinculado",
 
-                    SourceFileName = printJob.SourceFileName,
-                    FilamentUsedGrams = printJob.FilamentUsedGrams,
-                    EstimatedTimeMinutes = printJob.EstimatedTimeMinutes,
-                    ReportedCost = printJob.ReportedCost,
-                    CalculatedMaterialCost = printJob.CalculatedMaterialCost,
-                    Status = printJob.Status,
-                    FailureReason = printJob.FailureReason,
-                    CreatedAt = printJob.CreatedAt
+                        PrinterName = printJob.PrinterId.HasValue && printerNames.TryGetValue(printJob.PrinterId.Value, out var printerName)
+                            ? printerName
+                            : "Não vinculada",
+
+                        SourceFileName = printJob.SourceFileName,
+                        FilamentUsedGrams = printJob.FilamentUsedGrams,
+                        EstimatedTimeMinutes = printJob.EstimatedTimeMinutes,
+                        ReportedCost = printJob.ReportedCost,
+                        CalculatedMaterialCost = printJob.CalculatedMaterialCost,
+                        EstimatedMachineCost = estimatedMachineCost,
+                        PackagingCost = printJob.PackagingCost,
+                        EstimatedTotalProductionCost = printJob.CalculatedMaterialCost.HasValue && estimatedMachineCost.HasValue
+                            ? printJob.CalculatedMaterialCost.Value + estimatedMachineCost.Value + (printJob.PackagingCost ?? 0)
+                            : null,
+                        Status = printJob.Status,
+                        FailureReason = printJob.FailureReason,
+                        CreatedAt = printJob.CreatedAt
+                    };
                 })
                 .ToList(),
 

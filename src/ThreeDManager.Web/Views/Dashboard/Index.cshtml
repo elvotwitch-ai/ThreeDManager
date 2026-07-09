@@ -562,6 +562,29 @@
                                 {
                                     <div class="text-muted small">Custo calculado do material: não disponível</div>
                                 }
+
+                                @if (job.EstimatedMachineCost.HasValue)
+                                {
+                                    <div class="text-muted small">Custo de máquina estimado: @job.EstimatedMachineCost.Value.ToString("C")</div>
+                                }
+                                else
+                                {
+                                    <div class="text-muted small">Custo de máquina estimado: não disponível</div>
+                                }
+
+                                @if (job.PackagingCost.HasValue)
+                                {
+                                    <div class="text-muted small">Embalagem: @job.PackagingCost.Value.ToString("C")</div>
+                                }
+
+                                @if (job.EstimatedTotalProductionCost.HasValue)
+                                {
+                                    <div class="text-muted small">Custo total estimado: @job.EstimatedTotalProductionCost.Value.ToString("C")</div>
+                                }
+                                else
+                                {
+                                    <div class="text-muted small">Custo total estimado: não disponível</div>
+                                }
                             </td>
                             <td>
                                 <span class="badge @PrintJobStatusPresentation.GetBadgeClass(job.Status)">

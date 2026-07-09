@@ -3484,6 +3484,9 @@ public class PrintJobControllerIntegrationTests
                     MaterialId = ids.MaterialId,
                     SourceFileName = "dashboard-completed.gcode",
                     Status = PrintJobStatus.Completed,
+                    EstimatedTimeMinutes = 120,
+                    CalculatedMaterialCost = 1.00m,
+                    PackagingCost = 2.50m,
                     CreatedAt = DateTime.UtcNow.AddMinutes(10)
                 },
                 new PrintJob
@@ -3528,7 +3531,10 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("<th>Status da produção</th>", recentPrintJobsSection);
         Assert.DoesNotContain("<th>Filamento</th>", recentPrintJobsSection);
         Assert.Contains("Custo informado:", recentPrintJobsSection);
-        Assert.Contains("Custo calculado do material: não disponível", recentPrintJobsSection);
+        Assert.Contains("Custo calculado do material:", recentPrintJobsSection);
+        Assert.Contains("Custo de máquina estimado:", recentPrintJobsSection);
+        Assert.Contains("Embalagem:", recentPrintJobsSection);
+        Assert.Contains("Custo total estimado:", recentPrintJobsSection);
         Assert.DoesNotContain("<th>Tempo</th>", recentPrintJobsSection);
         Assert.DoesNotContain("<th>Custo</th>", recentPrintJobsSection);
         Assert.DoesNotContain("Arquivo:", recentPrintJobsSection);
