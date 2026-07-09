@@ -3475,6 +3475,12 @@ public class PrintJobControllerIntegrationTests
 
         await factory.SeedAsync(async context =>
         {
+            var printer = await context.Printers.FirstAsync(printer => printer.Id == ids.PrinterId);
+            printer.CostPerHour = 6.00m;
+
+            var product = await context.Products.FirstAsync(product => product.Id == ids.ProductId);
+            product.TargetMarginPercentage = 50.0m;
+
             context.PrintJobs.AddRange(
                 new PrintJob
                 {
@@ -3535,6 +3541,10 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("Custo de máquina estimado:", recentPrintJobsSection);
         Assert.Contains("Embalagem:", recentPrintJobsSection);
         Assert.Contains("Custo total estimado:", recentPrintJobsSection);
+        Assert.Contains("Preço de venda sugerido:", recentPrintJobsSection);
+        // Completed job: (1.00 material + (120/60)*6.00 machine + 2.50 packaging) = 15.50 total; 15.50 * 1.5 (50% target margin) = 23.25.
+        Assert.Contains("R$ 23,25", recentPrintJobsSection);
+        Assert.Contains("(margem alvo 50,0%)", recentPrintJobsSection);
         Assert.DoesNotContain("<th>Tempo</th>", recentPrintJobsSection);
         Assert.DoesNotContain("<th>Custo</th>", recentPrintJobsSection);
         Assert.DoesNotContain("Arquivo:", recentPrintJobsSection);

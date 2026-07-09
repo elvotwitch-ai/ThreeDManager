@@ -83,6 +83,10 @@ public class DashboardRecentPrintJobViewModel
 
     public decimal? EstimatedTotalProductionCost { get; set; }
 
+    public decimal? TargetMarginPercentage { get; set; }
+
+    public decimal? SuggestedSalePrice { get; set; }
+
     public string Status { get; set; } = string.Empty;
 
     public string? FailureReason { get; set; }

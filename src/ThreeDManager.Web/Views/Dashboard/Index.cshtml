@@ -585,6 +585,19 @@
                                 {
                                     <div class="text-muted small">Custo total estimado: não disponível</div>
                                 }
+
+                                @if (job.SuggestedSalePrice.HasValue)
+                                {
+                                    <div class="small">Preço de venda sugerido: <span class="fw-semibold">@job.SuggestedSalePrice.Value.ToString("C")</span> <span class="text-muted">(margem alvo @job.TargetMarginPercentage!.Value.ToString("N1")%)</span></div>
+                                }
+                                else if (!job.TargetMarginPercentage.HasValue)
+                                {
+                                    <div class="text-muted small">Preço de venda sugerido: sem margem alvo</div>
+                                }
+                                else
+                                {
+                                    <div class="text-muted small">Preço de venda sugerido: não disponível</div>
+                                }
                             </td>
                             <td>
                                 <span class="badge @PrintJobStatusPresentation.GetBadgeClass(job.Status)">

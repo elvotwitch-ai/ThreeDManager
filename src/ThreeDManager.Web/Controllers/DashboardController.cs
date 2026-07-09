@@ -48,6 +48,9 @@ public class DashboardController : Controller
         var productSalePriceById = await _context.Products
             .ToDictionaryAsync(product => product.Id, product => product.SalePrice);
 
+        var productTargetMarginPercentageById = await _context.Products
+            .ToDictionaryAsync(product => product.Id, product => product.TargetMarginPercentage);
+
         var lowStockMaterials = await _context.Materials
             .Where(material =>
                 material.CurrentStockGrams.HasValue
@@ -187,6 +190,18 @@ public class DashboardController : Controller
                 .Select(printJob =>
                 {
                     var estimatedMachineCost = EstimatedMachineCost(printJob);
+                    var estimatedTotalProductionCost = printJob.CalculatedMaterialCost.HasValue && estimatedMachineCost.HasValue
+                        ? printJob.CalculatedMaterialCost.Value + estimatedMachineCost.Value + (printJob.PackagingCost ?? 0)
+                        : (decimal?)null;
+
+                    var targetMarginPercentage = printJob.ProductId.HasValue
+                        && productTargetMarginPercentageById.TryGetValue(printJob.ProductId.Value, out var targetMargin)
+                        ? targetMargin
+                        : null;
+
+                    var suggestedSalePrice = estimatedTotalProductionCost.HasValue && targetMarginPercentage.HasValue
+                        ? Math.Round(estimatedTotalProductionCost.Value * (1 + (targetMarginPercentage.Value / 100m)), 2)
+                        : (decimal?)null;
 
                     return new DashboardRecentPrintJobViewModel
                     {
@@ -211,9 +226,9 @@ public class DashboardController : Controller
                         CalculatedMaterialCost = printJob.CalculatedMaterialCost,
                         EstimatedMachineCost = estimatedMachineCost,
                         PackagingCost = printJob.PackagingCost,
-                        EstimatedTotalProductionCost = printJob.CalculatedMaterialCost.HasValue && estimatedMachineCost.HasValue
-                            ? printJob.CalculatedMaterialCost.Value + estimatedMachineCost.Value + (printJob.PackagingCost ?? 0)
-                            : null,
+                        EstimatedTotalProductionCost = estimatedTotalProductionCost,
+                        TargetMarginPercentage = targetMarginPercentage,
+                        SuggestedSalePrice = suggestedSalePrice,
                         Status = printJob.Status,
                         FailureReason = printJob.FailureReason,
                         CreatedAt = printJob.CreatedAt
