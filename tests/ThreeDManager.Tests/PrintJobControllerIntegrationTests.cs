@@ -2540,6 +2540,9 @@ public class PrintJobControllerIntegrationTests
             var printer = await context.Printers.FirstAsync(printer => printer.Id == ids.PrinterId);
             printer.CostPerHour = 5.00m;
 
+            var product = await context.Products.FirstAsync(product => product.Id == ids.ProductId);
+            product.TargetMarginPercentage = 50.0m;
+
             context.PrintImports.Add(new PrintImport
             {
                 Id = importId,
@@ -2570,6 +2573,11 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("materialCost + machineCost + packagingAmount", html);
         Assert.Contains("id=\"PackagingCost\"", html);
         Assert.Contains("packagingCost.addEventListener(\"input\", updateTotalProductionCostHint)", html);
+        Assert.Contains("Preço de venda sugerido", html);
+        Assert.Contains("Margem alvo do produto", html);
+        // Seeded product TargetMarginPercentage = 50.0 -> invariant string in the option data attribute.
+        Assert.Contains("data-target-margin-percentage=\"50.0\"", html);
+        Assert.Contains("productSelect.addEventListener(\"change\", updateTotalProductionCostHint)", html);
     }
 
     [Fact]

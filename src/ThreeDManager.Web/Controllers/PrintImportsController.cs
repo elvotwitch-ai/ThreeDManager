@@ -555,6 +555,10 @@ public class PrintImportsController : Controller
             printer => printer.Id.ToString(),
             printer => printer.CostPerHour);
 
+        viewModel.ProductTargetMarginPercentageById = products.ToDictionary(
+            product => product.Id.ToString(),
+            product => product.TargetMarginPercentage);
+
         viewModel.StatusOptions = PrintJobStatus.All.Select(status => new SelectListItem
         {
             Value = status,

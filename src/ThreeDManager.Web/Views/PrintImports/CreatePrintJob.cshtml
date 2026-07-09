@@ -27,10 +27,19 @@
 
     <div class="mb-3">
         <label asp-for="ProductId" class="form-label">Produto</label>
-        <select asp-for="ProductId" asp-items="Model.ProductOptions" class="form-select">
+        <select asp-for="ProductId" class="form-select" id="productSelect">
             <option value="">Selecione um produto</option>
+            @foreach (var option in Model.ProductOptions)
+            {
+                var targetMarginPercentage = Model.ProductTargetMarginPercentageById.TryGetValue(option.Value, out var margin) ? margin : null;
+                var targetMarginAttribute = targetMarginPercentage.HasValue
+                    ? targetMarginPercentage.Value.ToString("0.0############################", System.Globalization.CultureInfo.InvariantCulture)
+                    : string.Empty;
+                <option value="@option.Value" data-target-margin-percentage="@targetMarginAttribute">@option.Text</option>
+            }
         </select>
         <span asp-validation-for="ProductId" class="text-danger"></span>
+        <div class="form-text" id="productTargetMarginHint">Margem alvo do produto: <span>Não informada</span></div>
     </div>
 
     <div class="mb-3">
@@ -130,6 +139,10 @@
 
     <div class="alert alert-light border" id="estimatedTotalProductionCostHint">
         Custo total estimado da produção: <strong>Não informado</strong>
+    </div>
+
+    <div class="alert alert-light border" id="suggestedSalePriceHint">
+        Preço de venda sugerido: <strong>Não informado</strong>
     </div>
 
     <div class="d-flex gap-2">
@@ -250,6 +263,7 @@
         })();
 
         (function () {
+            var productSelect = document.getElementById("productSelect");
             var materialSelect = document.getElementById("materialSelect");
             var printerSelect = document.getElementById("printerSelect");
             var filamentUsedGrams = document.getElementById("filamentUsedGrams");
@@ -257,18 +271,25 @@
             var actualTimeMinutes = document.getElementById("actualTimeMinutes");
             var packagingCost = document.getElementById("PackagingCost");
             var totalCostHint = document.getElementById("estimatedTotalProductionCostHint");
+            var suggestedSalePriceHint = document.getElementById("suggestedSalePriceHint");
+            var targetMarginHint = document.getElementById("productTargetMarginHint");
 
-            if (!materialSelect || !printerSelect || !filamentUsedGrams || !estimatedTimeMinutes || !actualTimeMinutes || !packagingCost || !totalCostHint) {
+            if (!productSelect || !materialSelect || !printerSelect || !filamentUsedGrams || !estimatedTimeMinutes || !actualTimeMinutes || !packagingCost || !totalCostHint || !suggestedSalePriceHint || !targetMarginHint) {
                 return;
             }
 
             var totalCostValue = totalCostHint.querySelector("strong");
+            var suggestedSalePriceValue = suggestedSalePriceHint.querySelector("strong");
+            var targetMarginValue = targetMarginHint.querySelector("span");
 
             function updateTotalProductionCostHint() {
+                var productOption = productSelect.options[productSelect.selectedIndex];
                 var materialOption = materialSelect.options[materialSelect.selectedIndex];
                 var printerOption = printerSelect.options[printerSelect.selectedIndex];
+                var targetMarginRaw = productOption ? productOption.getAttribute("data-target-margin-percentage") : "";
                 var costPerGramRaw = materialOption ? materialOption.getAttribute("data-cost-per-gram") : "";
                 var costPerHourRaw = printerOption ? printerOption.getAttribute("data-cost-per-hour") : "";
+                var targetMarginPercentage = targetMarginRaw ? parseFloat(targetMarginRaw) : NaN;
                 var costPerGram = costPerGramRaw ? parseFloat(costPerGramRaw) : NaN;
                 var costPerHour = costPerHourRaw ? parseFloat(costPerHourRaw) : NaN;
                 var grams = filamentUsedGrams.value ? parseFloat(filamentUsedGrams.value) : NaN;
@@ -277,20 +298,38 @@
                 var minutes = !isNaN(actual) ? actual : estimated;
                 var packaging = packagingCost.value ? parseFloat(packagingCost.value) : NaN;
 
+                targetMarginValue.textContent = isNaN(targetMarginPercentage)
+                    ? "Não informada"
+                    : targetMarginPercentage.toLocaleString("pt-BR", {
+                        minimumFractionDigits: 1,
+                        maximumFractionDigits: 1
+                    }) + "%";
+
                 if (isNaN(costPerGram) || isNaN(grams) || isNaN(costPerHour) || isNaN(minutes)) {
                     totalCostValue.textContent = "Não informado";
+                    suggestedSalePriceValue.textContent = "Não informado";
                     return;
                 }
 
                 var materialCost = grams * costPerGram;
                 var machineCost = (minutes / 60) * costPerHour;
                 var packagingAmount = isNaN(packaging) ? 0 : packaging;
-                totalCostValue.textContent = "R$ " + (materialCost + machineCost + packagingAmount).toLocaleString("pt-BR", {
+                var totalProductionCost = materialCost + machineCost + packagingAmount;
+
+                totalCostValue.textContent = "R$ " + totalProductionCost.toLocaleString("pt-BR", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                 });
+
+                suggestedSalePriceValue.textContent = isNaN(targetMarginPercentage)
+                    ? "Não informado"
+                    : "R$ " + (totalProductionCost * (1 + (targetMarginPercentage / 100))).toLocaleString("pt-BR", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
             }
 
+            productSelect.addEventListener("change", updateTotalProductionCostHint);
             materialSelect.addEventListener("change", updateTotalProductionCostHint);
             printerSelect.addEventListener("change", updateTotalProductionCostHint);
             filamentUsedGrams.addEventListener("input", updateTotalProductionCostHint);
