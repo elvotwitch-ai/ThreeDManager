@@ -3726,7 +3726,7 @@ public class PrintJobControllerIntegrationTests
         Assert.Equal(HttpStatusCode.OK, dashboardResponse.StatusCode);
         Assert.Contains("Printer A", queueSection);
         // Only Imported/Planned jobs belong in the queue: 3 jobs, 480 minutes = 8h 0min.
-        Assert.Matches(@"<td>Printer A</td>\s*<td>3</td>\s*<td>\s*8h 0min\s*<span class=""badge bg-warning text-dark ms-1"">Fila alta</span>", queueSection);
+        Assert.Matches(@"<td>\s*<a href=""/PrintJobs\?printerId=" + Regex.Escape(ids.PrinterId.ToString()) + @""">Printer A</a>\s*</td>\s*<td>3</td>\s*<td>\s*8h 0min\s*<span class=""badge bg-warning text-dark ms-1"">Fila alta</span>", queueSection);
         Assert.DoesNotContain("queue-completed", queueSection);
         Assert.DoesNotContain("queue-failed", queueSection);
     }
@@ -3795,10 +3795,77 @@ public class PrintJobControllerIntegrationTests
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         // Only Imported/Planned jobs belong in the queue: 3 jobs, 480 minutes = 8h 0min.
+        Assert.Contains($"/PrintJobs?printerId={ids.PrinterId}", html);
         Assert.Contains("3 produção(ões)", html);
         Assert.Contains("8h 0min", html);
         Assert.Contains("Fila alta", html);
         Assert.DoesNotContain("printers-queue-completed", html);
+    }
+
+    [Fact]
+    public async Task PrintJobsIndex_FiltersByPrinter_WhenPrinterIdProvided()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+        var secondPrinterId = Guid.NewGuid();
+
+        await factory.SeedAsync(async context =>
+        {
+            context.Printers.Add(new Printer
+            {
+                Id = secondPrinterId,
+                Name = "Printer B",
+                Brand = "E2E",
+                Model = "Model B",
+                CreatedAt = DateTime.UtcNow
+            });
+
+            context.PrintJobs.AddRange(
+                new PrintJob
+                {
+                    Id = Guid.NewGuid(),
+                    ProductId = ids.ProductId,
+                    PrinterId = ids.PrinterId,
+                    MaterialId = ids.MaterialId,
+                    SourceFileName = "printer-a-job.gcode",
+                    Status = PrintJobStatus.Imported,
+                    EstimatedTimeMinutes = 60,
+                    CreatedAt = DateTime.UtcNow.AddMinutes(10)
+                },
+                new PrintJob
+                {
+                    Id = Guid.NewGuid(),
+                    ProductId = ids.ProductId,
+                    PrinterId = secondPrinterId,
+                    MaterialId = ids.MaterialId,
+                    SourceFileName = "printer-b-job.gcode",
+                    Status = PrintJobStatus.Imported,
+                    EstimatedTimeMinutes = 45,
+                    CreatedAt = DateTime.UtcNow.AddMinutes(9)
+                });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var filteredResponse = await client.GetAsync($"/PrintJobs?printerId={ids.PrinterId}");
+        var filteredHtml = await filteredResponse.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, filteredResponse.StatusCode);
+        Assert.Contains("printer-a-job.gcode", filteredHtml);
+        Assert.DoesNotContain("printer-b-job.gcode", filteredHtml);
+        Assert.Contains("Filtrando por impressora:", filteredHtml);
+        Assert.Contains("Printer A", filteredHtml);
+        Assert.Contains("Ver todas", filteredHtml);
+
+        var unfilteredResponse = await client.GetAsync("/PrintJobs");
+        var unfilteredHtml = await unfilteredResponse.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, unfilteredResponse.StatusCode);
+        Assert.Contains("printer-a-job.gcode", unfilteredHtml);
+        Assert.Contains("printer-b-job.gcode", unfilteredHtml);
+        Assert.DoesNotContain("Filtrando por impressora:", unfilteredHtml);
     }
 
     [Fact]

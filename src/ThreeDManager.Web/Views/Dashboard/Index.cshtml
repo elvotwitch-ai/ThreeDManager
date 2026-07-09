@@ -320,7 +320,16 @@
                         @foreach (var queueEntry in Model.PrinterQueue)
                         {
                             <tr>
-                                <td>@queueEntry.PrinterName</td>
+                                <td>
+                                    @if (queueEntry.PrinterId.HasValue)
+                                    {
+                                        <a asp-controller="PrintJobs" asp-action="Index" asp-route-printerId="@queueEntry.PrinterId">@queueEntry.PrinterName</a>
+                                    }
+                                    else
+                                    {
+                                        @queueEntry.PrinterName
+                                    }
+                                </td>
                                 <td>@queueEntry.QueuedJobsCount</td>
                                 <td>
                                     @FormatMinutes(queueEntry.QueuedEstimatedTimeMinutes)

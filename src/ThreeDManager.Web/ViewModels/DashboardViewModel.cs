@@ -173,6 +173,8 @@ public class DashboardLowStockProductViewModel
 
 public class DashboardPrinterQueueViewModel
 {
+    public Guid? PrinterId { get; set; }
+
     public string PrinterName { get; set; } = string.Empty;
 
     public int QueuedJobsCount { get; set; }

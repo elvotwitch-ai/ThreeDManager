@@ -11,6 +11,8 @@
     var printerCostPerHour = ViewBag.PrinterCostPerHour as Dictionary<Guid, decimal?> ?? new Dictionary<Guid, decimal?>();
     var productSalePriceById = ViewBag.ProductSalePriceById as Dictionary<Guid, decimal?> ?? new Dictionary<Guid, decimal?>();
     var productTargetMarginPercentageById = ViewBag.ProductTargetMarginPercentageById as Dictionary<Guid, decimal?> ?? new Dictionary<Guid, decimal?>();
+    var printerFilterName = ViewData["PrinterFilterName"] as string;
+    var isPrinterFilterActive = ViewData["PrinterFilterId"] is not null;
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -19,6 +21,14 @@
         <p class="text-muted">Histórico de produções geradas a partir de arquivos importados.</p>
     </div>
 </div>
+
+@if (isPrinterFilterActive)
+{
+    <div class="alert alert-secondary d-flex justify-content-between align-items-center">
+        <span>Filtrando por impressora: <strong>@(printerFilterName ?? "Impressora removida")</strong></span>
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Ver todas</a>
+    </div>
+}
 
 @if (TempData["SuccessMessage"] is not null)
 {
@@ -30,7 +40,9 @@
 @if (!Model.Any())
 {
     <div class="alert alert-info">
-        Nenhuma produção registrada ainda.
+        @(isPrinterFilterActive
+            ? "Nenhuma produção registrada para esta impressora."
+            : "Nenhuma produção registrada ainda.")
     </div>
 }
 else

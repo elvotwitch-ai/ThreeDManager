@@ -142,6 +142,7 @@ public class DashboardController : Controller
             .GroupBy(printJob => printJob.PrinterId)
             .Select(group => new DashboardPrinterQueueViewModel
             {
+                PrinterId = group.Key,
                 PrinterName = group.Key.HasValue && printerNames.TryGetValue(group.Key.Value, out var queuedPrinterName)
                     ? queuedPrinterName
                     : "Não vinculada",

@@ -21,9 +21,16 @@ public class PrintJobsController : Controller
         _stockService = stockService;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(Guid? printerId)
     {
-        var printJobs = await _context.PrintJobs
+        var printJobsQuery = _context.PrintJobs.AsQueryable();
+
+        if (printerId.HasValue)
+        {
+            printJobsQuery = printJobsQuery.Where(printJob => printJob.PrinterId == printerId.Value);
+        }
+
+        var printJobs = await printJobsQuery
             .OrderByDescending(printJob => printJob.CreatedAt)
             .ToListAsync();
 
@@ -42,6 +49,13 @@ public class PrintJobsController : Controller
         var printers = await _context.Printers.ToListAsync();
         ViewBag.Printers = printers.ToDictionary(printer => printer.Id, printer => printer.Name);
         ViewBag.PrinterCostPerHour = printers.ToDictionary(printer => printer.Id, printer => printer.CostPerHour);
+
+        if (printerId.HasValue)
+        {
+            ViewData["PrinterFilterId"] = printerId.Value;
+            ViewData["PrinterFilterName"] = printers
+                .FirstOrDefault(printer => printer.Id == printerId.Value)?.Name;
+        }
 
         return View(printJobs);
     }
