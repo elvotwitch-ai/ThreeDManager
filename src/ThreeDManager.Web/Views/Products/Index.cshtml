@@ -49,6 +49,7 @@ else
                     <th>Estoque mínimo</th>
                     <th>Status estoque</th>
                     <th>Margem alvo</th>
+                    <th>Custo padrão de embalagem</th>
                     <th>Movimentação recente</th>
                     <th>Status</th>
                     <th class="text-end">Ações</th>
@@ -130,6 +131,16 @@ else
                             else
                             {
                                 <span class="text-muted">Não definida</span>
+                            }
+                        </td>
+                        <td>
+                            @if (product.DefaultPackagingCost.HasValue)
+                            {
+                                <span>@product.DefaultPackagingCost.Value.ToString("C")</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Não definido</span>
                             }
                         </td>
                         <td>

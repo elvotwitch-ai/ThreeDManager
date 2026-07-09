@@ -2004,6 +2004,8 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("10 un.", indexHtml);
         Assert.Contains("Margem alvo", indexHtml);
         Assert.Contains("25,0%", indexHtml);
+        Assert.Contains("Custo padrão de embalagem", indexHtml);
+        Assert.Contains("R$ 2,50", indexHtml);
 
         var dashboardResponse = await client.GetAsync("/Dashboard");
         var dashboardHtml = WebUtility.HtmlDecode(await dashboardResponse.Content.ReadAsStringAsync());
@@ -2021,6 +2023,7 @@ public class PrintJobControllerIntegrationTests
         Assert.Equal(3, product.StockQuantity);
         Assert.Equal(10, product.MinimumStockQuantity);
         Assert.Equal(25m, product.TargetMarginPercentage);
+        Assert.Equal(2.50m, product.DefaultPackagingCost);
     }
 
     [Fact]
