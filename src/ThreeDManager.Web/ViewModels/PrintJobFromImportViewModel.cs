@@ -60,5 +60,8 @@ public class PrintJobFromImportViewModel
     public IReadOnlyDictionary<string, decimal?> ProductTargetMarginPercentageById { get; set; } =
         new Dictionary<string, decimal?>();
 
+    public IReadOnlyDictionary<string, decimal?> ProductDefaultPackagingCostById { get; set; } =
+        new Dictionary<string, decimal?>();
+
     public IEnumerable<SelectListItem> StatusOptions { get; set; } = Enumerable.Empty<SelectListItem>();
 }

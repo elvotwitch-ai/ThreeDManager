@@ -1981,6 +1981,7 @@ public class PrintJobControllerIntegrationTests
                 ["StockQuantity"] = "3",
                 ["MinimumStockQuantity"] = "10",
                 ["TargetMarginPercentage"] = "25",
+                ["DefaultPackagingCost"] = "2.50",
                 ["IsActive"] = "true",
                 ["CreatedAt"] = "2026-06-30T02:00:00Z"
             }));
@@ -1992,6 +1993,8 @@ public class PrintJobControllerIntegrationTests
         Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
         Assert.Contains("Estoque mínimo", detailsHtml);
         Assert.Contains("Baixo estoque", detailsHtml);
+        Assert.Contains("Custo padrão de embalagem", detailsHtml);
+        Assert.Contains("R$ 2,50", detailsHtml);
 
         var indexResponse = await client.GetAsync("/Products");
         var indexHtml = WebUtility.HtmlDecode(await indexResponse.Content.ReadAsStringAsync());
@@ -2680,6 +2683,7 @@ public class PrintJobControllerIntegrationTests
 
             var product = await context.Products.FirstAsync(product => product.Id == ids.ProductId);
             product.TargetMarginPercentage = 50.0m;
+            product.DefaultPackagingCost = 2.50m;
 
             context.PrintImports.Add(new PrintImport
             {
@@ -2715,7 +2719,10 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("Margem alvo do produto", html);
         // Seeded product TargetMarginPercentage = 50.0 -> invariant string in the option data attribute.
         Assert.Contains("data-target-margin-percentage=\"50.0\"", html);
-        Assert.Contains("productSelect.addEventListener(\"change\", updateTotalProductionCostHint)", html);
+        // Seeded product DefaultPackagingCost = 2.50 -> invariant string in the option data attribute.
+        Assert.Contains("data-default-packaging-cost=\"2.50\"", html);
+        Assert.Contains("applyDefaultPackagingCost();", html);
+        Assert.Contains("productSelect.addEventListener(\"change\", function ()", html);
     }
 
     [Fact]

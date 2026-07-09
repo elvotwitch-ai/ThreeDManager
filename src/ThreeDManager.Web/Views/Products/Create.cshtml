@@ -57,6 +57,13 @@
             </div>
 
             <div class="mb-3">
+                <label asp-for="DefaultPackagingCost" class="form-label">Custo padrão de embalagem (R$)</label>
+                <input asp-for="DefaultPackagingCost" class="form-control" type="number" step="0.01" min="0" placeholder="Ex: 2.50" />
+                <span asp-validation-for="DefaultPackagingCost" class="text-danger"></span>
+                <div class="form-text">Usado para preencher automaticamente o custo de embalagem ao gerar uma produção a partir de uma importação.</div>
+            </div>
+
+            <div class="mb-3">
                 <label asp-for="Description" class="form-label">Descrição</label>
                 <textarea asp-for="Description" class="form-control" rows="4" placeholder="Descreva o produto e possíveis variações"></textarea>
             </div>

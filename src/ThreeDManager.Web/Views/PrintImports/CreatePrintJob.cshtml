@@ -35,7 +35,11 @@
                 var targetMarginAttribute = targetMarginPercentage.HasValue
                     ? targetMarginPercentage.Value.ToString("0.0############################", System.Globalization.CultureInfo.InvariantCulture)
                     : string.Empty;
-                <option value="@option.Value" data-target-margin-percentage="@targetMarginAttribute">@option.Text</option>
+                var defaultPackagingCost = Model.ProductDefaultPackagingCostById.TryGetValue(option.Value, out var packagingCostDefault) ? packagingCostDefault : null;
+                var defaultPackagingCostAttribute = defaultPackagingCost.HasValue
+                    ? defaultPackagingCost.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                    : string.Empty;
+                <option value="@option.Value" data-target-margin-percentage="@targetMarginAttribute" data-default-packaging-cost="@defaultPackagingCostAttribute">@option.Text</option>
             }
         </select>
         <span asp-validation-for="ProductId" class="text-danger"></span>
@@ -282,6 +286,16 @@
             var suggestedSalePriceValue = suggestedSalePriceHint.querySelector("strong");
             var targetMarginValue = targetMarginHint.querySelector("span");
 
+            function applyDefaultPackagingCost() {
+                var productOption = productSelect.options[productSelect.selectedIndex];
+                var defaultPackagingCostRaw = productOption ? productOption.getAttribute("data-default-packaging-cost") : "";
+                var defaultPackagingCost = defaultPackagingCostRaw ? parseFloat(defaultPackagingCostRaw) : NaN;
+
+                if (!packagingCost.value && !isNaN(defaultPackagingCost)) {
+                    packagingCost.value = defaultPackagingCost.toFixed(2);
+                }
+            }
+
             function updateTotalProductionCostHint() {
                 var productOption = productSelect.options[productSelect.selectedIndex];
                 var materialOption = materialSelect.options[materialSelect.selectedIndex];
@@ -329,7 +343,10 @@
                     });
             }
 
-            productSelect.addEventListener("change", updateTotalProductionCostHint);
+            productSelect.addEventListener("change", function () {
+                applyDefaultPackagingCost();
+                updateTotalProductionCostHint();
+            });
             materialSelect.addEventListener("change", updateTotalProductionCostHint);
             printerSelect.addEventListener("change", updateTotalProductionCostHint);
             filamentUsedGrams.addEventListener("input", updateTotalProductionCostHint);

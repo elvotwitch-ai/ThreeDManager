@@ -25,6 +25,9 @@ public class Product
     [Range(0, double.MaxValue, ErrorMessage = "A margem alvo (%) não pode ser negativa.")]
     public decimal? TargetMarginPercentage {get; set; }
 
+    [Range(0, double.MaxValue, ErrorMessage = "O custo padrão de embalagem não pode ser negativo.")]
+    public decimal? DefaultPackagingCost {get; set; }
+
     public bool IsActive {get; set; } = true;
     public DateTime CreatedAt {get; set; } = DateTime.UtcNow;
     }
