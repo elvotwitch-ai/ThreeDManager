@@ -19,6 +19,7 @@ What each doc is for:
 - `docs/context/BACKLOG.md`: phased backlog with current status.
 - `docs/context/tasks_diary.md`: running checkpoint log.
 - `docs/errors/errors.md`: active bugs, blockers, and verification status.
+- `docs/operations/ALPHA_HOSTING.md`: alpha access credentials and safe local-server startup.
 
 Pre-commit checklist:
 1. Run `dotnet build ThreeDManager.slnx`.

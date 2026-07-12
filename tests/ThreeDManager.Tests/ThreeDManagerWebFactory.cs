@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -12,8 +13,14 @@ namespace ThreeDManager.Tests;
 
 public sealed class ThreeDManagerWebFactory : WebApplicationFactory<Program>
 {
+    private readonly bool _bypassAuthentication;
     private readonly string _databaseName = $"three-d-manager-tests-{Guid.NewGuid():N}";
     private readonly InMemoryDatabaseRoot _databaseRoot = new();
+
+    public ThreeDManagerWebFactory(bool bypassAuthentication = true)
+    {
+        _bypassAuthentication = bypassAuthentication;
+    }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -22,7 +29,10 @@ public sealed class ThreeDManagerWebFactory : WebApplicationFactory<Program>
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["Testing:DatabaseName"] = _databaseName
+                ["Testing:DatabaseName"] = _databaseName,
+                ["Testing:BypassAuthentication"] = _bypassAuthentication.ToString(),
+                ["AlphaAccess:Username"] = "alpha-operator",
+                ["AlphaAccess:Password"] = "test-only-password"
             });
         });
 
@@ -31,6 +41,12 @@ public sealed class ThreeDManagerWebFactory : WebApplicationFactory<Program>
         // so parallel/sequential test runs never leak rows across factory instances.
         builder.ConfigureTestServices(services =>
         {
+            if (_bypassAuthentication)
+            {
+                services.PostConfigure<AuthorizationOptions>(options =>
+                    options.FallbackPolicy = null);
+            }
+
             services.RemoveAll<DbContextOptions<AppDbContext>>();
             services.AddDbContext<AppDbContext>(options =>
                 options.UseInMemoryDatabase(_databaseName, _databaseRoot));

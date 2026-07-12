@@ -1,0 +1,38 @@
+@model ThreeDManager.Web.ViewModels.LoginViewModel
+@{
+    ViewData["Title"] = "Entrar";
+}
+
+<div class="row justify-content-center py-5">
+    <div class="col-12 col-sm-10 col-md-6 col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <h1 class="h3 mb-2">Entrar</h1>
+                <p class="text-body-secondary">Acesso ao ThreeDManager</p>
+
+                <form asp-action="Login" method="post">
+                    <input asp-for="ReturnUrl" type="hidden" />
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Username" class="form-label"></label>
+                        <input asp-for="Username" class="form-control" autocomplete="username" autofocus />
+                        <span asp-validation-for="Username" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="Password" class="form-label"></label>
+                        <input asp-for="Password" class="form-control" autocomplete="current-password" />
+                        <span asp-validation-for="Password" class="text-danger"></span>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Entrar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

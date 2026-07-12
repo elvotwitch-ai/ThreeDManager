@@ -24,7 +24,9 @@
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between align-items-sm-center gap-2">
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
                             <a class="nav-link" asp-area="" asp-controller="Dashboard" asp-action="Index">Dashboard</a>
@@ -49,6 +51,11 @@
                         </li>
                         
                     </ul>
+                    <span class="navbar-text text-nowrap">@User.Identity.Name</span>
+                    <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Sair</button>
+                    </form>
+                    }
                     <button id="theme-toggle" class="btn btn-outline-secondary btn-sm" type="button"
                             aria-label="Alternar entre modo claro e escuro" aria-pressed="true">
                         <span data-theme-icon aria-hidden="true">☀️</span>

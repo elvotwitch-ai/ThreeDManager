@@ -11,6 +11,65 @@ namespace ThreeDManager.Tests;
 public class PrintJobControllerIntegrationTests
 {
     [Fact]
+    public async Task AlphaAccess_RequiresLogin_RejectsInvalidPassword_AndSupportsLogout()
+    {
+        using var factory = new ThreeDManagerWebFactory(bypassAuthentication: false);
+        using var client = factory.CreateTestClient();
+
+        var protectedResponse = await client.GetAsync("/Dashboard");
+        Assert.Equal(HttpStatusCode.Redirect, protectedResponse.StatusCode);
+        Assert.Equal("/Account/Login", protectedResponse.Headers.Location?.AbsolutePath);
+
+        var loginResponse = await client.GetAsync("/Account/Login?returnUrl=%2FDashboard");
+        var loginHtml = await loginResponse.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode);
+        Assert.Contains("Acesso ao ThreeDManager", loginHtml);
+
+        var invalidResponse = await client.PostAsync(
+            "/Account/Login",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(loginHtml),
+                ["Username"] = "alpha-operator",
+                ["Password"] = "wrong-password",
+                ["ReturnUrl"] = "/Dashboard"
+            }));
+        var invalidHtml = await invalidResponse.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, invalidResponse.StatusCode);
+        Assert.Contains("Usuário ou senha inválidos.", WebUtility.HtmlDecode(invalidHtml));
+
+        var validResponse = await client.PostAsync(
+            "/Account/Login",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(invalidHtml),
+                ["Username"] = "alpha-operator",
+                ["Password"] = "test-only-password",
+                ["ReturnUrl"] = "/Dashboard"
+            }));
+        Assert.Equal(HttpStatusCode.Redirect, validResponse.StatusCode);
+        Assert.Equal("/Dashboard", validResponse.Headers.Location?.ToString());
+
+        var authenticatedResponse = await client.GetAsync("/Dashboard");
+        var authenticatedHtml = await authenticatedResponse.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, authenticatedResponse.StatusCode);
+        Assert.Contains("alpha-operator", authenticatedHtml);
+        Assert.Contains(">Sair</button>", authenticatedHtml);
+
+        var logoutResponse = await client.PostAsync(
+            "/Account/Logout",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = ExtractAntiForgeryToken(authenticatedHtml)
+            }));
+        Assert.Equal(HttpStatusCode.Redirect, logoutResponse.StatusCode);
+        Assert.Equal("/Account/Login", logoutResponse.Headers.Location?.ToString());
+
+        var afterLogoutResponse = await client.GetAsync("/Dashboard");
+        Assert.Equal(HttpStatusCode.Redirect, afterLogoutResponse.StatusCode);
+    }
+
+    [Fact]
     public async Task SharedLayout_DefaultsToDarkTheme_AndRendersPersistentToggle()
     {
         using var factory = new ThreeDManagerWebFactory();
