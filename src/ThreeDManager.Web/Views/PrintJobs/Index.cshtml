@@ -13,6 +13,10 @@
     var productTargetMarginPercentageById = ViewBag.ProductTargetMarginPercentageById as Dictionary<Guid, decimal?> ?? new Dictionary<Guid, decimal?>();
     var printerFilterName = ViewData["PrinterFilterName"] as string;
     var isPrinterFilterActive = ViewData["PrinterFilterId"] is not null;
+    var printerFilterId = isPrinterFilterActive ? (Guid?)ViewData["PrinterFilterId"] : null;
+    var statusFilter = ViewData["StatusFilter"] as string;
+    var failedPrintJobCount = ViewData["FailedPrintJobCount"] as int? ?? 0;
+    var isFailedStatusFilter = statusFilter == "failed";
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -30,6 +34,20 @@
     </div>
 }
 
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <a asp-action="Index"
+       asp-route-printerId="@printerFilterId"
+       class="btn btn-sm @(isFailedStatusFilter ? "btn-outline-secondary" : "btn-secondary")">
+        Todas
+    </a>
+    <a asp-action="Index"
+       asp-route-printerId="@printerFilterId"
+       asp-route-status="failed"
+       class="btn btn-sm @(isFailedStatusFilter ? "btn-danger" : "btn-outline-danger")">
+        Falhas (@failedPrintJobCount)
+    </a>
+</div>
+
 @if (TempData["SuccessMessage"] is not null)
 {
     <div class="alert alert-success">
@@ -40,9 +58,11 @@
 @if (!Model.Any())
 {
     <div class="alert alert-info">
-        @(isPrinterFilterActive
-            ? "Nenhuma produção registrada para esta impressora."
-            : "Nenhuma produção registrada ainda.")
+        @(isFailedStatusFilter
+            ? "Nenhuma produção com falha registrada."
+            : isPrinterFilterActive
+                ? "Nenhuma produção registrada para esta impressora."
+                : "Nenhuma produção registrada ainda.")
     </div>
 }
 else

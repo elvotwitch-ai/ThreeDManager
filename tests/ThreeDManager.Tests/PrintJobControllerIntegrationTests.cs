@@ -4001,6 +4001,65 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task PrintJobsIndex_FiltersFailedProductions_WhenStatusFailedRequested()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        await factory.SeedAsync(async context =>
+        {
+            context.PrintJobs.AddRange(
+                new PrintJob
+                {
+                    Id = Guid.NewGuid(),
+                    ProductId = ids.ProductId,
+                    PrinterId = ids.PrinterId,
+                    MaterialId = ids.MaterialId,
+                    SourceFileName = "status-filter-failed.gcode",
+                    Status = PrintJobStatus.Failed,
+                    FailureReason = "Entupimento do bico.",
+                    CreatedAt = DateTime.UtcNow.AddMinutes(10)
+                },
+                new PrintJob
+                {
+                    Id = Guid.NewGuid(),
+                    ProductId = ids.ProductId,
+                    PrinterId = ids.PrinterId,
+                    MaterialId = ids.MaterialId,
+                    SourceFileName = "status-filter-imported.gcode",
+                    Status = PrintJobStatus.Imported,
+                    CreatedAt = DateTime.UtcNow.AddMinutes(9)
+                });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var filteredResponse = await client.GetAsync("/PrintJobs?status=failed");
+        var filteredHtml = await filteredResponse.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, filteredResponse.StatusCode);
+        Assert.Contains("status-filter-failed.gcode", filteredHtml);
+        Assert.DoesNotContain("status-filter-imported.gcode", filteredHtml);
+        Assert.Contains("Falhas (1)", filteredHtml);
+
+        var unfilteredResponse = await client.GetAsync("/PrintJobs");
+        var unfilteredHtml = await unfilteredResponse.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, unfilteredResponse.StatusCode);
+        Assert.Contains("status-filter-failed.gcode", unfilteredHtml);
+        Assert.Contains("status-filter-imported.gcode", unfilteredHtml);
+        Assert.Contains("Falhas (1)", unfilteredHtml);
+
+        var dashboardResponse = await client.GetAsync("/Dashboard");
+        var dashboardHtml = await dashboardResponse.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, dashboardResponse.StatusCode);
+        Assert.Contains("href=\"/PrintJobs?status=failed\">Ver falhas</a>", dashboardHtml);
+    }
+
+    [Fact]
     public async Task PrintJobPackagingCost_PersistsAndRendersAcrossProductionFlow()
     {
         using var factory = new ThreeDManagerWebFactory();

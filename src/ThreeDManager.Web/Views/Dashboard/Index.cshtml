@@ -64,6 +64,10 @@
             <div class="card-body">
                 <h6 class="text-muted">Falhas</h6>
                 <h2>@Model.FailedPrintJobs</h2>
+                @if (Model.FailedPrintJobs > 0)
+                {
+                    <a asp-controller="PrintJobs" asp-action="Index" asp-route-status="failed" class="small">Ver falhas</a>
+                }
             </div>
         </div>
     </div>

@@ -21,7 +21,7 @@ public class PrintJobsController : Controller
         _stockService = stockService;
     }
 
-    public async Task<IActionResult> Index(Guid? printerId)
+    public async Task<IActionResult> Index(Guid? printerId, string? status)
     {
         var printJobsQuery = _context.PrintJobs.AsQueryable();
 
@@ -30,9 +30,20 @@ public class PrintJobsController : Controller
             printJobsQuery = printJobsQuery.Where(printJob => printJob.PrinterId == printerId.Value);
         }
 
-        var printJobs = await printJobsQuery
+        var allPrintJobs = await printJobsQuery
             .OrderByDescending(printJob => printJob.CreatedAt)
             .ToListAsync();
+
+        var failedPrintJobs = allPrintJobs
+            .Where(printJob => PrintJobStatus.Normalize(printJob.Status) == PrintJobStatus.Failed)
+            .ToList();
+
+        var isFailedStatusFilter = string.Equals(status, "failed", StringComparison.OrdinalIgnoreCase);
+
+        var printJobs = isFailedStatusFilter ? failedPrintJobs : allPrintJobs;
+
+        ViewData["StatusFilter"] = isFailedStatusFilter ? "failed" : null;
+        ViewData["FailedPrintJobCount"] = failedPrintJobs.Count;
 
         ViewBag.Products = await _context.Products
             .ToDictionaryAsync(product => product.Id, product => product.Name);
