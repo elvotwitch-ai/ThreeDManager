@@ -62,3 +62,12 @@ To remove the service while preserving installed application files:
 ```
 
 The service installer has not been executed on the host yet. Installation requires an elevated terminal and the real alpha operator password.
+
+To deploy a new published build after the service already exists:
+
+```powershell
+.\scripts\Publish-ThreeDManager.ps1
+.\scripts\Update-ThreeDManagerService.ps1
+```
+
+Run the update command from an elevated PowerShell window. It preserves the service credentials, stops the service, copies the new artifact, starts the service again, and verifies that `/css/site.css` is served as CSS.
