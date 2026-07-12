@@ -15,13 +15,20 @@ public class MaterialsController : Controller
         _context = context;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? stockStatus)
     {
-        var materials = await _context.Materials
+        var allMaterials = await _context.Materials
             .OrderByDescending(material => material.CreatedAt)
             .ToListAsync();
 
-        var materialIds = materials.Select(material => material.Id).ToList();
+        var lowStockMaterials = allMaterials
+            .Where(IsLowStock)
+            .ToList();
+
+        var isLowStockFilter = string.Equals(stockStatus, "low", StringComparison.OrdinalIgnoreCase);
+        var materials = isLowStockFilter ? lowStockMaterials : allMaterials;
+
+        var materialIds = allMaterials.Select(material => material.Id).ToList();
         var latestStockMovements = await _context.MaterialStockMovements
             .Where(movement => materialIds.Contains(movement.MaterialId))
             .OrderByDescending(movement => movement.CreatedAt)
@@ -31,7 +38,17 @@ public class MaterialsController : Controller
             .GroupBy(movement => movement.MaterialId)
             .ToDictionary(group => group.Key, group => group.First());
 
+        ViewData["StockStatusFilter"] = isLowStockFilter ? "low" : null;
+        ViewData["LowStockMaterialCount"] = lowStockMaterials.Count;
+
         return View(materials);
+    }
+
+    private static bool IsLowStock(Material material)
+    {
+        return material.CurrentStockGrams.HasValue
+            && material.MinimumStockGrams.HasValue
+            && material.CurrentStockGrams.Value <= material.MinimumStockGrams.Value;
     }
 
     public async Task<IActionResult> Details(Guid? id)

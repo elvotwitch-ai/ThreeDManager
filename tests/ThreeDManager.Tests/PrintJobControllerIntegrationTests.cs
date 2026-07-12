@@ -2254,6 +2254,51 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task MaterialsIndex_FiltersLowStockMaterials_WhenStockStatusLowRequested()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory, stockGrams: 120m);
+
+        var okMaterialId = Guid.NewGuid();
+        await factory.SeedAsync(async context =>
+        {
+            var seededMaterial = await context.Materials.SingleAsync(material => material.Id == ids.MaterialId);
+            seededMaterial.MinimumStockGrams = 200m;
+
+            context.Materials.Add(new Material
+            {
+                Id = okMaterialId,
+                Name = "PETG Branco",
+                Type = "PETG",
+                Brand = "E2E",
+                Color = "White",
+                CostPerKg = 90m,
+                CurrentStockGrams = 1000m,
+                MinimumStockGrams = 200m,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var unfilteredResponse = await client.GetAsync("/Materials");
+        var unfilteredHtml = WebUtility.HtmlDecode(await unfilteredResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, unfilteredResponse.StatusCode);
+        Assert.Contains("Baixo estoque (1)", unfilteredHtml);
+        Assert.Contains("PLA Preto", unfilteredHtml);
+        Assert.Contains("PETG Branco", unfilteredHtml);
+
+        var filteredResponse = await client.GetAsync("/Materials?stockStatus=low");
+        var filteredHtml = WebUtility.HtmlDecode(await filteredResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, filteredResponse.StatusCode);
+        Assert.Contains("Baixo estoque (1)", filteredHtml);
+        Assert.Contains("PLA Preto", filteredHtml);
+        Assert.DoesNotContain("PETG Branco", filteredHtml);
+    }
+
+    [Fact]
     public async Task EditPrintJob_ToCompleted_DeductsStockThroughMvcPipeline()
     {
         using var factory = new ThreeDManagerWebFactory();

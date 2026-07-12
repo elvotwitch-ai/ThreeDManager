@@ -4,6 +4,9 @@
 @{
     ViewData["Title"] = "Materiais";
     var latestStockMovements = ViewBag.LatestStockMovements as Dictionary<Guid, MaterialStockMovement> ?? new Dictionary<Guid, MaterialStockMovement>();
+    var stockStatusFilter = ViewData["StockStatusFilter"] as string;
+    var lowStockMaterialCount = ViewData["LowStockMaterialCount"] as int? ?? 0;
+    var isLowStockFilter = stockStatusFilter == "low";
 }
 
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
@@ -13,6 +16,18 @@
     </div>
 
     <a asp-action="Create" class="btn btn-primary">Novo material</a>
+</div>
+
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <a asp-action="Index"
+       class="btn btn-sm @(isLowStockFilter ? "btn-outline-secondary" : "btn-secondary")">
+        Todos
+    </a>
+    <a asp-action="Index"
+       asp-route-stockStatus="low"
+       class="btn btn-sm @(isLowStockFilter ? "btn-danger" : "btn-outline-danger")">
+        Baixo estoque (@lowStockMaterialCount)
+    </a>
 </div>
 
 @if (TempData["SuccessMessage"] is not null)
@@ -32,7 +47,9 @@
 @if (!Model.Any())
 {
     <div class="alert alert-info" role="alert">
-        Nenhum material cadastrado ainda. Clique em "Novo material" para começar.
+        @(isLowStockFilter
+            ? "Nenhum material em baixo estoque no momento."
+            : "Nenhum material cadastrado ainda. Clique em \"Novo material\" para começar.")
     </div>
 }
 else
