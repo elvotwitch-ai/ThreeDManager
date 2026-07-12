@@ -32,4 +32,32 @@ Open `http://localhost:5042`. An anonymous request must redirect to `/Account/Lo
 - Do not share Windows credentials, repository access, Docker access, or filesystem paths with clients.
 - Add HTTPS before remote use; cookie transport security depends on the externally exposed endpoint.
 
-Installing the restartable Windows service and private remote endpoint is a separate deployment batch.
+## Release publication
+
+From the repository root:
+
+```powershell
+.\scripts\Publish-ThreeDManager.ps1
+```
+
+This creates the ignored framework-dependent `win-x64` Release artifact under `artifacts\publish\ThreeDManager`. The server must retain the matching .NET 10 runtime.
+
+## Windows service installation
+
+Open PowerShell as Administrator and run:
+
+```powershell
+.\scripts\Install-ThreeDManagerService.ps1 -OperatorUsername "operator"
+```
+
+The installer prompts for the password without echoing it, requires at least 12 characters, copies the published artifact to `C:\ProgramData\ThreeDManager\app`, creates the automatic `ThreeDManager` Windows service, configures restart-on-failure, and binds Kestrel to `http://127.0.0.1:5080` by default. The username and password are written to the service's protected registry environment, not to the repository or published appsettings files.
+
+The default localhost binding is intentional: the next checkpoint must place a private HTTPS endpoint or tunnel in front of it. Do not change the binding to `0.0.0.0` merely to make it reachable from the internet.
+
+To remove the service while preserving installed application files:
+
+```powershell
+.\scripts\Uninstall-ThreeDManagerService.ps1
+```
+
+The service installer has not been executed on the host yet. Installation requires an elevated terminal and the real alpha operator password.

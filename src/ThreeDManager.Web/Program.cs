@@ -9,6 +9,10 @@ using ThreeDManager.Web.ModelBinding;
 using ThreeDManager.Web.Security;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Host.UseWindowsService(options =>
+{
+    options.ServiceName = "ThreeDManager";
+});
 
 // Add services to the container.
 builder.Services.AddControllersWithViews(options =>
