@@ -137,6 +137,8 @@ public class ProductsController : Controller
             return NotFound();
         }
 
+        var stockQuantityBeforeUpdate = existingProduct.StockQuantity;
+
         existingProduct.Name = product.Name;
         existingProduct.Sku = product.Sku;
         existingProduct.Category = product.Category;
@@ -147,6 +149,23 @@ public class ProductsController : Controller
         existingProduct.TargetMarginPercentage = product.TargetMarginPercentage;
         existingProduct.DefaultPackagingCost = product.DefaultPackagingCost;
         existingProduct.IsActive = product.IsActive;
+
+        if (stockQuantityBeforeUpdate != product.StockQuantity)
+        {
+            var stockBefore = stockQuantityBeforeUpdate ?? 0;
+            var stockAfter = product.StockQuantity ?? 0;
+
+            _context.ProductStockMovements.Add(new ProductStockMovement
+            {
+                ProductId = existingProduct.Id,
+                MovementType = "ManualAdjustment",
+                QuantityUnits = stockAfter - stockBefore,
+                StockBeforeUnits = stockQuantityBeforeUpdate,
+                StockAfterUnits = product.StockQuantity,
+                Notes = "Ajuste manual realizado no cadastro do produto.",
+                CreatedAt = DateTime.UtcNow
+            });
+        }
 
         await _context.SaveChangesAsync();
 

@@ -1922,10 +1922,17 @@ public class PrintJobControllerIntegrationTests
         var product = await context.Products.SingleAsync(product => product.Id == ids.ProductId);
         Assert.Equal(42, product.StockQuantity);
 
+        var movement = await context.ProductStockMovements.SingleAsync(movement => movement.ProductId == ids.ProductId);
+        Assert.Equal("ManualAdjustment", movement.MovementType);
+        Assert.Equal(42, movement.QuantityUnits);
+        Assert.Null(movement.StockBeforeUnits);
+        Assert.Equal(42, movement.StockAfterUnits);
+
         var detailsResponse = await client.GetAsync($"/Products/Details/{ids.ProductId}");
         var detailsHtml = WebUtility.HtmlDecode(await detailsResponse.Content.ReadAsStringAsync());
         Assert.Contains("Estoque de produtos acabados", detailsHtml);
         Assert.Contains("42 un.", detailsHtml);
+        Assert.Contains("Ajuste manual", detailsHtml);
 
         var indexResponse = await client.GetAsync("/Products");
         var indexHtml = WebUtility.HtmlDecode(await indexResponse.Content.ReadAsStringAsync());
