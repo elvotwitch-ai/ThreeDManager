@@ -15,6 +15,8 @@ Do not write the real password into `appsettings.json`, scripts, Git, screenshot
 
 The application fails at startup outside the automated `Testing` environment when either credential is missing. This is intentional fail-closed behavior.
 
+Cookie and antiforgery protection keys are persisted in `C:\ProgramData\ThreeDManager\keys` and protected with Windows DPAPI. This keeps normal service restarts from invalidating all sessions or already-rendered forms. Preserve this directory when maintaining the installation.
+
 ## Local validation
 
 With `threedmanager-db` ready, run:

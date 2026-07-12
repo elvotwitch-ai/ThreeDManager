@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using ThreeDManager.Application.Interfaces;
 using ThreeDManager.Infrastructure.Data;
@@ -13,6 +14,22 @@ builder.Host.UseWindowsService(options =>
 {
     options.ServiceName = "ThreeDManager";
 });
+
+if (!builder.Environment.IsEnvironment("Testing"))
+{
+    var dataProtectionPath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+        "ThreeDManager",
+        "keys");
+
+    Directory.CreateDirectory(dataProtectionPath);
+    var dataProtectionBuilder = builder.Services.AddDataProtection()
+        .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionPath));
+    if (OperatingSystem.IsWindows())
+    {
+        dataProtectionBuilder.ProtectKeysWithDpapi();
+    }
+}
 
 // Add services to the container.
 builder.Services.AddControllersWithViews(options =>
