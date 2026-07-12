@@ -7,6 +7,7 @@
     var stockMovement = ViewBag.StockMovement as MaterialStockMovement;
     var productStockMovement = ViewBag.ProductStockMovement as ProductStockMovement;
     var returnTo = ViewData["ReturnTo"] as string;
+    var filterPrinterId = ViewData["ReturnPrinterId"] as Guid?;
     var materialCostPerKg = ViewBag.MaterialCostPerKg as decimal?;
     var printerCostPerHour = ViewBag.PrinterCostPerHour as decimal?;
     var productSalePrice = ViewBag.ProductSalePrice as decimal?;
@@ -414,7 +415,7 @@
 </div>
 
 <div class="mt-3 d-flex gap-2">
-    <a asp-action="Edit" asp-route-id="@Model.Id" asp-route-returnTo="@returnTo" class="btn btn-primary">Editar</a>
+    <a asp-action="Edit" asp-route-id="@Model.Id" asp-route-returnTo="@returnTo" asp-route-filterPrinterId="@filterPrinterId" class="btn btn-primary">Editar</a>
     @if (returnTo == "errorQueue")
     {
         <a asp-controller="PrintImports" asp-action="Index" asp-route-status="error" class="btn btn-outline-secondary">Voltar para falhas</a>
@@ -425,7 +426,11 @@
     }
     else if (returnTo == "failedQueue")
     {
-        <a asp-action="Index" asp-route-status="failed" class="btn btn-outline-secondary">Voltar para falhas</a>
+        <a asp-action="Index" asp-route-status="failed" asp-route-printerId="@filterPrinterId" class="btn btn-outline-secondary">Voltar para falhas</a>
+    }
+    else if (filterPrinterId.HasValue)
+    {
+        <a asp-action="Index" asp-route-printerId="@filterPrinterId" class="btn btn-outline-secondary">Voltar para produções desta impressora</a>
     }
     else
     {
@@ -443,5 +448,5 @@
         </a>
     }
 
-    <a asp-action="Delete" asp-route-id="@Model.Id" asp-route-returnTo="@returnTo" class="btn btn-outline-danger">Remover</a>
+    <a asp-action="Delete" asp-route-id="@Model.Id" asp-route-returnTo="@returnTo" asp-route-filterPrinterId="@filterPrinterId" class="btn btn-outline-danger">Remover</a>
 </div>

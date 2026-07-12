@@ -4049,6 +4049,7 @@ public class PrintJobControllerIntegrationTests
         var ids = await SeedCommonAsync(factory);
         var secondPrinterId = Guid.NewGuid();
         var linkedImportId = Guid.NewGuid();
+        var printerAJobId = Guid.NewGuid();
 
         await factory.SeedAsync(async context =>
         {
@@ -4073,7 +4074,7 @@ public class PrintJobControllerIntegrationTests
             context.PrintJobs.AddRange(
                 new PrintJob
                 {
-                    Id = Guid.NewGuid(),
+                    Id = printerAJobId,
                     ProductId = ids.ProductId,
                     PrinterId = ids.PrinterId,
                     MaterialId = ids.MaterialId,
@@ -4111,6 +4112,11 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("Ver todas", filteredHtml);
         Assert.Contains($"/PrintImports/Details/{linkedImportId}", filteredHtml);
 
+        // Row action links from a printer-filtered queue must carry filterPrinterId so Details/Edit/Delete can round-trip back to it.
+        Assert.Contains($"/PrintJobs/Details/{printerAJobId}?filterPrinterId={ids.PrinterId}", filteredHtml);
+        Assert.Contains($"/PrintJobs/Edit/{printerAJobId}?filterPrinterId={ids.PrinterId}", filteredHtml);
+        Assert.Contains($"/PrintJobs/Delete/{printerAJobId}?filterPrinterId={ids.PrinterId}", filteredHtml);
+
         var unfilteredResponse = await client.GetAsync("/PrintJobs");
         var unfilteredHtml = await unfilteredResponse.Content.ReadAsStringAsync();
 
@@ -4121,6 +4127,87 @@ public class PrintJobControllerIntegrationTests
         // printer-a-job.gcode has a linked import and should render as a link; printer-b-job.gcode has none and stays plain text.
         Assert.Contains($"href=\"/PrintImports/Details/{linkedImportId}\">printer-a-job.gcode</a>", unfilteredHtml);
         Assert.DoesNotContain("href=\"/PrintImports/Details/\">printer-b-job.gcode", unfilteredHtml);
+        // Unfiltered rows must not carry a printerId, since there is no filtered queue to return to.
+        Assert.DoesNotContain("printerId=", unfilteredHtml);
+    }
+
+    [Fact]
+    public async Task PrintJobsDetails_PreservesPrinterFilterContext_ThroughEditAndDelete()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+        var printJobId = Guid.NewGuid();
+
+        await factory.SeedAsync(async context =>
+        {
+            context.PrintJobs.Add(new PrintJob
+            {
+                Id = printJobId,
+                ProductId = ids.ProductId,
+                PrinterId = ids.PrinterId,
+                MaterialId = ids.MaterialId,
+                SourceFileName = "printer-filter-returnto.gcode",
+                Status = PrintJobStatus.Imported,
+                EstimatedTimeMinutes = 30,
+                CreatedAt = DateTime.UtcNow
+            });
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var indexHtml = await client.GetStringAsync($"/PrintJobs?printerId={ids.PrinterId}");
+        Assert.Contains($"/PrintJobs/Details/{printJobId}?filterPrinterId={ids.PrinterId}", indexHtml);
+        Assert.Contains($"/PrintJobs/Edit/{printJobId}?filterPrinterId={ids.PrinterId}", indexHtml);
+        Assert.Contains($"/PrintJobs/Delete/{printJobId}?filterPrinterId={ids.PrinterId}", indexHtml);
+
+        var detailsResponse = await client.GetAsync($"/PrintJobs/Details/{printJobId}?filterPrinterId={ids.PrinterId}");
+        var detailsHtml = await detailsResponse.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        Assert.Contains($"href=\"/PrintJobs?printerId={ids.PrinterId}\">Voltar para produções desta impressora</a>", detailsHtml);
+        Assert.Contains($"/PrintJobs/Edit/{printJobId}?filterPrinterId={ids.PrinterId}", detailsHtml);
+        Assert.Contains($"/PrintJobs/Delete/{printJobId}?filterPrinterId={ids.PrinterId}", detailsHtml);
+
+        var editHtml = WebUtility.HtmlDecode(await client.GetStringAsync($"/PrintJobs/Edit/{printJobId}?filterPrinterId={ids.PrinterId}"));
+        Assert.Contains($"name=\"filterPrinterId\" value=\"{ids.PrinterId}\"", editHtml);
+
+        var editToken = ExtractAntiForgeryToken(editHtml);
+        var editPostResponse = await client.PostAsync(
+            $"/PrintJobs/Edit/{printJobId}",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = editToken,
+                ["Id"] = printJobId.ToString(),
+                ["ProductId"] = ids.ProductId.ToString(),
+                ["PrinterId"] = ids.PrinterId.ToString(),
+                ["MaterialId"] = ids.MaterialId.ToString(),
+                ["EstimatedTimeMinutes"] = "30",
+                ["Status"] = PrintJobStatus.Imported,
+                ["filterPrinterId"] = ids.PrinterId.ToString()
+            }));
+
+        Assert.Equal(HttpStatusCode.Redirect, editPostResponse.StatusCode);
+        Assert.Equal(
+            $"/PrintJobs/Details/{printJobId}?filterPrinterId={ids.PrinterId}",
+            editPostResponse.Headers.Location?.ToString());
+
+        var deleteHtml = WebUtility.HtmlDecode(await client.GetStringAsync($"/PrintJobs/Delete/{printJobId}?filterPrinterId={ids.PrinterId}"));
+        Assert.Contains($"name=\"filterPrinterId\" value=\"{ids.PrinterId}\"", deleteHtml);
+
+        var deleteToken = ExtractAntiForgeryToken(deleteHtml);
+        var deletePostResponse = await client.PostAsync(
+            $"/PrintJobs/Delete/{printJobId}",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = deleteToken,
+                ["Id"] = printJobId.ToString(),
+                ["filterPrinterId"] = ids.PrinterId.ToString()
+            }));
+
+        // Deleting from a printer-filtered queue must return to that filtered queue, not to the unfiltered Index.
+        Assert.Equal(HttpStatusCode.Redirect, deletePostResponse.StatusCode);
+        Assert.Equal($"/PrintJobs?printerId={ids.PrinterId}", deletePostResponse.Headers.Location?.ToString());
     }
 
     [Fact]

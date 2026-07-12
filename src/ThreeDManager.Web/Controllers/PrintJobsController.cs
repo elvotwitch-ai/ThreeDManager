@@ -71,7 +71,7 @@ public class PrintJobsController : Controller
         return View(printJobs);
     }
 
-    public async Task<IActionResult> Details(Guid? id, string? returnTo)
+    public async Task<IActionResult> Details(Guid? id, string? returnTo, Guid? filterPrinterId)
     {
         if (id is null)
         {
@@ -145,10 +145,11 @@ public class PrintJobsController : Controller
             .OrderByDescending(movement => movement.CreatedAt)
             .FirstOrDefaultAsync();
         ViewData["ReturnTo"] = NormalizeReturnTo(returnTo);
+        ViewData["ReturnPrinterId"] = filterPrinterId;
 
         return View(printJob);
     }
-    public async Task<IActionResult> Edit(Guid? id, string? returnTo)
+    public async Task<IActionResult> Edit(Guid? id, string? returnTo, Guid? filterPrinterId)
     {
         if (id is null)
         {
@@ -164,13 +165,14 @@ public class PrintJobsController : Controller
 
         await PopulateOptionsAsync(printJob);
         ViewData["ReturnTo"] = NormalizeReturnTo(returnTo);
+        ViewData["ReturnPrinterId"] = filterPrinterId;
 
         return View(printJob);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(Guid id, PrintJob printJob, string? returnTo)
+    public async Task<IActionResult> Edit(Guid id, PrintJob printJob, string? returnTo, Guid? filterPrinterId)
     {
         if (id != printJob.Id)
         {
@@ -197,6 +199,7 @@ public class PrintJobsController : Controller
         {
             await PopulateOptionsAsync(printJob);
             ViewData["ReturnTo"] = NormalizeReturnTo(returnTo);
+            ViewData["ReturnPrinterId"] = filterPrinterId;
             return View(printJob);
         }
 
@@ -236,6 +239,7 @@ public class PrintJobsController : Controller
             AddStockModelError(stockResult);
             await PopulateOptionsAsync(printJob);
             ViewData["ReturnTo"] = NormalizeReturnTo(returnTo);
+            ViewData["ReturnPrinterId"] = filterPrinterId;
             return View(printJob);
         }
 
@@ -248,11 +252,12 @@ public class PrintJobsController : Controller
             new
             {
                 id = existingPrintJob.Id,
-                returnTo = NormalizeReturnTo(returnTo)
+                returnTo = NormalizeReturnTo(returnTo),
+                filterPrinterId
             });
     }
 
-    public async Task<IActionResult> Delete(Guid? id, string? returnTo)
+    public async Task<IActionResult> Delete(Guid? id, string? returnTo, Guid? filterPrinterId)
     {
         if (id is null)
         {
@@ -274,13 +279,14 @@ public class PrintJobsController : Controller
                 .FirstOrDefaultAsync()
             : null;
         ViewData["ReturnTo"] = NormalizeReturnTo(returnTo);
+        ViewData["ReturnPrinterId"] = filterPrinterId;
 
         return View(printJob);
     }
 
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(Guid id, string? returnTo)
+    public async Task<IActionResult> DeleteConfirmed(Guid id, string? returnTo, Guid? filterPrinterId)
     {
         var printJob = await _context.PrintJobs.FindAsync(id);
 
@@ -300,7 +306,7 @@ public class PrintJobsController : Controller
 
         if (normalizedReturnTo == "failedQueue")
         {
-            return RedirectToAction(nameof(Index), new { status = "failed" });
+            return RedirectToAction(nameof(Index), new { status = "failed", printerId = filterPrinterId });
         }
 
         if (printJob.PrintImportId.HasValue && normalizedReturnTo is not null)
@@ -315,7 +321,7 @@ public class PrintJobsController : Controller
                 });
         }
 
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(nameof(Index), new { printerId = filterPrinterId });
     }
 
     private async Task PopulateOptionsAsync(PrintJob printJob)

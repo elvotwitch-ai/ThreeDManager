@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = "Editar produção";
     var returnTo = ViewData["ReturnTo"] as string;
+    var filterPrinterId = ViewData["ReturnPrinterId"] as Guid?;
 }
 
 <h1>Editar produção</h1>
@@ -23,6 +24,10 @@
     @if (!string.IsNullOrWhiteSpace(returnTo))
     {
         <input type="hidden" name="returnTo" value="@returnTo" />
+    }
+    @if (filterPrinterId.HasValue)
+    {
+        <input type="hidden" name="filterPrinterId" value="@filterPrinterId" />
     }
 
     <div class="mb-3">
@@ -177,7 +182,7 @@
 
     <div class="d-flex gap-2">
         <button type="submit" class="btn btn-primary">Salvar alterações</button>
-        <a asp-action="Details" asp-route-id="@Model.Id" asp-route-returnTo="@returnTo" class="btn btn-outline-secondary">Cancelar</a>
+        <a asp-action="Details" asp-route-id="@Model.Id" asp-route-returnTo="@returnTo" asp-route-filterPrinterId="@filterPrinterId" class="btn btn-outline-secondary">Cancelar</a>
     </div>
 </form>
 
