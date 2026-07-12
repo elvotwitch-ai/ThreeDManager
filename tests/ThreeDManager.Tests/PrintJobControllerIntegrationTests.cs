@@ -2026,6 +2026,8 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("Product A", dashboardHtml);
         Assert.Contains($"href=\"/Products/AdjustStock/{ids.ProductId}\"", dashboardHtml);
         Assert.Contains("Ajustar estoque", dashboardHtml);
+        Assert.Contains("href=\"/Products?stockStatus=low\"", dashboardHtml);
+        Assert.Contains("Ver produtos em baixo estoque", dashboardHtml);
 
         using var verifyScope = factory.Services.CreateScope();
         var context = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -2289,6 +2291,8 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("Alertas de estoque", dashboardHtml);
         Assert.Contains("Existem <strong>1</strong> materiais em baixo estoque.", dashboardHtml);
         Assert.Contains("PLA Preto", dashboardHtml);
+        Assert.Contains("href=\"/Materials?stockStatus=low\"", dashboardHtml);
+        Assert.Contains("Ver materiais em baixo estoque", dashboardHtml);
 
         using var verifyScope = factory.Services.CreateScope();
         var context = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();

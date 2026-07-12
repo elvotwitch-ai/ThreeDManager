@@ -189,7 +189,14 @@
 <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
         <strong>Alertas de estoque</strong>
-        <a asp-controller="Materials" asp-action="Index" class="btn btn-sm btn-outline-primary">Ver materiais</a>
+        @if (Model.LowStockMaterials.Any())
+        {
+            <a asp-controller="Materials" asp-action="Index" asp-route-stockStatus="low" class="btn btn-sm btn-outline-primary">Ver materiais em baixo estoque</a>
+        }
+        else
+        {
+            <a asp-controller="Materials" asp-action="Index" class="btn btn-sm btn-outline-primary">Ver materiais</a>
+        }
     </div>
 
     <div class="card-body">
@@ -242,7 +249,14 @@
 <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
         <strong>Alertas de estoque de produtos</strong>
-        <a asp-controller="Products" asp-action="Index" class="btn btn-sm btn-outline-primary">Ver produtos</a>
+        @if (Model.LowStockProducts.Any())
+        {
+            <a asp-controller="Products" asp-action="Index" asp-route-stockStatus="low" class="btn btn-sm btn-outline-primary">Ver produtos em baixo estoque</a>
+        }
+        else
+        {
+            <a asp-controller="Products" asp-action="Index" class="btn btn-sm btn-outline-primary">Ver produtos</a>
+        }
     </div>
 
     <div class="card-body">
