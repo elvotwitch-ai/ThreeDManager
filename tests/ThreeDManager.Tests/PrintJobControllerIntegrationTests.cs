@@ -2098,10 +2098,37 @@ public class PrintJobControllerIntegrationTests
         // Unfiltered rows must not carry a returnTo, since there is no filtered queue to return to.
         Assert.Contains($"/Products/Details/{ids.ProductId}\"", unfilteredHtml);
 
+        // The "Estoque" (AdjustStock) row link must also round-trip returnTo=lowStock, like Details/Edit/Delete.
+        Assert.Contains($"/Products/AdjustStock/{ids.ProductId}?returnTo=lowStock", filteredHtml);
+
         var detailsResponse = await client.GetAsync($"/Products/Details/{ids.ProductId}?returnTo=lowStock");
         var detailsHtml = await detailsResponse.Content.ReadAsStringAsync();
         Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
         Assert.Contains("href=\"/Products?stockStatus=low\">Voltar para baixo estoque</a>", detailsHtml);
+        Assert.Contains($"/Products/AdjustStock/{ids.ProductId}?returnTo=lowStock", detailsHtml);
+
+        var adjustStockGetResponse = await client.GetAsync($"/Products/AdjustStock/{okProductId}?returnTo=lowStock");
+        var adjustStockGetHtml = WebUtility.HtmlDecode(await adjustStockGetResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, adjustStockGetResponse.StatusCode);
+        Assert.Contains("name=\"returnTo\" value=\"lowStock\"", adjustStockGetHtml);
+
+        var adjustStockToken = ExtractAntiForgeryToken(adjustStockGetHtml);
+        var adjustStockPostResponse = await client.PostAsync(
+            "/Products/AdjustStock",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = adjustStockToken,
+                ["ProductId"] = okProductId.ToString(),
+                ["ProductName"] = "Product B",
+                ["CurrentStockQuantity"] = "50",
+                ["AdjustmentType"] = "Add",
+                ["QuantityUnits"] = "5",
+                ["returnTo"] = "lowStock"
+            }));
+
+        // Adjusting stock from the low-stock queue must land back on Details still carrying returnTo=lowStock.
+        Assert.Equal(HttpStatusCode.Redirect, adjustStockPostResponse.StatusCode);
+        Assert.Equal($"/Products/Details/{okProductId}?returnTo=lowStock", adjustStockPostResponse.Headers.Location?.ToString());
 
         var deleteResponse = await client.GetAsync($"/Products/Delete/{okProductId}?returnTo=lowStock");
         var deleteHtml = WebUtility.HtmlDecode(await deleteResponse.Content.ReadAsStringAsync());
@@ -2392,10 +2419,37 @@ public class PrintJobControllerIntegrationTests
         // Unfiltered rows must not carry a returnTo, since there is no filtered queue to return to.
         Assert.Contains($"/Materials/Details/{ids.MaterialId}\"", unfilteredHtml);
 
+        // The "Estoque" (AdjustStock) row link must also round-trip returnTo=lowStock, like Details/Edit/Delete.
+        Assert.Contains($"/Materials/AdjustStock/{ids.MaterialId}?returnTo=lowStock", filteredHtml);
+
         var detailsResponse = await client.GetAsync($"/Materials/Details/{ids.MaterialId}?returnTo=lowStock");
         var detailsHtml = await detailsResponse.Content.ReadAsStringAsync();
         Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
         Assert.Contains("href=\"/Materials?stockStatus=low\">Voltar para baixo estoque</a>", detailsHtml);
+        Assert.Contains($"/Materials/AdjustStock/{ids.MaterialId}?returnTo=lowStock", detailsHtml);
+
+        var adjustStockGetResponse = await client.GetAsync($"/Materials/AdjustStock/{okMaterialId}?returnTo=lowStock");
+        var adjustStockGetHtml = WebUtility.HtmlDecode(await adjustStockGetResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, adjustStockGetResponse.StatusCode);
+        Assert.Contains("name=\"returnTo\" value=\"lowStock\"", adjustStockGetHtml);
+
+        var adjustStockToken = ExtractAntiForgeryToken(adjustStockGetHtml);
+        var adjustStockPostResponse = await client.PostAsync(
+            "/Materials/AdjustStock",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = adjustStockToken,
+                ["MaterialId"] = okMaterialId.ToString(),
+                ["MaterialName"] = "PETG Branco",
+                ["CurrentStockGrams"] = "1000",
+                ["AdjustmentType"] = "Add",
+                ["QuantityGrams"] = "50",
+                ["returnTo"] = "lowStock"
+            }));
+
+        // Adjusting stock from the low-stock queue must land back on Details still carrying returnTo=lowStock.
+        Assert.Equal(HttpStatusCode.Redirect, adjustStockPostResponse.StatusCode);
+        Assert.Equal($"/Materials/Details/{okMaterialId}?returnTo=lowStock", adjustStockPostResponse.Headers.Location?.ToString());
 
         var deleteResponse = await client.GetAsync($"/Materials/Delete/{okMaterialId}?returnTo=lowStock");
         var deleteHtml = WebUtility.HtmlDecode(await deleteResponse.Content.ReadAsStringAsync());

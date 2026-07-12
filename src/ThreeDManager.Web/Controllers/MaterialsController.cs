@@ -180,7 +180,7 @@ public class MaterialsController : Controller
             : RedirectToAction(nameof(Index));
     }
 
-    public async Task<IActionResult> AdjustStock(Guid? id)
+    public async Task<IActionResult> AdjustStock(Guid? id, string? returnTo)
     {
         if (id is null)
         {
@@ -201,12 +201,14 @@ public class MaterialsController : Controller
             CurrentStockGrams = material.CurrentStockGrams
         };
 
+        ViewData["ReturnTo"] = NormalizeReturnTo(returnTo);
+
         return View(viewModel);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> AdjustStock(MaterialStockAdjustmentViewModel viewModel)
+    public async Task<IActionResult> AdjustStock(MaterialStockAdjustmentViewModel viewModel, string? returnTo)
     {
         var material = await _context.Materials.FindAsync(viewModel.MaterialId);
 
@@ -215,10 +217,13 @@ public class MaterialsController : Controller
             return NotFound();
         }
 
+        var normalizedReturnTo = NormalizeReturnTo(returnTo);
+
         if (!ModelState.IsValid)
         {
             viewModel.MaterialName = material.Name;
             viewModel.CurrentStockGrams = material.CurrentStockGrams;
+            ViewData["ReturnTo"] = normalizedReturnTo;
             return View(viewModel);
         }
 
@@ -240,6 +245,7 @@ public class MaterialsController : Controller
                     ModelState.AddModelError(nameof(viewModel.QuantityGrams), "A remoção não pode deixar o estoque negativo.");
                     viewModel.MaterialName = material.Name;
                     viewModel.CurrentStockGrams = material.CurrentStockGrams;
+                    ViewData["ReturnTo"] = normalizedReturnTo;
                     return View(viewModel);
                 }
                 break;
@@ -251,6 +257,7 @@ public class MaterialsController : Controller
                 ModelState.AddModelError(nameof(viewModel.AdjustmentType), "Tipo de ajuste inválido.");
                 viewModel.MaterialName = material.Name;
                 viewModel.CurrentStockGrams = material.CurrentStockGrams;
+                ViewData["ReturnTo"] = normalizedReturnTo;
                 return View(viewModel);
         }
 
@@ -272,7 +279,7 @@ public class MaterialsController : Controller
         await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = "Estoque ajustado com sucesso.";
-        return RedirectToAction(nameof(Details), new { id = material.Id });
+        return RedirectToAction(nameof(Details), new { id = material.Id, returnTo = normalizedReturnTo });
     }
 
     public async Task<IActionResult> Delete(Guid? id, string? returnTo)

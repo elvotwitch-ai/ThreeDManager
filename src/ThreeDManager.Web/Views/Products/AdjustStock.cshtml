@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Ajustar estoque";
+    var returnTo = ViewData["ReturnTo"] as string;
 }
 
 <div class="mb-4">
@@ -38,6 +39,10 @@
             <input type="hidden" asp-for="ProductId" />
             <input type="hidden" asp-for="ProductName" />
             <input type="hidden" asp-for="CurrentStockQuantity" />
+            @if (!string.IsNullOrWhiteSpace(returnTo))
+            {
+                <input type="hidden" name="returnTo" value="@returnTo" />
+            }
 
             <div class="mb-3">
                 <label asp-for="AdjustmentType" class="form-label">Tipo de ajuste</label>
@@ -66,7 +71,7 @@
 
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary">Salvar ajuste</button>
-                <a asp-action="Details" asp-route-id="@Model.ProductId" class="btn btn-outline-secondary">Cancelar</a>
+                <a asp-action="Details" asp-route-id="@Model.ProductId" asp-route-returnTo="@returnTo" class="btn btn-outline-secondary">Cancelar</a>
             </div>
         </form>
     </div>

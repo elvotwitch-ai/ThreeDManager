@@ -181,7 +181,7 @@ public class ProductsController : Controller
             : RedirectToAction(nameof(Index));
     }
 
-    public async Task<IActionResult> AdjustStock(Guid? id)
+    public async Task<IActionResult> AdjustStock(Guid? id, string? returnTo)
     {
         if (id is null)
         {
@@ -202,12 +202,14 @@ public class ProductsController : Controller
             CurrentStockQuantity = product.StockQuantity
         };
 
+        ViewData["ReturnTo"] = NormalizeReturnTo(returnTo);
+
         return View(viewModel);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> AdjustStock(ProductStockAdjustmentViewModel viewModel)
+    public async Task<IActionResult> AdjustStock(ProductStockAdjustmentViewModel viewModel, string? returnTo)
     {
         var product = await _context.Products.FindAsync(viewModel.ProductId);
 
@@ -216,10 +218,13 @@ public class ProductsController : Controller
             return NotFound();
         }
 
+        var normalizedReturnTo = NormalizeReturnTo(returnTo);
+
         if (!ModelState.IsValid)
         {
             viewModel.ProductName = product.Name;
             viewModel.CurrentStockQuantity = product.StockQuantity;
+            ViewData["ReturnTo"] = normalizedReturnTo;
             return View(viewModel);
         }
 
@@ -241,6 +246,7 @@ public class ProductsController : Controller
                     ModelState.AddModelError(nameof(viewModel.QuantityUnits), "A remoção não pode deixar o estoque negativo.");
                     viewModel.ProductName = product.Name;
                     viewModel.CurrentStockQuantity = product.StockQuantity;
+                    ViewData["ReturnTo"] = normalizedReturnTo;
                     return View(viewModel);
                 }
                 break;
@@ -252,6 +258,7 @@ public class ProductsController : Controller
                 ModelState.AddModelError(nameof(viewModel.AdjustmentType), "Tipo de ajuste inválido.");
                 viewModel.ProductName = product.Name;
                 viewModel.CurrentStockQuantity = product.StockQuantity;
+                ViewData["ReturnTo"] = normalizedReturnTo;
                 return View(viewModel);
         }
 
@@ -273,7 +280,7 @@ public class ProductsController : Controller
         await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = "Estoque ajustado com sucesso.";
-        return RedirectToAction(nameof(Details), new { id = product.Id });
+        return RedirectToAction(nameof(Details), new { id = product.Id, returnTo = normalizedReturnTo });
     }
 
     [HttpPost]
