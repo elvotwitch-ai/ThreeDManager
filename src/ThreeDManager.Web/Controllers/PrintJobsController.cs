@@ -297,6 +297,12 @@ public class PrintJobsController : Controller
         TempData["SuccessMessage"] = "Produção removida com sucesso.";
 
         var normalizedReturnTo = NormalizeReturnTo(returnTo);
+
+        if (normalizedReturnTo == "failedQueue")
+        {
+            return RedirectToAction(nameof(Index), new { status = "failed" });
+        }
+
         if (printJob.PrintImportId.HasValue && normalizedReturnTo is not null)
         {
             return RedirectToAction(
@@ -387,6 +393,11 @@ public class PrintJobsController : Controller
         if (string.Equals(returnTo, "pendingQueue", StringComparison.OrdinalIgnoreCase))
         {
             return "pendingQueue";
+        }
+
+        if (string.Equals(returnTo, "failedQueue", StringComparison.OrdinalIgnoreCase))
+        {
+            return "failedQueue";
         }
 
         return null;

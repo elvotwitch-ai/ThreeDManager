@@ -4013,12 +4013,14 @@ public class PrintJobControllerIntegrationTests
         using var factory = new ThreeDManagerWebFactory();
         var ids = await SeedCommonAsync(factory);
 
+        var failedJobId = Guid.NewGuid();
+
         await factory.SeedAsync(async context =>
         {
             context.PrintJobs.AddRange(
                 new PrintJob
                 {
-                    Id = Guid.NewGuid(),
+                    Id = failedJobId,
                     ProductId = ids.ProductId,
                     PrinterId = ids.PrinterId,
                     MaterialId = ids.MaterialId,
@@ -4050,6 +4052,10 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("status-filter-failed.gcode", filteredHtml);
         Assert.DoesNotContain("status-filter-imported.gcode", filteredHtml);
         Assert.Contains("Falhas (1)", filteredHtml);
+        // Row action links from the filtered queue must carry returnTo=failedQueue so Details/Edit/Delete can round-trip back to it.
+        Assert.Contains($"/PrintJobs/Details/{failedJobId}?returnTo=failedQueue", filteredHtml);
+        Assert.Contains($"/PrintJobs/Edit/{failedJobId}?returnTo=failedQueue", filteredHtml);
+        Assert.Contains($"/PrintJobs/Delete/{failedJobId}?returnTo=failedQueue", filteredHtml);
 
         var unfilteredResponse = await client.GetAsync("/PrintJobs");
         var unfilteredHtml = await unfilteredResponse.Content.ReadAsStringAsync();
@@ -4058,12 +4064,39 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("status-filter-failed.gcode", unfilteredHtml);
         Assert.Contains("status-filter-imported.gcode", unfilteredHtml);
         Assert.Contains("Falhas (1)", unfilteredHtml);
+        // Unfiltered rows must not carry a returnTo, since there is no filtered queue to return to.
+        Assert.Contains($"/PrintJobs/Details/{failedJobId}\"", unfilteredHtml);
 
         var dashboardResponse = await client.GetAsync("/Dashboard");
         var dashboardHtml = await dashboardResponse.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.OK, dashboardResponse.StatusCode);
         Assert.Contains("href=\"/PrintJobs?status=failed\">Ver falhas</a>", dashboardHtml);
+
+        var detailsResponse = await client.GetAsync($"/PrintJobs/Details/{failedJobId}?returnTo=failedQueue");
+        var detailsHtml = await detailsResponse.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        Assert.Contains("href=\"/PrintJobs?status=failed\">Voltar para falhas</a>", detailsHtml);
+
+        var deleteResponse = await client.GetAsync($"/PrintJobs/Delete/{failedJobId}?returnTo=failedQueue");
+        var deleteHtml = WebUtility.HtmlDecode(await deleteResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
+        Assert.Contains("name=\"returnTo\" value=\"failedQueue\"", deleteHtml);
+
+        var deleteToken = ExtractAntiForgeryToken(deleteHtml);
+        var deletePostResponse = await client.PostAsync(
+            $"/PrintJobs/Delete/{failedJobId}",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = deleteToken,
+                ["Id"] = failedJobId.ToString(),
+                ["returnTo"] = "failedQueue"
+            }));
+
+        // Deleting from the failed queue must return to the filtered failed queue, not to Index or any linked import.
+        Assert.Equal(HttpStatusCode.Redirect, deletePostResponse.StatusCode);
+        Assert.Equal("/PrintJobs?status=failed", deletePostResponse.Headers.Location?.ToString());
     }
 
     [Fact]
