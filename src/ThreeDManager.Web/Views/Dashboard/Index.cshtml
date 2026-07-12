@@ -400,13 +400,7 @@
                             <tbody>
                                 @foreach (var movement in Model.RecentStockMovements)
                                 {
-                                    var movementLabel = movement.MovementType switch
-                                    {
-                                        "PrintJobCompleted" => "Baixa automática",
-                                        "PrintJobStockRestored" => "Devolução automática",
-                                        "ManualAdjustment" => "Ajuste manual",
-                                        _ => movement.MovementType
-                                    };
+                                    var movementLabel = StockMovementTypePresentation.GetMaterialMovementLabel(movement.MovementType);
 
                                     <tr>
                                         <td>@movement.MaterialName</td>
@@ -462,13 +456,7 @@
                             <tbody>
                                 @foreach (var movement in Model.RecentProductStockMovements)
                                 {
-                                    var movementLabel = movement.MovementType switch
-                                    {
-                                        "PrintJobCompleted" => "Crédito automático",
-                                        "PrintJobStockCreditReverted" => "Reversão automática",
-                                        "ManualAdjustment" => "Ajuste manual",
-                                        _ => movement.MovementType
-                                    };
+                                    var movementLabel = StockMovementTypePresentation.GetProductMovementLabel(movement.MovementType);
 
                                     <tr>
                                         <td>@movement.ProductName</td>

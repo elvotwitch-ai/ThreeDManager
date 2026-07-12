@@ -331,13 +331,7 @@
         }
         else
         {
-            var movementLabel = stockMovement.MovementType switch
-            {
-                "PrintJobCompleted" => "Baixa automática",
-                "PrintJobStockRestored" => "Devolução automática",
-                "ManualAdjustment" => "Ajuste manual",
-                _ => stockMovement.MovementType
-            };
+            var movementLabel = StockMovementTypePresentation.GetMaterialMovementLabel(stockMovement.MovementType);
 
             <dl class="row mb-0">
                 <dt class="col-sm-3">Tipo</dt>
@@ -381,13 +375,7 @@
         }
         else
         {
-            var productMovementLabel = productStockMovement.MovementType switch
-            {
-                "PrintJobCompleted" => "Crédito automático",
-                "PrintJobStockCreditReverted" => "Reversão automática",
-                "ManualAdjustment" => "Ajuste manual",
-                _ => productStockMovement.MovementType
-            };
+            var productMovementLabel = StockMovementTypePresentation.GetProductMovementLabel(productStockMovement.MovementType);
 
             <dl class="row mb-0">
                 <dt class="col-sm-3">Tipo</dt>

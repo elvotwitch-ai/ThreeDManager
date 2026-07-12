@@ -1,5 +1,6 @@
 @model IEnumerable<ThreeDManager.Domain.Entities.Product>
 @using ThreeDManager.Domain.Entities
+@using ThreeDManager.Web.Presentation
 
 @{
     ViewData["Title"] = "Produtos";
@@ -79,13 +80,7 @@ else
                 @foreach (var product in Model)
                 {
                     latestStockMovements.TryGetValue(product.Id, out var latestMovement);
-                    var movementLabel = latestMovement?.MovementType switch
-                    {
-                        "PrintJobCompleted" => "Crédito automático",
-                        "PrintJobStockCreditReverted" => "Reversão automática",
-                        "ManualAdjustment" => "Ajuste manual",
-                        _ => latestMovement?.MovementType
-                    };
+                    var movementLabel = StockMovementTypePresentation.GetProductMovementLabel(latestMovement?.MovementType);
 
                     <tr>
                         <td class="fw-semibold">@product.Name</td>

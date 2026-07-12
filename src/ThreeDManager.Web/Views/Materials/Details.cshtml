@@ -1,5 +1,6 @@
 @model ThreeDManager.Domain.Entities.Material
 @using ThreeDManager.Domain.Entities
+@using ThreeDManager.Web.Presentation
 
 @{
     ViewData["Title"] = "Detalhes do material";
@@ -134,13 +135,7 @@
                 <tbody>
                     @foreach (var movement in stockMovements)
                     {
-                        var movementLabel = movement.MovementType switch
-                        {
-                            "PrintJobCompleted" => "Baixa automática",
-                            "PrintJobStockRestored" => "Devolução automática",
-                            "ManualAdjustment" => "Ajuste manual",
-                            _ => movement.MovementType
-                        };
+                        var movementLabel = StockMovementTypePresentation.GetMaterialMovementLabel(movement.MovementType);
 
                         <tr>
                             <td>@movement.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>

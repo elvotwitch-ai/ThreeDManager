@@ -1,5 +1,6 @@
 @model IEnumerable<ThreeDManager.Domain.Entities.Material>
 @using ThreeDManager.Domain.Entities
+@using ThreeDManager.Web.Presentation
 
 @{
     ViewData["Title"] = "Materiais";
@@ -78,13 +79,7 @@ else
             @foreach (var material in Model)
             {
                 latestStockMovements.TryGetValue(material.Id, out var latestMovement);
-                var movementLabel = latestMovement?.MovementType switch
-                {
-                    "PrintJobCompleted" => "Baixa automática",
-                    "PrintJobStockRestored" => "Devolução automática",
-                    "ManualAdjustment" => "Ajuste manual",
-                    _ => latestMovement?.MovementType
-                };
+                var movementLabel = StockMovementTypePresentation.GetMaterialMovementLabel(latestMovement?.MovementType);
 
                 <tr>
                     <td class="fw-semibold">@material.Name</td>
