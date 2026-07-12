@@ -29,6 +29,7 @@ Open `http://localhost:5042`. An anonymous request must redirect to `/Account/Lo
 
 - Expose only the ThreeDManager HTTP/HTTPS endpoint through the selected private tunnel or reverse proxy.
 - Never expose PostgreSQL port `5436` to the internet.
+- `docker-compose.yml` binds PostgreSQL as `127.0.0.1:5436:5432`; preserve this localhost-only binding.
 - Do not share Windows credentials, repository access, Docker access, or filesystem paths with clients.
 - Add HTTPS before remote use; cookie transport security depends on the externally exposed endpoint.
 

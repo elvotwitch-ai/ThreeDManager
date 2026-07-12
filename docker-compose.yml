@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: appuser
       POSTGRES_PASSWORD: apppass
     ports:
-      - "5436:5432"
+      - "127.0.0.1:5436:5432"
     volumes:
       - threedmanager_pgdata:/var/lib/postgresql/data
 
