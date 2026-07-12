@@ -51,7 +51,7 @@ public class ProductsController : Controller
             && product.StockQuantity.Value <= product.MinimumStockQuantity.Value;
     }
 
-    public async Task<IActionResult> Details(Guid? id)
+    public async Task<IActionResult> Details(Guid? id, string? returnTo)
     {
         if (id is null)
         {
@@ -71,6 +71,8 @@ public class ProductsController : Controller
             .OrderByDescending(movement => movement.CreatedAt)
             .Take(20)
             .ToListAsync();
+
+        ViewData["ReturnTo"] = NormalizeReturnTo(returnTo);
 
         return View(product);
     }
@@ -99,7 +101,7 @@ public class ProductsController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    public async Task<IActionResult> Edit(Guid? id)
+    public async Task<IActionResult> Edit(Guid? id, string? returnTo)
     {
         if (id is null)
         {
@@ -113,12 +115,14 @@ public class ProductsController : Controller
             return NotFound();
         }
 
+        ViewData["ReturnTo"] = NormalizeReturnTo(returnTo);
+
         return View(product);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(Guid id, Product product)
+    public async Task<IActionResult> Edit(Guid id, Product product, string? returnTo)
     {
         if (id != product.Id)
         {
@@ -127,6 +131,7 @@ public class ProductsController : Controller
 
         if (!ModelState.IsValid)
         {
+            ViewData["ReturnTo"] = NormalizeReturnTo(returnTo);
             return View(product);
         }
 
@@ -169,7 +174,11 @@ public class ProductsController : Controller
 
         await _context.SaveChangesAsync();
 
-        return RedirectToAction(nameof(Index));
+        var normalizedReturnTo = NormalizeReturnTo(returnTo);
+
+        return normalizedReturnTo == "lowStock"
+            ? RedirectToAction(nameof(Index), new { stockStatus = "low" })
+            : RedirectToAction(nameof(Index));
     }
 
     public async Task<IActionResult> AdjustStock(Guid? id)
@@ -300,7 +309,7 @@ public class ProductsController : Controller
 
         return RedirectToAction(nameof(Index));
     }
-    public async Task<IActionResult> Delete(Guid? id)
+    public async Task<IActionResult> Delete(Guid? id, string? returnTo)
     {
         if (id is null)
         {
@@ -315,12 +324,14 @@ public class ProductsController : Controller
             return NotFound();
         }
 
+        ViewData["ReturnTo"] = NormalizeReturnTo(returnTo);
+
         return View(product);
     }
 
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(Guid id)
+    public async Task<IActionResult> DeleteConfirmed(Guid id, string? returnTo)
     {
         var product = await _context.Products.FindAsync(id);
 
@@ -329,19 +340,36 @@ public class ProductsController : Controller
             return NotFound();
         }
 
+        var normalizedReturnTo = NormalizeReturnTo(returnTo);
+
         var hasPrintJobs = await _context.PrintJobs
             .AnyAsync(printJob => printJob.ProductId == id);
 
         if (hasPrintJobs)
         {
             TempData["ErrorMessage"] = "Este produto não pode ser removido porque possui produções vinculadas. Desative o produto em vez de removê-lo.";
-            return RedirectToAction(nameof(Index));
+            return normalizedReturnTo == "lowStock"
+                ? RedirectToAction(nameof(Index), new { stockStatus = "low" })
+                : RedirectToAction(nameof(Index));
         }
 
         _context.Products.Remove(product);
         await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = "Produto removido com sucesso.";
-        return RedirectToAction(nameof(Index));
+
+        return normalizedReturnTo == "lowStock"
+            ? RedirectToAction(nameof(Index), new { stockStatus = "low" })
+            : RedirectToAction(nameof(Index));
+    }
+
+    private static string? NormalizeReturnTo(string? returnTo)
+    {
+        if (string.Equals(returnTo, "lowStock", StringComparison.OrdinalIgnoreCase))
+        {
+            return "lowStock";
+        }
+
+        return null;
     }
 }

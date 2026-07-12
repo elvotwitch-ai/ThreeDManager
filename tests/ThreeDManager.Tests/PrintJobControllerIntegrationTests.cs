@@ -2090,6 +2090,37 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("Baixo estoque (1)", filteredHtml);
         Assert.Contains("Product A", filteredHtml);
         Assert.DoesNotContain("Product B", filteredHtml);
+        // Row action links from the filtered queue must carry returnTo=lowStock so Details/Edit/Delete can round-trip back to it.
+        Assert.Contains($"/Products/Details/{ids.ProductId}?returnTo=lowStock", filteredHtml);
+        Assert.Contains($"/Products/Edit/{ids.ProductId}?returnTo=lowStock", filteredHtml);
+        Assert.Contains($"/Products/Delete/{ids.ProductId}?returnTo=lowStock", filteredHtml);
+
+        // Unfiltered rows must not carry a returnTo, since there is no filtered queue to return to.
+        Assert.Contains($"/Products/Details/{ids.ProductId}\"", unfilteredHtml);
+
+        var detailsResponse = await client.GetAsync($"/Products/Details/{ids.ProductId}?returnTo=lowStock");
+        var detailsHtml = await detailsResponse.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        Assert.Contains("href=\"/Products?stockStatus=low\">Voltar para baixo estoque</a>", detailsHtml);
+
+        var deleteResponse = await client.GetAsync($"/Products/Delete/{okProductId}?returnTo=lowStock");
+        var deleteHtml = WebUtility.HtmlDecode(await deleteResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
+        Assert.Contains("name=\"returnTo\" value=\"lowStock\"", deleteHtml);
+
+        var deleteToken = ExtractAntiForgeryToken(deleteHtml);
+        var deletePostResponse = await client.PostAsync(
+            $"/Products/Delete/{okProductId}",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = deleteToken,
+                ["Id"] = okProductId.ToString(),
+                ["returnTo"] = "lowStock"
+            }));
+
+        // Deleting from the low-stock queue must return to the filtered queue, not the unfiltered Index.
+        Assert.Equal(HttpStatusCode.Redirect, deletePostResponse.StatusCode);
+        Assert.Equal("/Products?stockStatus=low", deletePostResponse.Headers.Location?.ToString());
     }
 
     [Fact]
@@ -2353,6 +2384,37 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("Baixo estoque (1)", filteredHtml);
         Assert.Contains("PLA Preto", filteredHtml);
         Assert.DoesNotContain("PETG Branco", filteredHtml);
+        // Row action links from the filtered queue must carry returnTo=lowStock so Details/Edit/Delete can round-trip back to it.
+        Assert.Contains($"/Materials/Details/{ids.MaterialId}?returnTo=lowStock", filteredHtml);
+        Assert.Contains($"/Materials/Edit/{ids.MaterialId}?returnTo=lowStock", filteredHtml);
+        Assert.Contains($"/Materials/Delete/{ids.MaterialId}?returnTo=lowStock", filteredHtml);
+
+        // Unfiltered rows must not carry a returnTo, since there is no filtered queue to return to.
+        Assert.Contains($"/Materials/Details/{ids.MaterialId}\"", unfilteredHtml);
+
+        var detailsResponse = await client.GetAsync($"/Materials/Details/{ids.MaterialId}?returnTo=lowStock");
+        var detailsHtml = await detailsResponse.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        Assert.Contains("href=\"/Materials?stockStatus=low\">Voltar para baixo estoque</a>", detailsHtml);
+
+        var deleteResponse = await client.GetAsync($"/Materials/Delete/{okMaterialId}?returnTo=lowStock");
+        var deleteHtml = WebUtility.HtmlDecode(await deleteResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
+        Assert.Contains("name=\"returnTo\" value=\"lowStock\"", deleteHtml);
+
+        var deleteToken = ExtractAntiForgeryToken(deleteHtml);
+        var deletePostResponse = await client.PostAsync(
+            $"/Materials/Delete/{okMaterialId}",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = deleteToken,
+                ["Id"] = okMaterialId.ToString(),
+                ["returnTo"] = "lowStock"
+            }));
+
+        // Deleting from the low-stock queue must return to the filtered queue, not the unfiltered Index.
+        Assert.Equal(HttpStatusCode.Redirect, deletePostResponse.StatusCode);
+        Assert.Equal("/Materials?stockStatus=low", deletePostResponse.Headers.Location?.ToString());
     }
 
     [Fact]

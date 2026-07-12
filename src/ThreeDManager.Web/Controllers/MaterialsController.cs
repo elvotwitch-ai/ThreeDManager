@@ -51,7 +51,7 @@ public class MaterialsController : Controller
             && material.CurrentStockGrams.Value <= material.MinimumStockGrams.Value;
     }
 
-    public async Task<IActionResult> Details(Guid? id)
+    public async Task<IActionResult> Details(Guid? id, string? returnTo)
     {
         if (id is null)
         {
@@ -71,6 +71,8 @@ public class MaterialsController : Controller
             .OrderByDescending(movement => movement.CreatedAt)
             .Take(20)
             .ToListAsync();
+
+        ViewData["ReturnTo"] = NormalizeReturnTo(returnTo);
 
         return View(material);
     }
@@ -99,7 +101,7 @@ public class MaterialsController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    public async Task<IActionResult> Edit(Guid? id)
+    public async Task<IActionResult> Edit(Guid? id, string? returnTo)
     {
         if (id is null)
         {
@@ -113,12 +115,14 @@ public class MaterialsController : Controller
             return NotFound();
         }
 
+        ViewData["ReturnTo"] = NormalizeReturnTo(returnTo);
+
         return View(material);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(Guid id, Material material)
+    public async Task<IActionResult> Edit(Guid id, Material material, string? returnTo)
     {
         if (id != material.Id)
         {
@@ -127,6 +131,7 @@ public class MaterialsController : Controller
 
         if (!ModelState.IsValid)
         {
+            ViewData["ReturnTo"] = NormalizeReturnTo(returnTo);
             return View(material);
         }
 
@@ -167,7 +172,12 @@ public class MaterialsController : Controller
         await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = "Material atualizado com sucesso.";
-        return RedirectToAction(nameof(Index));
+
+        var normalizedReturnTo = NormalizeReturnTo(returnTo);
+
+        return normalizedReturnTo == "lowStock"
+            ? RedirectToAction(nameof(Index), new { stockStatus = "low" })
+            : RedirectToAction(nameof(Index));
     }
 
     public async Task<IActionResult> AdjustStock(Guid? id)
@@ -265,7 +275,7 @@ public class MaterialsController : Controller
         return RedirectToAction(nameof(Details), new { id = material.Id });
     }
 
-    public async Task<IActionResult> Delete(Guid? id)
+    public async Task<IActionResult> Delete(Guid? id, string? returnTo)
     {
         if (id is null)
         {
@@ -280,12 +290,14 @@ public class MaterialsController : Controller
             return NotFound();
         }
 
+        ViewData["ReturnTo"] = NormalizeReturnTo(returnTo);
+
         return View(material);
     }
 
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(Guid id)
+    public async Task<IActionResult> DeleteConfirmed(Guid id, string? returnTo)
     {
         var material = await _context.Materials.FindAsync(id);
 
@@ -294,19 +306,36 @@ public class MaterialsController : Controller
             return NotFound();
         }
 
+        var normalizedReturnTo = NormalizeReturnTo(returnTo);
+
         var hasPrintJobs = await _context.PrintJobs
             .AnyAsync(printJob => printJob.MaterialId == id);
 
         if (hasPrintJobs)
         {
             TempData["ErrorMessage"] = "Este material não pode ser removido porque possui produções vinculadas.";
-            return RedirectToAction(nameof(Index));
+            return normalizedReturnTo == "lowStock"
+                ? RedirectToAction(nameof(Index), new { stockStatus = "low" })
+                : RedirectToAction(nameof(Index));
         }
 
         _context.Materials.Remove(material);
         await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = "Material removido com sucesso.";
-        return RedirectToAction(nameof(Index));
+
+        return normalizedReturnTo == "lowStock"
+            ? RedirectToAction(nameof(Index), new { stockStatus = "low" })
+            : RedirectToAction(nameof(Index));
+    }
+
+    private static string? NormalizeReturnTo(string? returnTo)
+    {
+        if (string.Equals(returnTo, "lowStock", StringComparison.OrdinalIgnoreCase))
+        {
+            return "lowStock";
+        }
+
+        return null;
     }
 }

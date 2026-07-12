@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Editar material";
+    var returnTo = ViewData["ReturnTo"] as string;
 }
 
 <div class="mb-4">
@@ -16,6 +17,10 @@
 
             <input type="hidden" asp-for="Id" />
             <input type="hidden" asp-for="CreatedAt" />
+            @if (!string.IsNullOrWhiteSpace(returnTo))
+            {
+                <input type="hidden" name="returnTo" value="@returnTo" />
+            }
 
             <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
@@ -63,7 +68,7 @@
 
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary">Salvar alterações</button>
-                <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                <a asp-action="Details" asp-route-id="@Model.Id" asp-route-returnTo="@returnTo" class="btn btn-outline-secondary">Cancelar</a>
             </div>
         </form>
     </div>

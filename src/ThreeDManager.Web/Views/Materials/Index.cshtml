@@ -72,6 +72,9 @@ else
             </tr>
         </thead>
         <tbody>
+            @{
+                var rowReturnTo = isLowStockFilter ? "lowStock" : null;
+            }
             @foreach (var material in Model)
             {
                 latestStockMovements.TryGetValue(material.Id, out var latestMovement);
@@ -177,10 +180,10 @@ else
                     </td>
                     <td class="text-end">
                         <div class="btn-group btn-group-sm flex-wrap" role="group" aria-label="Ações do material">
-                            <a asp-action="Details" asp-route-id="@material.Id" class="btn btn-outline-secondary">Detalhes</a>
-                            <a asp-action="Edit" asp-route-id="@material.Id" class="btn btn-outline-primary">Editar</a>
+                            <a asp-action="Details" asp-route-id="@material.Id" asp-route-returnTo="@rowReturnTo" class="btn btn-outline-secondary">Detalhes</a>
+                            <a asp-action="Edit" asp-route-id="@material.Id" asp-route-returnTo="@rowReturnTo" class="btn btn-outline-primary">Editar</a>
                             <a asp-action="AdjustStock" asp-route-id="@material.Id" class="btn btn-outline-success">Estoque</a>
-                            <a asp-action="Delete" asp-route-id="@material.Id" class="btn btn-outline-danger">Remover</a>
+                            <a asp-action="Delete" asp-route-id="@material.Id" asp-route-returnTo="@rowReturnTo" class="btn btn-outline-danger">Remover</a>
                         </div>
                     </td>
                 </tr>
