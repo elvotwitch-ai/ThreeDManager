@@ -163,7 +163,7 @@ public class ProductsController : Controller
             _context.ProductStockMovements.Add(new ProductStockMovement
             {
                 ProductId = existingProduct.Id,
-                MovementType = "ManualAdjustment",
+                MovementType = StockMovementType.ManualAdjustment,
                 QuantityUnits = stockAfter - stockBefore,
                 StockBeforeUnits = stockQuantityBeforeUpdate,
                 StockAfterUnits = product.StockQuantity,
@@ -267,7 +267,7 @@ public class ProductsController : Controller
         _context.ProductStockMovements.Add(new ProductStockMovement
         {
             ProductId = product.Id,
-            MovementType = "ManualAdjustment",
+            MovementType = StockMovementType.ManualAdjustment,
             QuantityUnits = movementQuantity,
             StockBeforeUnits = stockBefore,
             StockAfterUnits = stockAfter,

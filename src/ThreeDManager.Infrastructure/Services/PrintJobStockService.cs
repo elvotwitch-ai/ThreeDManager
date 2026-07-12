@@ -93,7 +93,7 @@ public class PrintJobStockService : IPrintJobStockService
             {
                 MaterialId = material.Id,
                 PrintJobId = printJob.Id,
-                MovementType = "PrintJobStockRestored",
+                MovementType = StockMovementType.PrintJobStockRestored,
                 QuantityGrams = quantity,
                 StockBeforeGrams = stockBefore,
                 StockAfterGrams = stockAfter,
@@ -165,7 +165,7 @@ public class PrintJobStockService : IPrintJobStockService
         {
             MaterialId = material.Id,
             PrintJobId = printJob.Id,
-            MovementType = "PrintJobCompleted",
+            MovementType = StockMovementType.PrintJobCompleted,
             QuantityGrams = -quantity,
             StockBeforeGrams = stockBefore,
             StockAfterGrams = stockAfter,
@@ -203,7 +203,7 @@ public class PrintJobStockService : IPrintJobStockService
             {
                 ProductId = product.Id,
                 PrintJobId = printJob.Id,
-                MovementType = "PrintJobStockCreditReverted",
+                MovementType = StockMovementType.PrintJobStockCreditReverted,
                 QuantityUnits = -quantity,
                 StockBeforeUnits = stockBefore,
                 StockAfterUnits = stockAfter,
@@ -260,7 +260,7 @@ public class PrintJobStockService : IPrintJobStockService
         {
             ProductId = product.Id,
             PrintJobId = printJob.Id,
-            MovementType = "PrintJobCompleted",
+            MovementType = StockMovementType.PrintJobCompleted,
             QuantityUnits = unitsProduced,
             StockBeforeUnits = stockBefore,
             StockAfterUnits = stockAfter,

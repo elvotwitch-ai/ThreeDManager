@@ -160,7 +160,7 @@ public class MaterialsController : Controller
             _context.MaterialStockMovements.Add(new MaterialStockMovement
             {
                 MaterialId = existingMaterial.Id,
-                MovementType = "ManualAdjustment",
+                MovementType = StockMovementType.ManualAdjustment,
                 QuantityGrams = stockAfter - stockBefore,
                 StockBeforeGrams = currentStockBeforeUpdate,
                 StockAfterGrams = material.CurrentStockGrams,
@@ -266,7 +266,7 @@ public class MaterialsController : Controller
         _context.MaterialStockMovements.Add(new MaterialStockMovement
         {
             MaterialId = material.Id,
-            MovementType = "ManualAdjustment",
+            MovementType = StockMovementType.ManualAdjustment,
             QuantityGrams = movementQuantity,
             StockBeforeGrams = stockBefore,
             StockAfterGrams = stockAfter,
