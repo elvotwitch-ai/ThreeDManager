@@ -234,11 +234,11 @@ public class ProductsController : Controller
 
         switch (viewModel.AdjustmentType)
         {
-            case "Add":
+            case StockAdjustmentType.Add:
                 movementQuantity = viewModel.QuantityUnits;
                 stockAfter = stockBefore + viewModel.QuantityUnits;
                 break;
-            case "Remove":
+            case StockAdjustmentType.Remove:
                 movementQuantity = -viewModel.QuantityUnits;
                 stockAfter = stockBefore - viewModel.QuantityUnits;
                 if (stockAfter < 0)
@@ -250,7 +250,7 @@ public class ProductsController : Controller
                     return View(viewModel);
                 }
                 break;
-            case "Set":
+            case StockAdjustmentType.Set:
                 stockAfter = viewModel.QuantityUnits;
                 movementQuantity = stockAfter - stockBefore;
                 break;

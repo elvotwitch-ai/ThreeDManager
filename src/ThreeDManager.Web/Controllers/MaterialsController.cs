@@ -233,11 +233,11 @@ public class MaterialsController : Controller
 
         switch (viewModel.AdjustmentType)
         {
-            case "Add":
+            case StockAdjustmentType.Add:
                 movementQuantity = viewModel.QuantityGrams;
                 stockAfter = stockBefore + viewModel.QuantityGrams;
                 break;
-            case "Remove":
+            case StockAdjustmentType.Remove:
                 movementQuantity = -viewModel.QuantityGrams;
                 stockAfter = stockBefore - viewModel.QuantityGrams;
                 if (stockAfter < 0)
@@ -249,7 +249,7 @@ public class MaterialsController : Controller
                     return View(viewModel);
                 }
                 break;
-            case "Set":
+            case StockAdjustmentType.Set:
                 stockAfter = viewModel.QuantityGrams;
                 movementQuantity = stockAfter - stockBefore;
                 break;

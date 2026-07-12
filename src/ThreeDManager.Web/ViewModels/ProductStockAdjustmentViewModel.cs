@@ -11,7 +11,7 @@ public class ProductStockAdjustmentViewModel
     public int? CurrentStockQuantity { get; set; }
 
     [Required(ErrorMessage = "Selecione o tipo de ajuste.")]
-    public string AdjustmentType { get; set; } = "Add";
+    public string AdjustmentType { get; set; } = StockAdjustmentType.Add;
 
     [Required(ErrorMessage = "Informe a quantidade em unidades.")]
     [Range(1, int.MaxValue, ErrorMessage = "A quantidade deve ser maior que zero.")]

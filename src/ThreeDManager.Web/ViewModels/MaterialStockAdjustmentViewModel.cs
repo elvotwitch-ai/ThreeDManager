@@ -11,7 +11,7 @@ public class MaterialStockAdjustmentViewModel
     public decimal? CurrentStockGrams { get; set; }
 
     [Required(ErrorMessage = "Selecione o tipo de ajuste.")]
-    public string AdjustmentType { get; set; } = "Add";
+    public string AdjustmentType { get; set; } = StockAdjustmentType.Add;
 
     [Required(ErrorMessage = "Informe a quantidade em gramas.")]
     [Range(0.01, double.MaxValue, ErrorMessage = "A quantidade deve ser maior que zero.")]

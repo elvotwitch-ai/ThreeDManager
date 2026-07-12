@@ -1,3 +1,4 @@
+@using ThreeDManager.Web.ViewModels
 @model ThreeDManager.Web.ViewModels.MaterialStockAdjustmentViewModel
 
 @{
@@ -47,9 +48,9 @@
             <div class="mb-3">
                 <label asp-for="AdjustmentType" class="form-label">Tipo de ajuste</label>
                 <select asp-for="AdjustmentType" class="form-select">
-                    <option value="Add">Adicionar ao estoque</option>
-                    <option value="Remove">Remover do estoque</option>
-                    <option value="Set">Definir estoque exato</option>
+                    <option value="@StockAdjustmentType.Add">Adicionar ao estoque</option>
+                    <option value="@StockAdjustmentType.Remove">Remover do estoque</option>
+                    <option value="@StockAdjustmentType.Set">Definir estoque exato</option>
                 </select>
                 <span asp-validation-for="AdjustmentType" class="text-danger"></span>
             </div>
