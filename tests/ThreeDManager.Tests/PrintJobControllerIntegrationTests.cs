@@ -3902,6 +3902,7 @@ public class PrintJobControllerIntegrationTests
         using var factory = new ThreeDManagerWebFactory();
         var ids = await SeedCommonAsync(factory);
         var secondPrinterId = Guid.NewGuid();
+        var linkedImportId = Guid.NewGuid();
 
         await factory.SeedAsync(async context =>
         {
@@ -3914,6 +3915,15 @@ public class PrintJobControllerIntegrationTests
                 CreatedAt = DateTime.UtcNow
             });
 
+            context.PrintImports.Add(new PrintImport
+            {
+                Id = linkedImportId,
+                FileName = "printer-a-job.gcode",
+                FileType = "gcode",
+                Status = PrintImportStatus.Parsed,
+                ImportedAt = DateTime.UtcNow
+            });
+
             context.PrintJobs.AddRange(
                 new PrintJob
                 {
@@ -3921,6 +3931,7 @@ public class PrintJobControllerIntegrationTests
                     ProductId = ids.ProductId,
                     PrinterId = ids.PrinterId,
                     MaterialId = ids.MaterialId,
+                    PrintImportId = linkedImportId,
                     SourceFileName = "printer-a-job.gcode",
                     Status = PrintJobStatus.Imported,
                     EstimatedTimeMinutes = 60,
@@ -3952,6 +3963,7 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("Filtrando por impressora:", filteredHtml);
         Assert.Contains("Printer A", filteredHtml);
         Assert.Contains("Ver todas", filteredHtml);
+        Assert.Contains($"/PrintImports/Details/{linkedImportId}", filteredHtml);
 
         var unfilteredResponse = await client.GetAsync("/PrintJobs");
         var unfilteredHtml = await unfilteredResponse.Content.ReadAsStringAsync();
@@ -3960,6 +3972,9 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("printer-a-job.gcode", unfilteredHtml);
         Assert.Contains("printer-b-job.gcode", unfilteredHtml);
         Assert.DoesNotContain("Filtrando por impressora:", unfilteredHtml);
+        // printer-a-job.gcode has a linked import and should render as a link; printer-b-job.gcode has none and stays plain text.
+        Assert.Contains($"href=\"/PrintImports/Details/{linkedImportId}\">printer-a-job.gcode</a>", unfilteredHtml);
+        Assert.DoesNotContain("href=\"/PrintImports/Details/\">printer-b-job.gcode", unfilteredHtml);
     }
 
     [Fact]

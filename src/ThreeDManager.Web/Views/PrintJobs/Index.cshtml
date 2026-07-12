@@ -87,7 +87,16 @@ else
                     <td>@productName</td>
                     <td>@materialName</td>
                     <td>@printerName</td>
-                    <td>@job.SourceFileName</td>
+                    <td>
+                        @if (job.PrintImportId.HasValue)
+                        {
+                            <a asp-controller="PrintImports" asp-action="Details" asp-route-id="@job.PrintImportId">@job.SourceFileName</a>
+                        }
+                        else
+                        {
+                            @job.SourceFileName
+                        }
+                    </td>
                     <td>
                         @if (job.FilamentUsedGrams.HasValue)
                         {
