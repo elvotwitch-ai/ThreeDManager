@@ -2814,6 +2814,44 @@ public class PrintJobControllerIntegrationTests
         var indexHtml = WebUtility.HtmlDecode(await indexResponse.Content.ReadAsStringAsync());
         Assert.Equal(HttpStatusCode.OK, indexResponse.StatusCode);
         Assert.Contains("Motivo: Destacamento da primeira camada", indexHtml);
+
+        var reEditGetResponse = await client.GetAsync($"/PrintJobs/Edit/{printJobId}");
+        var reEditToken = ExtractAntiForgeryToken(await reEditGetResponse.Content.ReadAsStringAsync());
+        var reEditPostResponse = await client.PostAsync(
+            $"/PrintJobs/Edit/{printJobId}",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = reEditToken,
+                ["Id"] = printJobId.ToString(),
+                ["ProductId"] = ids.ProductId.ToString(),
+                ["PrinterId"] = ids.PrinterId.ToString(),
+                ["MaterialId"] = ids.MaterialId.ToString(),
+                ["PrintImportId"] = "",
+                ["SourceFileName"] = "legacy.gcode",
+                ["CreatedAt"] = "2026-06-19T02:00:00Z",
+                ["FilamentUsedGrams"] = "12.45",
+                ["FilamentUsedMeters"] = "1.23",
+                ["EstimatedTimeMinutes"] = "60",
+                ["ActualTimeMinutes"] = "",
+                ["ReportedCost"] = "2.50",
+                ["Status"] = "Completed",
+                ["FailureReason"] = "Destacamento da primeira camada"
+            }));
+
+        Assert.Equal(HttpStatusCode.Redirect, reEditPostResponse.StatusCode);
+
+        using var reVerifyScope = factory.Services.CreateScope();
+        var reVerifyContext = reVerifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var recoveredPrintJob = await reVerifyContext.PrintJobs.SingleAsync(printJob => printJob.Id == printJobId);
+
+        Assert.Equal("Completed", recoveredPrintJob.Status);
+        Assert.Equal("Destacamento da primeira camada", recoveredPrintJob.FailureReason);
+
+        var recoveredDetailsResponse = await client.GetAsync($"/PrintJobs/Details/{printJobId}");
+        var recoveredDetailsHtml = WebUtility.HtmlDecode(await recoveredDetailsResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, recoveredDetailsResponse.StatusCode);
+        Assert.DoesNotContain("Motivo da falha", recoveredDetailsHtml);
+        Assert.DoesNotContain("Destacamento da primeira camada", recoveredDetailsHtml);
     }
 
     [Fact]

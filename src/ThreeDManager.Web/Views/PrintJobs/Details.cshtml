@@ -296,17 +296,20 @@
                 </span>
             </dd>
 
-            <dt class="col-sm-3">Motivo da falha</dt>
-            <dd class="col-sm-9">
-                @if (!string.IsNullOrWhiteSpace(Model.FailureReason))
-                {
-                    <span>@Model.FailureReason</span>
-                }
-                else
-                {
-                    <span class="text-muted">Não informado</span>
-                }
-            </dd>
+            @if (string.Equals(PrintJobStatus.Normalize(Model.Status), PrintJobStatus.Failed, StringComparison.Ordinal))
+            {
+                <dt class="col-sm-3">Motivo da falha</dt>
+                <dd class="col-sm-9">
+                    @if (!string.IsNullOrWhiteSpace(Model.FailureReason))
+                    {
+                        <span>@Model.FailureReason</span>
+                    }
+                    else
+                    {
+                        <span class="text-muted">Não informado</span>
+                    }
+                </dd>
+            }
 
             <dt class="col-sm-3">Criado em</dt>
             <dd class="col-sm-9">@Model.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
