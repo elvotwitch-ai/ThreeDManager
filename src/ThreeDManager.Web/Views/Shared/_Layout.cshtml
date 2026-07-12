@@ -1,9 +1,15 @@
 ﻿<!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-bs-theme="dark">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - ThreeDManager</title>
+    <script>
+        (() => {
+            const savedTheme = localStorage.getItem("threedmanager-theme");
+            document.documentElement.setAttribute("data-bs-theme", savedTheme === "light" ? "light" : "dark");
+        })();
+    </script>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -11,7 +17,7 @@
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm bg-body-tertiary border-bottom box-shadow mb-3">
             <div class="container-fluid">
                 <a class="navbar-brand fw-semibold" asp-area="" asp-controller="Dashboard" asp-action="Index">ThreeDManager</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
@@ -21,28 +27,33 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Dashboard" asp-action="Index">Dashboard</a>
+                            <a class="nav-link" asp-area="" asp-controller="Dashboard" asp-action="Index">Dashboard</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Products" asp-action="Index">Produtos</a>
+                            <a class="nav-link" asp-area="" asp-controller="Products" asp-action="Index">Produtos</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="PrintJobs" asp-action="Index">Produções</a>
+                            <a class="nav-link" asp-area="" asp-controller="PrintJobs" asp-action="Index">Produções</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Materials" asp-action="Index">Materiais</a>
+                            <a class="nav-link" asp-area="" asp-controller="Materials" asp-action="Index">Materiais</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Printers" asp-action="Index">Impressoras</a>
+                            <a class="nav-link" asp-area="" asp-controller="Printers" asp-action="Index">Impressoras</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="PrintImports" asp-action="Index">Importações</a>
+                            <a class="nav-link" asp-area="" asp-controller="PrintImports" asp-action="Index">Importações</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacidade</a>
+                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Privacy">Privacidade</a>
                         </li>
                         
                     </ul>
+                    <button id="theme-toggle" class="btn btn-outline-secondary btn-sm" type="button"
+                            aria-label="Alternar entre modo claro e escuro" aria-pressed="true">
+                        <span data-theme-icon aria-hidden="true">☀️</span>
+                        <span data-theme-label>Modo claro</span>
+                    </button>
                 </div>
             </div>
         </nav>

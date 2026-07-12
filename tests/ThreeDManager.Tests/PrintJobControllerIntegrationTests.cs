@@ -11,6 +11,22 @@ namespace ThreeDManager.Tests;
 public class PrintJobControllerIntegrationTests
 {
     [Fact]
+    public async Task SharedLayout_DefaultsToDarkTheme_AndRendersPersistentToggle()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        using var client = factory.CreateTestClient();
+
+        var response = await client.GetAsync("/Dashboard");
+        var html = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("<html lang=\"pt-BR\" data-bs-theme=\"dark\">", html);
+        Assert.Contains("id=\"theme-toggle\"", html);
+        Assert.Contains("threedmanager-theme", html);
+        Assert.Contains("Modo claro", html);
+    }
+
+    [Fact]
     public async Task CreatePrintJob_FromImport_DeductsStockAndCreatesCompletedJob()
     {
         using var factory = new ThreeDManagerWebFactory();

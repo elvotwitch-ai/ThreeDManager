@@ -19,6 +19,11 @@ html {
 
 body {
   margin-bottom: 60px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+#theme-toggle {
+  min-width: 7.5rem;
 }
 
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
