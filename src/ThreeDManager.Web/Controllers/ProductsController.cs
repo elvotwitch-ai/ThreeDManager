@@ -15,13 +15,20 @@ public class ProductsController : Controller
         _context = context;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? stockStatus)
     {
-        var products = await _context.Products
+        var allProducts = await _context.Products
             .OrderByDescending(product => product.CreatedAt)
             .ToListAsync();
 
-        var productIds = products.Select(product => product.Id).ToList();
+        var lowStockProducts = allProducts
+            .Where(IsLowStock)
+            .ToList();
+
+        var isLowStockFilter = string.Equals(stockStatus, "low", StringComparison.OrdinalIgnoreCase);
+        var products = isLowStockFilter ? lowStockProducts : allProducts;
+
+        var productIds = allProducts.Select(product => product.Id).ToList();
         var latestStockMovements = await _context.ProductStockMovements
             .Where(movement => productIds.Contains(movement.ProductId))
             .OrderByDescending(movement => movement.CreatedAt)
@@ -31,7 +38,17 @@ public class ProductsController : Controller
             .GroupBy(movement => movement.ProductId)
             .ToDictionary(group => group.Key, group => group.First());
 
+        ViewData["StockStatusFilter"] = isLowStockFilter ? "low" : null;
+        ViewData["LowStockProductCount"] = lowStockProducts.Count;
+
         return View(products);
+    }
+
+    private static bool IsLowStock(Product product)
+    {
+        return product.StockQuantity.HasValue
+            && product.MinimumStockQuantity.HasValue
+            && product.StockQuantity.Value <= product.MinimumStockQuantity.Value;
     }
 
     public async Task<IActionResult> Details(Guid? id)

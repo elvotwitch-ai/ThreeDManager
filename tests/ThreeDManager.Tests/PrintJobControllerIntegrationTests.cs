@@ -2038,6 +2038,51 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task ProductsIndex_FiltersLowStockProducts_WhenStockStatusLowRequested()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        var okProductId = Guid.NewGuid();
+        await factory.SeedAsync(async context =>
+        {
+            var seededProduct = await context.Products.SingleAsync(product => product.Id == ids.ProductId);
+            seededProduct.StockQuantity = 3;
+            seededProduct.MinimumStockQuantity = 10;
+
+            context.Products.Add(new Product
+            {
+                Id = okProductId,
+                Name = "Product B",
+                Sku = "E2E-PROD-B",
+                Category = "Brindes",
+                StockQuantity = 50,
+                MinimumStockQuantity = 10,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var unfilteredResponse = await client.GetAsync("/Products");
+        var unfilteredHtml = WebUtility.HtmlDecode(await unfilteredResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, unfilteredResponse.StatusCode);
+        Assert.Contains("Baixo estoque (1)", unfilteredHtml);
+        Assert.Contains("Product A", unfilteredHtml);
+        Assert.Contains("Product B", unfilteredHtml);
+
+        var filteredResponse = await client.GetAsync("/Products?stockStatus=low");
+        var filteredHtml = WebUtility.HtmlDecode(await filteredResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, filteredResponse.StatusCode);
+        Assert.Contains("Baixo estoque (1)", filteredHtml);
+        Assert.Contains("Product A", filteredHtml);
+        Assert.DoesNotContain("Product B", filteredHtml);
+    }
+
+    [Fact]
     public async Task PrinterEdit_RejectsMissingName_WithoutPersistingChange()
     {
         using var factory = new ThreeDManagerWebFactory();
