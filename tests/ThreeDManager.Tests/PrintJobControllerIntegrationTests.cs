@@ -4026,6 +4026,7 @@ public class PrintJobControllerIntegrationTests
         Assert.DoesNotContain("queue-failed", queueSection);
 
         Assert.Contains("Previsão de fila livre", queueSection);
+        Assert.Contains("title=\"Estimativa assume impressão sequencial e ininterrupta a partir de agora; não considera paradas, manutenção ou impressões simultâneas.\"", queueSection);
         var clearAtMatch = Regex.Match(queueSection, @"<td>(\d{2}/\d{2}/\d{4} \d{2}:\d{2})</td>");
         Assert.True(clearAtMatch.Success, "Expected the estimated queue clear-time cell to render.");
         var renderedClearAt = DateTime.ParseExact(clearAtMatch.Groups[1].Value, "dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture);
@@ -4107,6 +4108,7 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("Fila alta", html);
         Assert.DoesNotContain("printers-queue-completed", html);
 
+        Assert.Contains("title=\"Estimativa assume impressão sequencial e ininterrupta a partir de agora; não considera paradas, manutenção ou impressões simultâneas.\"", html);
         var clearAtMatch = Regex.Match(html, @"Livre em (\d{2}/\d{2} \d{2}:\d{2})");
         Assert.True(clearAtMatch.Success, "Expected the estimated queue clear-time hint to render.");
         var renderedClearAt = DateTime.ParseExact(clearAtMatch.Groups[1].Value, "dd/MM HH:mm", CultureInfo.InvariantCulture);
