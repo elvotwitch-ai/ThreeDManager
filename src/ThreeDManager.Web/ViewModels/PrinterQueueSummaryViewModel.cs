@@ -11,5 +11,7 @@ public class PrinterQueueSummaryViewModel
 
     public int QueuedEstimatedTimeMinutes { get; set; }
 
+    public DateTime EstimatedClearAt { get; set; }
+
     public bool RequiresAttention => QueuedEstimatedTimeMinutes >= PrinterQueueThresholds.AttentionMinutes;
 }

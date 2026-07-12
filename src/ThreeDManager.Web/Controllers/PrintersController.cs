@@ -26,6 +26,8 @@ public class PrintersController : Controller
             .Select(printJob => new { printJob.PrinterId, printJob.Status, printJob.EstimatedTimeMinutes })
             .ToListAsync();
 
+        var now = DateTime.UtcNow;
+
         ViewBag.PrinterQueue = queuedPrintJobs
             .Where(printJob =>
             {
@@ -35,10 +37,15 @@ public class PrintersController : Controller
             .GroupBy(printJob => printJob.PrinterId!.Value)
             .ToDictionary(
                 group => group.Key,
-                group => new PrinterQueueSummaryViewModel
+                group =>
                 {
-                    QueuedJobsCount = group.Count(),
-                    QueuedEstimatedTimeMinutes = group.Sum(printJob => printJob.EstimatedTimeMinutes ?? 0)
+                    var queuedEstimatedTimeMinutes = group.Sum(printJob => printJob.EstimatedTimeMinutes ?? 0);
+                    return new PrinterQueueSummaryViewModel
+                    {
+                        QueuedJobsCount = group.Count(),
+                        QueuedEstimatedTimeMinutes = queuedEstimatedTimeMinutes,
+                        EstimatedClearAt = now.AddMinutes(queuedEstimatedTimeMinutes)
+                    };
                 });
 
         return View(printers);

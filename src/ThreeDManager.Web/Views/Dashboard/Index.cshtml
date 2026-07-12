@@ -328,6 +328,7 @@
                             <th>Impressora</th>
                             <th>Produções na fila</th>
                             <th>Tempo estimado na fila</th>
+                            <th>Previsão de fila livre</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -352,6 +353,7 @@
                                         <span class="badge bg-warning text-dark ms-1">Fila alta</span>
                                     }
                                 </td>
+                                <td>@queueEntry.EstimatedClearAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
                             </tr>
                         }
                     </tbody>

@@ -133,6 +133,8 @@ public class DashboardController : Controller
             .Select(printJob => PrintJobStatus.Normalize(printJob.Status))
             .ToList();
 
+        var now = DateTime.UtcNow;
+
         var printerQueue = printJobs
             .Where(printJob =>
             {
@@ -140,14 +142,19 @@ public class DashboardController : Controller
                 return normalizedStatus == PrintJobStatus.Imported || normalizedStatus == PrintJobStatus.Planned;
             })
             .GroupBy(printJob => printJob.PrinterId)
-            .Select(group => new DashboardPrinterQueueViewModel
+            .Select(group =>
             {
-                PrinterId = group.Key,
-                PrinterName = group.Key.HasValue && printerNames.TryGetValue(group.Key.Value, out var queuedPrinterName)
-                    ? queuedPrinterName
-                    : "Não vinculada",
-                QueuedJobsCount = group.Count(),
-                QueuedEstimatedTimeMinutes = group.Sum(printJob => printJob.EstimatedTimeMinutes ?? 0)
+                var queuedEstimatedTimeMinutes = group.Sum(printJob => printJob.EstimatedTimeMinutes ?? 0);
+                return new DashboardPrinterQueueViewModel
+                {
+                    PrinterId = group.Key,
+                    PrinterName = group.Key.HasValue && printerNames.TryGetValue(group.Key.Value, out var queuedPrinterName)
+                        ? queuedPrinterName
+                        : "Não vinculada",
+                    QueuedJobsCount = group.Count(),
+                    QueuedEstimatedTimeMinutes = queuedEstimatedTimeMinutes,
+                    EstimatedClearAt = now.AddMinutes(queuedEstimatedTimeMinutes)
+                };
             })
             .OrderByDescending(entry => entry.QueuedEstimatedTimeMinutes)
             .ToList();

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
@@ -3810,7 +3811,9 @@ public class PrintJobControllerIntegrationTests
 
         using var client = factory.CreateTestClient();
 
+        var beforeRequest = DateTime.UtcNow;
         var dashboardResponse = await client.GetAsync("/Dashboard");
+        var afterRequest = DateTime.UtcNow;
         var dashboardHtml = WebUtility.HtmlDecode(await dashboardResponse.Content.ReadAsStringAsync());
 
         var queueSectionStart = dashboardHtml.IndexOf("Fila de produção por impressora", StringComparison.Ordinal);
@@ -3823,6 +3826,15 @@ public class PrintJobControllerIntegrationTests
         Assert.Matches(@"<td>\s*<a href=""/PrintJobs\?printerId=" + Regex.Escape(ids.PrinterId.ToString()) + @""">Printer A</a>\s*</td>\s*<td>3</td>\s*<td>\s*8h 0min\s*<span class=""badge bg-warning text-dark ms-1"">Fila alta</span>", queueSection);
         Assert.DoesNotContain("queue-completed", queueSection);
         Assert.DoesNotContain("queue-failed", queueSection);
+
+        Assert.Contains("Previsão de fila livre", queueSection);
+        var clearAtMatch = Regex.Match(queueSection, @"<td>(\d{2}/\d{2}/\d{4} \d{2}:\d{2})</td>");
+        Assert.True(clearAtMatch.Success, "Expected the estimated queue clear-time cell to render.");
+        var renderedClearAt = DateTime.ParseExact(clearAtMatch.Groups[1].Value, "dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture);
+        Assert.InRange(
+            renderedClearAt,
+            beforeRequest.AddMinutes(480).ToLocalTime().AddMinutes(-1),
+            afterRequest.AddMinutes(480).ToLocalTime().AddMinutes(1));
     }
 
     [Fact]
@@ -3884,7 +3896,9 @@ public class PrintJobControllerIntegrationTests
 
         using var client = factory.CreateTestClient();
 
+        var beforeRequest = DateTime.UtcNow;
         var response = await client.GetAsync("/Printers");
+        var afterRequest = DateTime.UtcNow;
         var html = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -3894,6 +3908,15 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("8h 0min", html);
         Assert.Contains("Fila alta", html);
         Assert.DoesNotContain("printers-queue-completed", html);
+
+        var clearAtMatch = Regex.Match(html, @"Livre em (\d{2}/\d{2} \d{2}:\d{2})");
+        Assert.True(clearAtMatch.Success, "Expected the estimated queue clear-time hint to render.");
+        var renderedClearAt = DateTime.ParseExact(clearAtMatch.Groups[1].Value, "dd/MM HH:mm", CultureInfo.InvariantCulture);
+        var expectedMin = beforeRequest.AddMinutes(480).ToLocalTime().AddMinutes(-1);
+        var expectedMax = afterRequest.AddMinutes(480).ToLocalTime().AddMinutes(1);
+        // "dd/MM HH:mm" drops the year; compare using expectedMin's year for the day/month/hour/minute fields.
+        var renderedClearAtWithYear = new DateTime(expectedMin.Year, renderedClearAt.Month, renderedClearAt.Day, renderedClearAt.Hour, renderedClearAt.Minute, 0);
+        Assert.InRange(renderedClearAtWithYear, expectedMin.AddSeconds(-59), expectedMax);
     }
 
     [Fact]
