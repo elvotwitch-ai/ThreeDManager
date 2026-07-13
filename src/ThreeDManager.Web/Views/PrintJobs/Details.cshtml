@@ -19,18 +19,11 @@
     decimal? estimatedTotalProductionCost = (Model.CalculatedMaterialCost.HasValue && estimatedMachineCost.HasValue)
         ? Model.CalculatedMaterialCost.Value + estimatedMachineCost.Value + (Model.PackagingCost ?? 0m)
         : (decimal?)null;
-    decimal? estimatedCostPerUnit = (estimatedTotalProductionCost.HasValue && Model.UnitsProduced > 0)
-        ? Math.Round(estimatedTotalProductionCost.Value / Model.UnitsProduced, 2)
-        : (decimal?)null;
-    decimal? estimatedMargin = (productSalePrice.HasValue && estimatedTotalProductionCost.HasValue)
-        ? productSalePrice.Value - estimatedTotalProductionCost.Value
-        : (decimal?)null;
-    decimal? estimatedMarginPercentage = (estimatedMargin.HasValue && productSalePrice > 0m)
-        ? Math.Round((estimatedMargin.Value / productSalePrice.Value) * 100m, 1)
-        : (decimal?)null;
-    decimal? suggestedSalePrice = (estimatedTotalProductionCost.HasValue && productTargetMarginPercentage.HasValue)
-        ? Math.Round(estimatedTotalProductionCost.Value * (1 + (productTargetMarginPercentage.Value / 100m)), 2)
-        : (decimal?)null;
+    decimal? estimatedCostPerUnit = PrintJobCostPresentation.EstimatedCostPerUnit(estimatedTotalProductionCost, Model.UnitsProduced);
+    decimal? estimatedMargin = PrintJobCostPresentation.EstimatedMargin(productSalePrice, estimatedCostPerUnit);
+    decimal? estimatedMarginPercentage = PrintJobCostPresentation.EstimatedMarginPercentage(estimatedMargin, productSalePrice);
+    decimal? suggestedSalePrice = PrintJobCostPresentation.SuggestedSalePrice(estimatedCostPerUnit, productTargetMarginPercentage);
+    var costBasisLabel = Model.UnitsProduced > 1 ? "custo por unidade" : "custo total estimado";
 }
 
 <h1>Detalhes da produção</h1>
@@ -234,7 +227,7 @@
                         — @marginLabel
                     </span>
                     <small class="text-muted d-block">
-                        preço de venda @productSalePrice!.Value.ToString("C") − custo total estimado @estimatedTotalProductionCost!.Value.ToString("C")
+                        preço de venda @productSalePrice!.Value.ToString("C") − @costBasisLabel @estimatedCostPerUnit!.Value.ToString("C")
                     </small>
                 }
                 else if (!productSalePrice.HasValue)
@@ -253,7 +246,7 @@
                 {
                     <span class="fw-semibold">@suggestedSalePrice.Value.ToString("C")</span>
                     <small class="text-muted d-block">
-                        custo total estimado @estimatedTotalProductionCost!.Value.ToString("C") + margem alvo @productTargetMarginPercentage!.Value.ToString("N1")%
+                        @costBasisLabel @estimatedCostPerUnit!.Value.ToString("C") + margem alvo @productTargetMarginPercentage!.Value.ToString("N1")%
                     </small>
                 }
                 else if (!productTargetMarginPercentage.HasValue)

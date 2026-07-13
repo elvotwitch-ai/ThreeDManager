@@ -3393,6 +3393,108 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task PrintJobsDetails_ComputesMarginAndSuggestedPricePerUnit_ForMultiUnitJob()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        var printJobId = Guid.NewGuid();
+
+        await factory.SeedAsync(async context =>
+        {
+            var printer = await context.Printers.FirstAsync(printer => printer.Id == ids.PrinterId);
+            printer.CostPerHour = 5.00m;
+
+            var product = await context.Products.FirstAsync(product => product.Id == ids.ProductId);
+            product.SalePrice = 20.00m;
+            product.TargetMarginPercentage = 50.0m;
+
+            context.PrintJobs.Add(new PrintJob
+            {
+                Id = printJobId,
+                ProductId = ids.ProductId,
+                PrinterId = ids.PrinterId,
+                MaterialId = ids.MaterialId,
+                SourceFileName = "per-unit-margin.gcode",
+                EstimatedTimeMinutes = 120,
+                CalculatedMaterialCost = 2.00m,
+                PackagingCost = 2.00m,
+                UnitsProduced = 4,
+                Status = PrintJobStatus.Completed,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var detailsResponse = await client.GetAsync($"/PrintJobs/Details/{printJobId}");
+        var detailsHtml = WebUtility.HtmlDecode(await detailsResponse.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        // total cost R$ 14,00 (material R$ 2,00 + máquina R$ 10,00 + embalagem R$ 2,00) ÷ 4 unidades = R$ 3,50 per unit.
+        // margin compares the per-unit sale price against the per-unit cost: R$ 20,00 - R$ 3,50 = R$ 16,50 (82,5%).
+        Assert.Contains("Margem estimada", detailsHtml);
+        Assert.Contains("R$ 16,50", detailsHtml);
+        Assert.Contains("82,5%", detailsHtml);
+        Assert.Contains("custo por unidade R$ 3,50", detailsHtml);
+        // suggested price is per-unit as well: R$ 3,50 × 1,5 = R$ 5,25 (not the whole-batch R$ 21,00).
+        Assert.Contains("R$ 5,25", detailsHtml);
+        Assert.DoesNotContain("R$ 21,00", detailsHtml);
+    }
+
+    [Fact]
+    public async Task PrintJobsIndex_ComputesMarginAndSuggestedPricePerUnit_ForMultiUnitJob()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        var printJobId = Guid.NewGuid();
+
+        await factory.SeedAsync(async context =>
+        {
+            var printer = await context.Printers.FirstAsync(printer => printer.Id == ids.PrinterId);
+            printer.CostPerHour = 5.00m;
+
+            var product = await context.Products.FirstAsync(product => product.Id == ids.ProductId);
+            product.SalePrice = 20.00m;
+            product.TargetMarginPercentage = 50.0m;
+
+            context.PrintJobs.Add(new PrintJob
+            {
+                Id = printJobId,
+                ProductId = ids.ProductId,
+                PrinterId = ids.PrinterId,
+                MaterialId = ids.MaterialId,
+                SourceFileName = "index-per-unit-margin.gcode",
+                EstimatedTimeMinutes = 120,
+                CalculatedMaterialCost = 2.00m,
+                PackagingCost = 2.00m,
+                UnitsProduced = 4,
+                Status = PrintJobStatus.Completed,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var indexResponse = await client.GetAsync("/PrintJobs");
+        var indexHtml = WebUtility.HtmlDecode(await indexResponse.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, indexResponse.StatusCode);
+        // whole-batch cost R$ 14,00 ÷ 4 unidades = R$ 3,50 per unit.
+        Assert.Contains("R$ 14,00", indexHtml);
+        // margin = R$ 20,00 - R$ 3,50 = R$ 16,50 (82,5%); suggested price = R$ 3,50 × 1,5 = R$ 5,25.
+        Assert.Contains("R$ 16,50", indexHtml);
+        Assert.Contains("82,5%", indexHtml);
+        Assert.Contains("R$ 5,25", indexHtml);
+        Assert.DoesNotContain("R$ 21,00", indexHtml);
+    }
+
+    [Fact]
     public async Task PrintJobsDetails_ShowsEstimatedMargin_FromProductSalePriceAndTotalProductionCost()
     {
         using var factory = new ThreeDManagerWebFactory();
