@@ -6,6 +6,8 @@
     ViewData["Title"] = "Materiais";
     var latestStockMovements = ViewBag.LatestStockMovements as Dictionary<Guid, MaterialStockMovement> ?? new Dictionary<Guid, MaterialStockMovement>();
     var stockStatusFilter = ViewData["StockStatusFilter"] as string;
+    var currentSort = ViewData["Sort"] as string;
+    var nextValueSort = currentSort == "valueDesc" ? "valueAsc" : "valueDesc";
     var lowStockMaterialCount = ViewData["LowStockMaterialCount"] as int? ?? 0;
     var outOfStockMaterialCount = ViewData["OutOfStockMaterialCount"] as int? ?? 0;
     var isLowStockFilter = stockStatusFilter == "low";
@@ -22,11 +24,13 @@
 
 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
     <a asp-action="Index"
+       asp-route-sort="@currentSort"
        class="btn btn-sm @(isLowStockFilter ? "btn-outline-secondary" : "btn-secondary")">
         Todos
     </a>
     <a asp-action="Index"
        asp-route-stockStatus="low"
+       asp-route-sort="@currentSort"
        class="btn btn-sm @(isLowStockFilter ? "btn-danger" : "btn-outline-danger")">
         Baixo estoque (@lowStockMaterialCount)
     </a>
@@ -73,7 +77,23 @@ else
                 <th>Custo por kg (R$)</th>
                 <th>Custo por grama</th>
                 <th>Estoque atual</th>
-                <th>Valor em estoque</th>
+                <th>
+                    <a asp-action="Index"
+                       asp-route-stockStatus="@stockStatusFilter"
+                       asp-route-sort="@nextValueSort"
+                       class="text-reset text-decoration-none"
+                       title="Ordenar por valor em estoque">
+                        Valor em estoque
+                        @if (currentSort == "valueDesc")
+                        {
+                            <span aria-hidden="true">▼</span>
+                        }
+                        else if (currentSort == "valueAsc")
+                        {
+                            <span aria-hidden="true">▲</span>
+                        }
+                    </a>
+                </th>
                 <th>Estoque mínimo</th>
                 <th>Status estoque</th>
                 <th>Movimentação recente</th>

@@ -2737,6 +2737,43 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task MaterialsIndex_SortsByInventoryValueDescending_WhenSortRequested()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        await SeedCommonAsync(factory); // PLA Preto: CostPerKg 80 x 1000 g = R$ 80,00 (seeded first)
+        await factory.SeedAsync(async context =>
+        {
+            context.Materials.Add(new Material
+            {
+                Id = Guid.NewGuid(),
+                Name = "PETG Azul",
+                Type = "PETG",
+                Brand = "E2E",
+                Color = "Blue",
+                CostPerKg = 100m,
+                CurrentStockGrams = 500m, // 100/1000 x 500 = R$ 50,00 (seeded later => newest-first default)
+                CreatedAt = DateTime.UtcNow
+            });
+            await context.SaveChangesAsync();
+        });
+        using var client = factory.CreateTestClient();
+
+        // Default order is newest-first: PETG Azul (seeded later) appears before PLA Preto.
+        var defaultResponse = await client.GetAsync("/Materials");
+        var defaultHtml = WebUtility.HtmlDecode(await defaultResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, defaultResponse.StatusCode);
+        Assert.True(defaultHtml.IndexOf("PETG Azul", StringComparison.Ordinal) < defaultHtml.IndexOf("PLA Preto", StringComparison.Ordinal));
+
+        // Sorting by value descending puts the higher-value PLA Preto (R$ 80,00) ahead of PETG Azul (R$ 50,00).
+        var sortedResponse = await client.GetAsync("/Materials?sort=valueDesc");
+        var sortedHtml = WebUtility.HtmlDecode(await sortedResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, sortedResponse.StatusCode);
+        Assert.True(sortedHtml.IndexOf("PLA Preto", StringComparison.Ordinal) < sortedHtml.IndexOf("PETG Azul", StringComparison.Ordinal));
+        // The footer total is unaffected by ordering: still R$ 80,00 + R$ 50,00 = R$ 130,00.
+        Assert.Contains("R$ 130,00", sortedHtml);
+    }
+
+    [Fact]
     public async Task LowStockAlert_IsShown_OnMaterialsAndDashboard_WhenBelowMinimum()
     {
         using var factory = new ThreeDManagerWebFactory();

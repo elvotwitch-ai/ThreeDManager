@@ -16,7 +16,7 @@ public class MaterialsController : Controller
         _context = context;
     }
 
-    public async Task<IActionResult> Index(string? stockStatus)
+    public async Task<IActionResult> Index(string? stockStatus, string? sort)
     {
         var allMaterials = await _context.Materials
             .OrderByDescending(material => material.CreatedAt)
@@ -27,7 +27,8 @@ public class MaterialsController : Controller
             .ToList();
 
         var isLowStockFilter = string.Equals(stockStatus, "low", StringComparison.OrdinalIgnoreCase);
-        var materials = isLowStockFilter ? lowStockMaterials : allMaterials;
+        var normalizedSort = NormalizeSort(sort);
+        var materials = SortMaterials(isLowStockFilter ? lowStockMaterials : allMaterials, normalizedSort);
 
         var materialIds = allMaterials.Select(material => material.Id).ToList();
         var latestStockMovements = await _context.MaterialStockMovements
@@ -40,6 +41,7 @@ public class MaterialsController : Controller
             .ToDictionary(group => group.Key, group => group.First());
 
         ViewData["StockStatusFilter"] = isLowStockFilter ? "low" : null;
+        ViewData["Sort"] = normalizedSort;
         ViewData["LowStockMaterialCount"] = lowStockMaterials.Count;
         ViewData["OutOfStockMaterialCount"] = lowStockMaterials.Count(material =>
             StockStatusPresentation.IsOutOfStock(material.CurrentStockGrams, material.MinimumStockGrams));
@@ -52,6 +54,38 @@ public class MaterialsController : Controller
         return material.CurrentStockGrams.HasValue
             && material.MinimumStockGrams.HasValue
             && material.CurrentStockGrams.Value <= material.MinimumStockGrams.Value;
+    }
+
+    private static string? NormalizeSort(string? sort)
+    {
+        return sort switch
+        {
+            "valueDesc" => "valueDesc",
+            "valueAsc" => "valueAsc",
+            _ => null
+        };
+    }
+
+    private static List<Material> SortMaterials(List<Material> materials, string? sort)
+    {
+        // Materials whose value cannot be computed (missing unit cost or stock) always
+        // sink to the bottom, regardless of the sort direction. The default (null) sort
+        // keeps the existing newest-first ordering established by the query above.
+        static decimal? Value(Material material)
+            => MaterialCostPresentation.InventoryValue(material.CostPerKg, material.CurrentStockGrams);
+
+        return sort switch
+        {
+            "valueDesc" => materials
+                .OrderByDescending(material => Value(material).HasValue)
+                .ThenByDescending(material => Value(material) ?? 0m)
+                .ToList(),
+            "valueAsc" => materials
+                .OrderByDescending(material => Value(material).HasValue)
+                .ThenBy(material => Value(material) ?? 0m)
+                .ToList(),
+            _ => materials
+        };
     }
 
     public async Task<IActionResult> Details(Guid? id, string? returnTo)
