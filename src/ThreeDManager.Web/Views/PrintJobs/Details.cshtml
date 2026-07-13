@@ -19,6 +19,9 @@
     decimal? estimatedTotalProductionCost = (Model.CalculatedMaterialCost.HasValue && estimatedMachineCost.HasValue)
         ? Model.CalculatedMaterialCost.Value + estimatedMachineCost.Value + (Model.PackagingCost ?? 0m)
         : (decimal?)null;
+    decimal? estimatedCostPerUnit = (estimatedTotalProductionCost.HasValue && Model.UnitsProduced > 0)
+        ? Math.Round(estimatedTotalProductionCost.Value / Model.UnitsProduced, 2)
+        : (decimal?)null;
     decimal? estimatedMargin = (productSalePrice.HasValue && estimatedTotalProductionCost.HasValue)
         ? productSalePrice.Value - estimatedTotalProductionCost.Value
         : (decimal?)null;
@@ -197,6 +200,24 @@
                     <span class="text-muted">Não disponível</span>
                 }
             </dd>
+
+            @if (Model.UnitsProduced > 1)
+            {
+                <dt class="col-sm-3">Custo por unidade</dt>
+                <dd class="col-sm-9">
+                    @if (estimatedCostPerUnit.HasValue)
+                    {
+                        <span>@estimatedCostPerUnit.Value.ToString("C")</span>
+                        <small class="text-muted d-block">
+                            custo total estimado @estimatedTotalProductionCost!.Value.ToString("C") ÷ @Model.UnitsProduced unidades
+                        </small>
+                    }
+                    else
+                    {
+                        <span class="text-muted">Não disponível</span>
+                    }
+                </dd>
+            }
 
             <dt class="col-sm-3">Margem estimada</dt>
             <dd class="col-sm-9">
