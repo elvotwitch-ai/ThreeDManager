@@ -71,6 +71,7 @@ else
                     <th>Categoria</th>
                     <th>Preço de venda</th>
                     <th>Estoque</th>
+                    <th>Valor em estoque</th>
                     <th>Estoque mínimo</th>
                     <th>Status estoque</th>
                     <th>Margem alvo</th>
@@ -107,6 +108,19 @@ else
                             @if (product.StockQuantity.HasValue)
                             {
                                 <span>@product.StockQuantity.Value un.</span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-light">Não informado</span>
+                            }
+                        </td>
+                        <td>
+                            @{
+                                var stockValue = ProductCostPresentation.StockValueAtSalePrice(product.SalePrice, product.StockQuantity);
+                            }
+                            @if (stockValue.HasValue)
+                            {
+                                <span>@stockValue.Value.ToString("C")</span>
                             }
                             else
                             {
@@ -207,7 +221,7 @@ else
             </tbody>
             <tfoot>
                 <tr class="fw-semibold border-top">
-                    <td colspan="4" class="text-end">Valor total em estoque</td>
+                    <td colspan="5" class="text-end">Valor total em estoque</td>
                     <td>@ProductCostPresentation.TotalStockValueAtSalePrice(Model).ToString("C")</td>
                     <td colspan="7"></td>
                 </tr>

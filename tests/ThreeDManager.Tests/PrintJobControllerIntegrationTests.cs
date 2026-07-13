@@ -1800,6 +1800,11 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("Valor total em estoque", indexHtml);
         // R$ 200,00 (Product A) + R$ 120,00 (Chaveiro Azul) = R$ 320,00.
         Assert.Contains("R$ 320,00", indexHtml);
+        // The per-item "Valor em estoque" column renders each product's own stock value
+        // alongside the aggregate footer total.
+        Assert.Contains("Valor em estoque", indexHtml);
+        Assert.Contains("R$ 200,00", indexHtml); // Product A: R$ 25,00 x 8 un.
+        Assert.Contains("R$ 120,00", indexHtml); // Chaveiro Azul: R$ 40,00 x 3 un.
     }
 
     [Fact]
