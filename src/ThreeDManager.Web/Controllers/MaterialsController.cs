@@ -261,6 +261,14 @@ public class MaterialsController : Controller
                 return View(viewModel);
         }
 
+        if (movementQuantity == 0m)
+        {
+            // A "definir" (Set) adjustment to the current value changes nothing; mirror the
+            // Edit flow's guard and skip persisting a misleading zero-quantity ledger entry.
+            TempData["SuccessMessage"] = "O estoque informado já é o atual; nenhum ajuste foi registrado.";
+            return RedirectToAction(nameof(Details), new { id = material.Id, returnTo = normalizedReturnTo });
+        }
+
         material.CurrentStockGrams = stockAfter;
 
         _context.MaterialStockMovements.Add(new MaterialStockMovement

@@ -262,6 +262,14 @@ public class ProductsController : Controller
                 return View(viewModel);
         }
 
+        if (movementQuantity == 0)
+        {
+            // A "definir" (Set) adjustment to the current value changes nothing; mirror the
+            // Edit flow's guard and skip persisting a misleading zero-quantity ledger entry.
+            TempData["SuccessMessage"] = "O estoque informado já é o atual; nenhum ajuste foi registrado.";
+            return RedirectToAction(nameof(Details), new { id = product.Id, returnTo = normalizedReturnTo });
+        }
+
         product.StockQuantity = stockAfter;
 
         _context.ProductStockMovements.Add(new ProductStockMovement
