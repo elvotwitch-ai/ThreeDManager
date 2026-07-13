@@ -42,7 +42,11 @@ public class DashboardViewModel
 
     public int LowStockMaterialsCount { get; set; }
 
+    public int OutOfStockMaterialsCount { get; set; }
+
     public int LowStockProductsCount { get; set; }
+
+    public int OutOfStockProductsCount { get; set; }
 
     public List<DashboardRecentPrintJobViewModel> RecentPrintJobs { get; set; } = new();
 

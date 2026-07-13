@@ -195,6 +195,8 @@ public class DashboardController : Controller
             ProductionsWithEstimatedMargin = productionsWithEstimatedMargin,
 
             LowStockMaterialsCount = lowStockMaterials.Count,
+            OutOfStockMaterialsCount = lowStockMaterials.Count(material =>
+                StockStatusPresentation.IsOutOfStock(material.CurrentStockGrams, material.MinimumStockGrams)),
             LowStockMaterials = lowStockMaterials
                 .Select(material => new DashboardLowStockMaterialViewModel
                 {
@@ -206,6 +208,8 @@ public class DashboardController : Controller
                 .ToList(),
 
             LowStockProductsCount = lowStockProducts.Count,
+            OutOfStockProductsCount = lowStockProducts.Count(product =>
+                StockStatusPresentation.IsOutOfStock(product.StockQuantity, product.MinimumStockQuantity)),
             LowStockProducts = lowStockProducts
                 .Select(product => new DashboardLowStockProductViewModel
                 {

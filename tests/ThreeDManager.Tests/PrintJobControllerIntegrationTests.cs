@@ -2479,6 +2479,44 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task Dashboard_DistinguishesOutOfStockMaterial_FromLowStock_WhenStockIsZero()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+        using var client = factory.CreateTestClient();
+
+        var editPage = await client.GetAsync($"/Materials/Edit/{ids.MaterialId}");
+        Assert.Equal(HttpStatusCode.OK, editPage.StatusCode);
+
+        var token = ExtractAntiForgeryToken(await editPage.Content.ReadAsStringAsync());
+        var postResponse = await client.PostAsync(
+            $"/Materials/Edit/{ids.MaterialId}",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = token,
+                ["Id"] = ids.MaterialId.ToString(),
+                ["Name"] = "PLA Esgotado",
+                ["Type"] = "PLA",
+                ["Brand"] = "E2E",
+                ["Color"] = "Black",
+                ["CostPerKg"] = "80.00",
+                ["CurrentStockGrams"] = "0.00",
+                ["MinimumStockGrams"] = "200.00",
+                ["CreatedAt"] = "2026-06-19T02:00:00Z"
+            }));
+
+        Assert.Equal(HttpStatusCode.Redirect, postResponse.StatusCode);
+
+        var dashboardResponse = await client.GetAsync("/Dashboard");
+        var dashboardHtml = WebUtility.HtmlDecode(await dashboardResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, dashboardResponse.StatusCode);
+        Assert.Contains("Existem <strong>1</strong> materiais em baixo estoque.", dashboardHtml);
+        Assert.Contains("<strong>1</strong> sem estoque no momento.", dashboardHtml);
+        Assert.Contains("Sem estoque", dashboardHtml);
+        Assert.Contains("badge bg-dark", dashboardHtml);
+    }
+
+    [Fact]
     public async Task MaterialsIndex_FiltersLowStockMaterials_WhenStockStatusLowRequested()
     {
         using var factory = new ThreeDManagerWebFactory();

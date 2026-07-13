@@ -214,6 +214,10 @@
         {
             <div class="alert alert-warning">
                 Existem <strong>@Model.LowStockMaterialsCount</strong> materiais em baixo estoque.
+                @if (Model.OutOfStockMaterialsCount > 0)
+                {
+                    <text><strong>@Model.OutOfStockMaterialsCount</strong> sem estoque no momento.</text>
+                }
             </div>
 
             <div class="table-responsive">
@@ -223,6 +227,7 @@
                             <th>Material</th>
                             <th>Estoque atual</th>
                             <th>Estoque mínimo</th>
+                            <th>Status</th>
                             <th class="text-end">Ações</th>
                         </tr>
                     </thead>
@@ -233,6 +238,9 @@
                                 <td>@material.Name</td>
                                 <td>@material.CurrentStockGrams.ToString("N2") g</td>
                                 <td>@material.MinimumStockGrams.ToString("N2") g</td>
+                                <td>
+                                    <span class="@StockStatusPresentation.GetBadgeClass(material.CurrentStockGrams, material.MinimumStockGrams)">@StockStatusPresentation.GetLabel(material.CurrentStockGrams, material.MinimumStockGrams)</span>
+                                </td>
                                 <td class="text-end">
                                     <a asp-controller="Materials" asp-action="Details" asp-route-id="@material.Id" class="btn btn-sm btn-outline-secondary">
                                         Detalhes
@@ -274,6 +282,10 @@
         {
             <div class="alert alert-warning">
                 Existem <strong>@Model.LowStockProductsCount</strong> produtos em baixo estoque.
+                @if (Model.OutOfStockProductsCount > 0)
+                {
+                    <text><strong>@Model.OutOfStockProductsCount</strong> sem estoque no momento.</text>
+                }
             </div>
 
             <div class="table-responsive">
@@ -283,6 +295,7 @@
                             <th>Produto</th>
                             <th>Estoque atual</th>
                             <th>Estoque mínimo</th>
+                            <th>Status</th>
                             <th class="text-end">Ações</th>
                         </tr>
                     </thead>
@@ -293,6 +306,9 @@
                                 <td>@product.Name</td>
                                 <td>@product.StockQuantity un.</td>
                                 <td>@product.MinimumStockQuantity un.</td>
+                                <td>
+                                    <span class="@StockStatusPresentation.GetBadgeClass(product.StockQuantity, product.MinimumStockQuantity)">@StockStatusPresentation.GetLabel(product.StockQuantity, product.MinimumStockQuantity)</span>
+                                </td>
                                 <td class="text-end">
                                     <a asp-controller="Products" asp-action="Details" asp-route-id="@product.Id" class="btn btn-sm btn-outline-secondary">
                                         Detalhes
