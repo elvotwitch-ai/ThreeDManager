@@ -2123,6 +2123,38 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task ProductOutOfStockBadge_IsShown_OnDetailsAndIndex_WhenAlertConfiguredAndEmpty()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+        await factory.SeedAsync(async context =>
+        {
+            var product = await context.Products.SingleAsync(product => product.Id == ids.ProductId);
+            product.StockQuantity = 0;
+            product.MinimumStockQuantity = 10;
+            await context.SaveChangesAsync();
+        });
+        using var client = factory.CreateTestClient();
+
+        var detailsResponse = await client.GetAsync($"/Products/Details/{ids.ProductId}");
+        var detailsHtml = WebUtility.HtmlDecode(await detailsResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        Assert.Contains("<span class=\"badge bg-dark\">Sem estoque</span>", detailsHtml);
+        Assert.DoesNotContain("Baixo estoque", detailsHtml);
+
+        var indexResponse = await client.GetAsync("/Products");
+        var indexHtml = WebUtility.HtmlDecode(await indexResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, indexResponse.StatusCode);
+        Assert.Contains("<span class=\"badge bg-dark\">Sem estoque</span>", indexHtml);
+
+        // Out of stock is a strict subset of low stock, so the Dashboard alert still counts it.
+        var dashboardResponse = await client.GetAsync("/Dashboard");
+        var dashboardHtml = WebUtility.HtmlDecode(await dashboardResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, dashboardResponse.StatusCode);
+        Assert.Contains("Existem <strong>1</strong> produtos em baixo estoque.", dashboardHtml);
+    }
+
+    [Fact]
     public async Task ProductsIndex_FiltersLowStockProducts_WhenStockStatusLowRequested()
     {
         using var factory = new ThreeDManagerWebFactory();

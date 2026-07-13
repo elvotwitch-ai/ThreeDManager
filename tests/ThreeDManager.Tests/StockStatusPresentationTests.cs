@@ -50,10 +50,39 @@ public class StockStatusPresentationTests
     }
 
     [Fact]
-    public void GetBadgeClass_MatchesTheThreeStates()
+    public void GetBadgeClass_MatchesTheFourStates()
     {
+        Assert.Equal("badge bg-dark", StockStatusPresentation.GetBadgeClass(0m, 200m));      // out of stock
         Assert.Equal("badge bg-danger", StockStatusPresentation.GetBadgeClass(50m, 200m));   // low
         Assert.Equal("badge bg-success", StockStatusPresentation.GetBadgeClass(500m, 200m)); // ok
         Assert.Equal("badge bg-secondary", StockStatusPresentation.GetBadgeClass(500m, null)); // no alert
+    }
+
+    [Fact]
+    public void IsOutOfStock_WhenAlertConfiguredAndCurrentAtOrBelowZero_IsTrue()
+    {
+        Assert.True(StockStatusPresentation.IsOutOfStock(0m, 200m));
+        Assert.True(StockStatusPresentation.IsOutOfStock(-5m, 200m)); // defensive: treat negative as empty
+    }
+
+    [Fact]
+    public void IsOutOfStock_WhenStockRemainsOrAlertNotConfigured_IsFalse()
+    {
+        Assert.False(StockStatusPresentation.IsOutOfStock(50m, 200m));  // low but not empty
+        Assert.False(StockStatusPresentation.IsOutOfStock(0m, null));   // empty but no alert configured
+    }
+
+    [Fact]
+    public void GetLabel_ReturnsOutOfStock_WhenAlertConfiguredAndEmpty()
+    {
+        Assert.Equal(StockStatusPresentation.OutOfStockLabel, StockStatusPresentation.GetLabel(0m, 200m));
+        Assert.Equal("Sem estoque", StockStatusPresentation.GetLabel(0m, 10m));
+    }
+
+    [Fact]
+    public void GetLabel_ReturnsNoAlert_WhenEmptyButAlertNotConfigured()
+    {
+        // current == 0 without a configured minimum stays "no alert" (grey), unchanged.
+        Assert.Equal(StockStatusPresentation.NoAlertLabel, StockStatusPresentation.GetLabel(0m, null));
     }
 }
