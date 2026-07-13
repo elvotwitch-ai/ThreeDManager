@@ -1748,6 +1748,61 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task ProductsIndex_ShowsTotalStockValue_SummedAcrossProducts()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        // Set the seeded product to a known SalePrice x StockQuantity -> R$ 200,00.
+        using (var client = factory.CreateTestClient())
+        {
+            var editPage = await client.GetAsync($"/Products/Edit/{ids.ProductId}");
+            Assert.Equal(HttpStatusCode.OK, editPage.StatusCode);
+            var token = ExtractAntiForgeryToken(await editPage.Content.ReadAsStringAsync());
+            var postResponse = await client.PostAsync(
+                $"/Products/Edit/{ids.ProductId}",
+                new FormUrlEncodedContent(new Dictionary<string, string>
+                {
+                    ["__RequestVerificationToken"] = token,
+                    ["Id"] = ids.ProductId.ToString(),
+                    ["Name"] = "Product A",
+                    ["Sku"] = "E2E-PROD",
+                    ["Category"] = "Brindes",
+                    ["SalePrice"] = "25.00",
+                    ["StockQuantity"] = "8",
+                    ["IsActive"] = "true",
+                    ["CreatedAt"] = "2026-06-30T02:00:00Z"
+                }));
+            Assert.Equal(HttpStatusCode.Redirect, postResponse.StatusCode);
+        }
+
+        // Add a second product -> R$ 120,00.
+        await factory.SeedAsync(async context =>
+        {
+            context.Products.Add(new Product
+            {
+                Id = Guid.NewGuid(),
+                Name = "Chaveiro Azul",
+                Sku = "E2E-KEY",
+                Category = "Brindes",
+                SalePrice = 40m,
+                StockQuantity = 3,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            });
+            await context.SaveChangesAsync();
+        });
+
+        using var readClient = factory.CreateTestClient();
+        var indexResponse = await readClient.GetAsync("/Products");
+        var indexHtml = WebUtility.HtmlDecode(await indexResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, indexResponse.StatusCode);
+        Assert.Contains("Valor total em estoque", indexHtml);
+        // R$ 200,00 (Product A) + R$ 120,00 (Chaveiro Azul) = R$ 320,00.
+        Assert.Contains("R$ 320,00", indexHtml);
+    }
+
+    [Fact]
     public async Task AdjustStock_AddRemoveAndSet_UpdatesMaterialStockAndRecordsMovement()
     {
         var scenarios = new[]

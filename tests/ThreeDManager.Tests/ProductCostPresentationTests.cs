@@ -1,3 +1,4 @@
+using ThreeDManager.Domain.Entities;
 using ThreeDManager.Web.Presentation;
 
 namespace ThreeDManager.Tests;
@@ -31,5 +32,36 @@ public class ProductCostPresentationTests
     public void StockValueAtSalePrice_ReturnsNull_WhenPriceOrStockMissing(double? salePrice, int? stockQuantity)
     {
         Assert.Null(ProductCostPresentation.StockValueAtSalePrice((decimal?)salePrice, stockQuantity));
+    }
+
+    [Fact]
+    public void TotalStockValueAtSalePrice_SumsEachProductStockValue()
+    {
+        var products = new[]
+        {
+            new Product { SalePrice = 25.00m, StockQuantity = 8 }, // R$ 200,00
+            new Product { SalePrice = 40.00m, StockQuantity = 3 }, // R$ 120,00
+        };
+
+        Assert.Equal(320.00m, ProductCostPresentation.TotalStockValueAtSalePrice(products));
+    }
+
+    [Fact]
+    public void TotalStockValueAtSalePrice_TreatsProductsWithMissingDataAsZero()
+    {
+        var products = new[]
+        {
+            new Product { SalePrice = 25.00m, StockQuantity = 8 }, // R$ 200,00
+            new Product { SalePrice = null, StockQuantity = 3 },   // unknown price -> 0
+            new Product { SalePrice = 40.00m, StockQuantity = null }, // unknown stock -> 0
+        };
+
+        Assert.Equal(200.00m, ProductCostPresentation.TotalStockValueAtSalePrice(products));
+    }
+
+    [Fact]
+    public void TotalStockValueAtSalePrice_IsZero_ForEmptySequence()
+    {
+        Assert.Equal(0m, ProductCostPresentation.TotalStockValueAtSalePrice(Array.Empty<Product>()));
     }
 }

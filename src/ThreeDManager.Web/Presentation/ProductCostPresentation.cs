@@ -1,3 +1,5 @@
+using ThreeDManager.Domain.Entities;
+
 namespace ThreeDManager.Web.Presentation;
 
 /// <summary>
@@ -19,4 +21,16 @@ public static class ProductCostPresentation
         => (salePrice.HasValue && stockQuantity.HasValue)
             ? Math.Round(salePrice.Value * stockQuantity.Value, 2)
             : (decimal?)null;
+
+    /// <summary>
+    /// The combined finished-goods stock value across a set of products: the sum of
+    /// each product's <see cref="StockValueAtSalePrice(decimal?, int?)"/>. Products
+    /// whose sale price or stock quantity is unknown contribute <c>0</c>, so the result
+    /// is always a concrete total (never <c>null</c>) representing the sale-price value
+    /// of the finished-goods stock for the products that have enough data to value.
+    /// Mirrors <see cref="MaterialCostPresentation.TotalInventoryValue(IEnumerable{Material})"/>.
+    /// </summary>
+    public static decimal TotalStockValueAtSalePrice(IEnumerable<Product> products)
+        => products
+            .Sum(product => StockValueAtSalePrice(product.SalePrice, product.StockQuantity) ?? 0m);
 }
