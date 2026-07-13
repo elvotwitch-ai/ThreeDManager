@@ -1874,6 +1874,13 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("Produtos acabados: R$ 320,00", dashboardHtml);
         // Combined inventory value -> R$ 450,00.
         Assert.Contains("R$ 450,00", dashboardHtml);
+        // The Materiais / Produtos acabados figures drill down to their index lists.
+        Assert.Matches(
+            "<a[^>]*data-inventory-value-link=\"materials\"[^>]*href=\"/Materials\"|<a[^>]*href=\"/Materials\"[^>]*data-inventory-value-link=\"materials\"",
+            dashboardHtml);
+        Assert.Matches(
+            "<a[^>]*data-inventory-value-link=\"products\"[^>]*href=\"/Products\"|<a[^>]*href=\"/Products\"[^>]*data-inventory-value-link=\"products\"",
+            dashboardHtml);
     }
 
     [Fact]
