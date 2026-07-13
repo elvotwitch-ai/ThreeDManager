@@ -4097,6 +4097,68 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task Dashboard_UsesPerUnitCostBasis_ForMultiUnitJobMarginAndSuggestedPrice()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        await factory.SeedAsync(async context =>
+        {
+            var printer = await context.Printers.FirstAsync(printer => printer.Id == ids.PrinterId);
+            printer.CostPerHour = 5.00m;
+
+            var product = await context.Products.FirstAsync(product => product.Id == ids.ProductId);
+            product.SalePrice = 20.00m;
+            product.TargetMarginPercentage = 50.0m;
+
+            // Batch of 4 units: material 2,00 + máquina (120/60)*5,00 = 10,00 + embalagem 2,00
+            // = 14,00 total → 3,50 por unidade.
+            context.PrintJobs.Add(new PrintJob
+            {
+                Id = Guid.NewGuid(),
+                ProductId = ids.ProductId,
+                PrinterId = ids.PrinterId,
+                MaterialId = ids.MaterialId,
+                SourceFileName = "dashboard-batch-4.gcode",
+                Status = PrintJobStatus.Completed,
+                EstimatedTimeMinutes = 120,
+                CalculatedMaterialCost = 2.00m,
+                PackagingCost = 2.00m,
+                UnitsProduced = 4,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var dashboardResponse = await client.GetAsync("/Dashboard");
+        var dashboardHtml = WebUtility.HtmlDecode(await dashboardResponse.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, dashboardResponse.StatusCode);
+
+        // Portfolio margin is per-batch revenue (SalePrice 20,00 × 4 units = 80,00) minus the
+        // whole-batch cost 14,00 = 66,00. The old per-unit-vs-whole-batch form gave 20,00 − 14,00
+        // = 6,00, so the buggy value must be gone. Only this one job carries a complete cost + sale
+        // price, so the aggregate is deterministic within the isolated test database.
+        var costCard = dashboardHtml[dashboardHtml.IndexOf("Custo informado", StringComparison.Ordinal)..];
+        Assert.Contains("Margem estimada:", costCard);
+        Assert.Contains("R$ 66,00", costCard);
+        Assert.DoesNotContain("R$ 6,00", costCard);
+        Assert.Contains("(1 produções)", costCard);
+
+        // Suggested price is per-unit: 3,50 × 1,5 (50% target margin) = 5,25, NOT the old
+        // whole-batch 14,00 × 1,5 = 21,00. The caption flags the per-unit basis for batch jobs.
+        var recentPrintJobsSection = dashboardHtml[dashboardHtml.IndexOf("Últimas produções", StringComparison.Ordinal)..];
+        Assert.Contains("dashboard-batch-4.gcode", recentPrintJobsSection);
+        Assert.Contains("Preço de venda sugerido:", recentPrintJobsSection);
+        Assert.Contains("R$ 5,25", recentPrintJobsSection);
+        Assert.Contains("por unidade, margem alvo 50,0%", recentPrintJobsSection);
+        Assert.DoesNotContain("R$ 21,00", recentPrintJobsSection);
+    }
+
+    [Fact]
     public async Task Dashboard_NormalizesProductionStatusCounts()
     {
         using var factory = new ThreeDManagerWebFactory();

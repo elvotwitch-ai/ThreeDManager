@@ -651,7 +651,10 @@
 
                                 @if (job.SuggestedSalePrice.HasValue)
                                 {
-                                    <div class="small">Preço de venda sugerido: <span class="fw-semibold">@job.SuggestedSalePrice.Value.ToString("C")</span> <span class="text-muted">(margem alvo @job.TargetMarginPercentage!.Value.ToString("N1")%)</span></div>
+                                    var suggestedPriceCaption = job.UnitsProduced > 1
+                                        ? $"por unidade, margem alvo {job.TargetMarginPercentage!.Value.ToString("N1")}%"
+                                        : $"margem alvo {job.TargetMarginPercentage!.Value.ToString("N1")}%";
+                                    <div class="small">Preço de venda sugerido: <span class="fw-semibold">@job.SuggestedSalePrice.Value.ToString("C")</span> <span class="text-muted">(@suggestedPriceCaption)</span></div>
                                 }
                                 else if (!job.TargetMarginPercentage.HasValue)
                                 {

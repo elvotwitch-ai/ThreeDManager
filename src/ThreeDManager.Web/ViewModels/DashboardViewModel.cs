@@ -85,6 +85,8 @@ public class DashboardRecentPrintJobViewModel
 
     public decimal? EstimatedTotalProductionCost { get; set; }
 
+    public int UnitsProduced { get; set; } = 1;
+
     public decimal? TargetMarginPercentage { get; set; }
 
     public decimal? SuggestedSalePrice { get; set; }

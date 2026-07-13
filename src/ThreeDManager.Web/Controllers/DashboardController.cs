@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using ThreeDManager.Application.Interfaces;
 using ThreeDManager.Domain.Entities;
 using ThreeDManager.Infrastructure.Data;
+using ThreeDManager.Web.Presentation;
 using ThreeDManager.Web.ViewModels;
 
 namespace ThreeDManager.Web.Controllers;
@@ -125,7 +126,11 @@ public class DashboardController : Controller
                 + estimatedMachineCost.Value
                 + (printJob.PackagingCost ?? 0);
 
-            totalEstimatedMargin += productSalePrice.Value - estimatedTotalProductionCost;
+            // Portfolio total: revenue for every unit the batch produces (per-unit sale price ×
+            // units) minus the whole-batch cost. For single-unit jobs this equals the prior
+            // (salePrice − totalCost); for multi-unit (batch) jobs the old form understated margin
+            // by comparing a per-unit sale price against the whole-batch cost.
+            totalEstimatedMargin += (productSalePrice.Value * printJob.UnitsProduced) - estimatedTotalProductionCost;
             productionsWithEstimatedMargin++;
         }
 
@@ -227,9 +232,13 @@ public class DashboardController : Controller
                         ? targetMargin
                         : null;
 
-                    var suggestedSalePrice = estimatedTotalProductionCost.HasValue && targetMarginPercentage.HasValue
-                        ? Math.Round(estimatedTotalProductionCost.Value * (1 + (targetMarginPercentage.Value / 100m)), 2)
-                        : (decimal?)null;
+                    // Suggested price is per-unit (comparable to the product's per-unit sale price),
+                    // so it must be derived from the per-unit cost rather than the whole-batch total.
+                    var estimatedCostPerUnit = PrintJobCostPresentation.EstimatedCostPerUnit(
+                        estimatedTotalProductionCost, printJob.UnitsProduced);
+
+                    var suggestedSalePrice = PrintJobCostPresentation.SuggestedSalePrice(
+                        estimatedCostPerUnit, targetMarginPercentage);
 
                     return new DashboardRecentPrintJobViewModel
                     {
@@ -255,6 +264,7 @@ public class DashboardController : Controller
                         EstimatedMachineCost = estimatedMachineCost,
                         PackagingCost = printJob.PackagingCost,
                         EstimatedTotalProductionCost = estimatedTotalProductionCost,
+                        UnitsProduced = printJob.UnitsProduced,
                         TargetMarginPercentage = targetMarginPercentage,
                         SuggestedSalePrice = suggestedSalePrice,
                         Status = printJob.Status,
