@@ -170,6 +170,13 @@ else
                 </tr>
             }
         </tbody>
+        <tfoot>
+            <tr class="fw-semibold border-top">
+                <td colspan="6" class="text-end">Valor total em estoque</td>
+                <td>@MaterialCostPresentation.TotalInventoryValue(Model).ToString("C")</td>
+                <td colspan="4"></td>
+            </tr>
+        </tfoot>
         </table>
     </div>
 }

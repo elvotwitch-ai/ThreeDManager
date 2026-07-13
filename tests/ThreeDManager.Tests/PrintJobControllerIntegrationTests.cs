@@ -2557,6 +2557,36 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task MaterialsIndex_ShowsTotalInventoryValue_SummedAcrossMaterials()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        await SeedCommonAsync(factory); // PLA Preto: CostPerKg 80 x 1000 g = R$ 80,00
+        await factory.SeedAsync(async context =>
+        {
+            context.Materials.Add(new Material
+            {
+                Id = Guid.NewGuid(),
+                Name = "PETG Azul",
+                Type = "PETG",
+                Brand = "E2E",
+                Color = "Blue",
+                CostPerKg = 100m,
+                CurrentStockGrams = 500m, // 100/1000 x 500 = R$ 50,00
+                CreatedAt = DateTime.UtcNow
+            });
+            await context.SaveChangesAsync();
+        });
+        using var client = factory.CreateTestClient();
+
+        var indexResponse = await client.GetAsync("/Materials");
+        var indexHtml = WebUtility.HtmlDecode(await indexResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, indexResponse.StatusCode);
+        Assert.Contains("Valor total em estoque", indexHtml);
+        // R$ 80,00 (PLA Preto) + R$ 50,00 (PETG Azul) = R$ 130,00.
+        Assert.Contains("R$ 130,00", indexHtml);
+    }
+
+    [Fact]
     public async Task LowStockAlert_IsShown_OnMaterialsAndDashboard_WhenBelowMinimum()
     {
         using var factory = new ThreeDManagerWebFactory();

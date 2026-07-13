@@ -1,3 +1,4 @@
+using ThreeDManager.Domain.Entities;
 using ThreeDManager.Web.Presentation;
 
 namespace ThreeDManager.Tests;
@@ -31,5 +32,36 @@ public class MaterialCostPresentationTests
     public void InventoryValue_ReturnsNull_WhenCostOrStockMissing(double? costPerKg, double? grams)
     {
         Assert.Null(MaterialCostPresentation.InventoryValue((decimal?)costPerKg, (decimal?)grams));
+    }
+
+    [Fact]
+    public void TotalInventoryValue_SumsEachMaterialInventoryValue()
+    {
+        var materials = new[]
+        {
+            new Material { CostPerKg = 120.00m, CurrentStockGrams = 2500m }, // R$ 300,00
+            new Material { CostPerKg = 100.00m, CurrentStockGrams = 500m },  // R$ 50,00
+        };
+
+        Assert.Equal(350.00m, MaterialCostPresentation.TotalInventoryValue(materials));
+    }
+
+    [Fact]
+    public void TotalInventoryValue_TreatsMaterialsWithMissingDataAsZero()
+    {
+        var materials = new[]
+        {
+            new Material { CostPerKg = 120.00m, CurrentStockGrams = 2500m }, // R$ 300,00
+            new Material { CostPerKg = null, CurrentStockGrams = 500m },      // unknown cost -> 0
+            new Material { CostPerKg = 100.00m, CurrentStockGrams = null },   // unknown stock -> 0
+        };
+
+        Assert.Equal(300.00m, MaterialCostPresentation.TotalInventoryValue(materials));
+    }
+
+    [Fact]
+    public void TotalInventoryValue_IsZero_ForEmptySequence()
+    {
+        Assert.Equal(0m, MaterialCostPresentation.TotalInventoryValue(Array.Empty<Material>()));
     }
 }
