@@ -127,28 +127,7 @@ else
                         }
                     </td>
                     <td>
-                        @{
-                            var hasCurrentStock = material.CurrentStockGrams.HasValue;
-                            var hasMinimumStock = material.MinimumStockGrams.HasValue;
-                            var currentStockGrams = material.CurrentStockGrams.GetValueOrDefault();
-                            var minimumStockGrams = material.MinimumStockGrams.GetValueOrDefault();
-                            var isLowStock = hasCurrentStock
-                                && hasMinimumStock
-                                && currentStockGrams <= minimumStockGrams;
-                        }
-
-                        @if (isLowStock)
-                        {
-                            <span class="badge bg-danger">Baixo estoque</span>
-                        }
-                        else if (hasCurrentStock && hasMinimumStock)
-                        {
-                            <span class="badge bg-success">Ok</span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-secondary">Sem alerta</span>
-                        }
+                        <span class="@StockStatusPresentation.GetBadgeClass(material.CurrentStockGrams, material.MinimumStockGrams)">@StockStatusPresentation.GetLabel(material.CurrentStockGrams, material.MinimumStockGrams)</span>
                     </td>
                     <td>
                         @if (latestMovement is null)

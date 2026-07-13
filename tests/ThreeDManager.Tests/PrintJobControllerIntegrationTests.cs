@@ -2158,6 +2158,9 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("Baixo estoque (1)", unfilteredHtml);
         Assert.Contains("Product A", unfilteredHtml);
         Assert.Contains("Product B", unfilteredHtml);
+        // Product B (stock 50, min 10) is above its minimum, so it must render the centralized
+        // StockStatusPresentation "Ok" badge through the real view pipeline.
+        Assert.Contains("<span class=\"badge bg-success\">Ok</span>", unfilteredHtml);
 
         var filteredResponse = await client.GetAsync("/Products?stockStatus=low");
         var filteredHtml = WebUtility.HtmlDecode(await filteredResponse.Content.ReadAsStringAsync());
@@ -2479,6 +2482,9 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("Baixo estoque (1)", unfilteredHtml);
         Assert.Contains("PLA Preto", unfilteredHtml);
         Assert.Contains("PETG Branco", unfilteredHtml);
+        // PETG Branco (1000 g, min 200 g) is above its minimum, so it must render the centralized
+        // StockStatusPresentation "Ok" badge through the real view pipeline.
+        Assert.Contains("<span class=\"badge bg-success\">Ok</span>", unfilteredHtml);
 
         var filteredResponse = await client.GetAsync("/Materials?stockStatus=low");
         var filteredHtml = WebUtility.HtmlDecode(await filteredResponse.Content.ReadAsStringAsync());

@@ -117,26 +117,7 @@ else
                             }
                         </td>
                         <td>
-                            @{
-                                var hasStockQuantity = product.StockQuantity.HasValue;
-                                var hasMinimumStockQuantity = product.MinimumStockQuantity.HasValue;
-                                var isLowStockQuantity = hasStockQuantity
-                                    && hasMinimumStockQuantity
-                                    && product.StockQuantity!.Value <= product.MinimumStockQuantity!.Value;
-                            }
-
-                            @if (isLowStockQuantity)
-                            {
-                                <span class="badge bg-danger">Baixo estoque</span>
-                            }
-                            else if (hasStockQuantity && hasMinimumStockQuantity)
-                            {
-                                <span class="badge bg-success">Ok</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-secondary">Sem alerta</span>
-                            }
+                            <span class="@StockStatusPresentation.GetBadgeClass(product.StockQuantity, product.MinimumStockQuantity)">@StockStatusPresentation.GetLabel(product.StockQuantity, product.MinimumStockQuantity)</span>
                         </td>
                         <td>
                             @if (product.TargetMarginPercentage.HasValue)
