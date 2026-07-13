@@ -1675,6 +1675,42 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task MaterialsDetails_ShowsInventoryValue_FromCostPerKgAndCurrentStock()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+        using var client = factory.CreateTestClient();
+
+        var getResponse = await client.GetAsync($"/Materials/Edit/{ids.MaterialId}");
+        Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+
+        var token = ExtractAntiForgeryToken(await getResponse.Content.ReadAsStringAsync());
+        var postResponse = await client.PostAsync(
+            $"/Materials/Edit/{ids.MaterialId}",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = token,
+                ["Id"] = ids.MaterialId.ToString(),
+                ["Name"] = "PLA Preto",
+                ["Type"] = "PLA",
+                ["Brand"] = "E2E",
+                ["Color"] = "Black",
+                ["CostPerKg"] = "80.00",
+                ["CurrentStockGrams"] = "900.00",
+                ["CreatedAt"] = "2026-06-19T02:00:00Z"
+            }));
+
+        Assert.Equal(HttpStatusCode.Redirect, postResponse.StatusCode);
+
+        var detailsResponse = await client.GetAsync($"/Materials/Details/{ids.MaterialId}");
+        var detailsHtml = WebUtility.HtmlDecode(await detailsResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        Assert.Contains("Valor em estoque", detailsHtml);
+        // R$ 80,00/kg -> R$ 0,08/g; 900 g on hand -> R$ 72,00.
+        Assert.Contains(72.00m.ToString("C"), detailsHtml);
+    }
+
+    [Fact]
     public async Task AdjustStock_AddRemoveAndSet_UpdatesMaterialStockAndRecordsMovement()
     {
         var scenarios = new[]
