@@ -16,7 +16,7 @@ public class ProductsController : Controller
         _context = context;
     }
 
-    public async Task<IActionResult> Index(string? stockStatus)
+    public async Task<IActionResult> Index(string? stockStatus, string? sort)
     {
         var allProducts = await _context.Products
             .OrderByDescending(product => product.CreatedAt)
@@ -27,7 +27,8 @@ public class ProductsController : Controller
             .ToList();
 
         var isLowStockFilter = string.Equals(stockStatus, "low", StringComparison.OrdinalIgnoreCase);
-        var products = isLowStockFilter ? lowStockProducts : allProducts;
+        var normalizedSort = NormalizeSort(sort);
+        var products = SortProducts(isLowStockFilter ? lowStockProducts : allProducts, normalizedSort);
 
         var productIds = allProducts.Select(product => product.Id).ToList();
         var latestStockMovements = await _context.ProductStockMovements
@@ -40,6 +41,7 @@ public class ProductsController : Controller
             .ToDictionary(group => group.Key, group => group.First());
 
         ViewData["StockStatusFilter"] = isLowStockFilter ? "low" : null;
+        ViewData["Sort"] = normalizedSort;
         ViewData["LowStockProductCount"] = lowStockProducts.Count;
         ViewData["OutOfStockProductCount"] = lowStockProducts.Count(product =>
             StockStatusPresentation.IsOutOfStock(product.StockQuantity, product.MinimumStockQuantity));
@@ -52,6 +54,38 @@ public class ProductsController : Controller
         return product.StockQuantity.HasValue
             && product.MinimumStockQuantity.HasValue
             && product.StockQuantity.Value <= product.MinimumStockQuantity.Value;
+    }
+
+    private static string? NormalizeSort(string? sort)
+    {
+        return sort switch
+        {
+            "valueDesc" => "valueDesc",
+            "valueAsc" => "valueAsc",
+            _ => null
+        };
+    }
+
+    private static List<Product> SortProducts(List<Product> products, string? sort)
+    {
+        // Products whose stock value cannot be computed (missing sale price or stock) always
+        // sink to the bottom, regardless of the sort direction. The default (null) sort keeps
+        // the existing newest-first ordering established by the query above.
+        static decimal? Value(Product product)
+            => ProductCostPresentation.StockValueAtSalePrice(product.SalePrice, product.StockQuantity);
+
+        return sort switch
+        {
+            "valueDesc" => products
+                .OrderByDescending(product => Value(product).HasValue)
+                .ThenByDescending(product => Value(product) ?? 0m)
+                .ToList(),
+            "valueAsc" => products
+                .OrderByDescending(product => Value(product).HasValue)
+                .ThenBy(product => Value(product) ?? 0m)
+                .ToList(),
+            _ => products
+        };
     }
 
     public async Task<IActionResult> Details(Guid? id, string? returnTo)
