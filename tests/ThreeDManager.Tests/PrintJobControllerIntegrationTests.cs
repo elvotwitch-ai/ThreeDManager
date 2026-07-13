@@ -1711,6 +1711,43 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task ProductsDetails_ShowsStockValue_FromSalePriceAndStockQuantity()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+        using var client = factory.CreateTestClient();
+
+        var getResponse = await client.GetAsync($"/Products/Edit/{ids.ProductId}");
+        Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+
+        var token = ExtractAntiForgeryToken(await getResponse.Content.ReadAsStringAsync());
+        var postResponse = await client.PostAsync(
+            $"/Products/Edit/{ids.ProductId}",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = token,
+                ["Id"] = ids.ProductId.ToString(),
+                ["Name"] = "Product A",
+                ["Sku"] = "E2E-PROD",
+                ["Category"] = "Brindes",
+                ["Description"] = "Produto de teste",
+                ["SalePrice"] = "25.00",
+                ["StockQuantity"] = "8",
+                ["IsActive"] = "true",
+                ["CreatedAt"] = "2026-06-30T02:00:00Z"
+            }));
+
+        Assert.Equal(HttpStatusCode.Redirect, postResponse.StatusCode);
+
+        var detailsResponse = await client.GetAsync($"/Products/Details/{ids.ProductId}");
+        var detailsHtml = WebUtility.HtmlDecode(await detailsResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        Assert.Contains("Valor em estoque", detailsHtml);
+        // R$ 25,00 each; 8 units on hand -> R$ 200,00.
+        Assert.Contains(200.00m.ToString("C"), detailsHtml);
+    }
+
+    [Fact]
     public async Task AdjustStock_AddRemoveAndSet_UpdatesMaterialStockAndRecordsMovement()
     {
         var scenarios = new[]
