@@ -57,7 +57,7 @@
 
             <div class="mb-3">
                 <label asp-for="QuantityUnits" class="form-label">Quantidade (un.)</label>
-                <input asp-for="QuantityUnits" class="form-control" type="number" step="1" min="1" />
+                <input asp-for="QuantityUnits" class="form-control" type="number" step="1" min="0" />
                 <span asp-validation-for="QuantityUnits" class="text-danger"></span>
                 <div class="form-text">
                     Para “Definir estoque exato”, informe o novo saldo total em unidades.
