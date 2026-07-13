@@ -40,6 +40,12 @@ public class DashboardViewModel
 
     public int ProductionsWithEstimatedMargin { get; set; }
 
+    public decimal MaterialInventoryValue { get; set; }
+
+    public decimal ProductStockValue { get; set; }
+
+    public decimal TotalInventoryValue => MaterialInventoryValue + ProductStockValue;
+
     public int LowStockMaterialsCount { get; set; }
 
     public int OutOfStockMaterialsCount { get; set; }

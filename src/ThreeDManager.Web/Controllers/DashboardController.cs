@@ -52,6 +52,9 @@ public class DashboardController : Controller
         var productTargetMarginPercentageById = await _context.Products
             .ToDictionaryAsync(product => product.Id, product => product.TargetMarginPercentage);
 
+        var allMaterials = await _context.Materials.ToListAsync();
+        var allProducts = await _context.Products.ToListAsync();
+
         var lowStockMaterials = await _context.Materials
             .Where(material =>
                 material.CurrentStockGrams.HasValue
@@ -193,6 +196,9 @@ public class DashboardController : Controller
             TotalEstimatedProductionCost = totalCalculatedMaterialCost + totalEstimatedMachineCost + totalPackagingCost,
             TotalEstimatedMargin = totalEstimatedMargin,
             ProductionsWithEstimatedMargin = productionsWithEstimatedMargin,
+
+            MaterialInventoryValue = MaterialCostPresentation.TotalInventoryValue(allMaterials),
+            ProductStockValue = ProductCostPresentation.TotalStockValueAtSalePrice(allProducts),
 
             LowStockMaterialsCount = lowStockMaterials.Count,
             OutOfStockMaterialsCount = lowStockMaterials.Count(material =>

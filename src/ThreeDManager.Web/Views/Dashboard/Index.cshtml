@@ -190,6 +190,23 @@
     </div>
 </div>
 
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-info h-100">
+            <div class="card-body">
+                <h6 class="text-muted">Valor em estoque</h6>
+                <h3>@Model.TotalInventoryValue.ToString("C")</h3>
+                <div class="text-muted small">
+                    Materiais: @Model.MaterialInventoryValue.ToString("C")
+                </div>
+                <div class="text-muted small">
+                    Produtos acabados: @Model.ProductStockValue.ToString("C")
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
         <strong>Alertas de estoque</strong>
