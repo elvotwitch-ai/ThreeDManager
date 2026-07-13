@@ -2155,6 +2155,70 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task ProductsIndex_ShowsOutOfStockCallout_OnlyWhenLowStockItemIsEmpty()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+        await factory.SeedAsync(async context =>
+        {
+            var product = await context.Products.SingleAsync(product => product.Id == ids.ProductId);
+            product.StockQuantity = 3;
+            product.MinimumStockQuantity = 10;
+            await context.SaveChangesAsync();
+        });
+        using var client = factory.CreateTestClient();
+
+        // Low but not empty: the header must not surface a "Sem estoque" callout.
+        var lowHtml = WebUtility.HtmlDecode(await (await client.GetAsync("/Products")).Content.ReadAsStringAsync());
+        Assert.Contains("Baixo estoque (1)", lowHtml);
+        Assert.DoesNotContain("Sem estoque", lowHtml);
+
+        // Drop the same low-stock product to zero: the header callout must now report 1 empty item.
+        await factory.SeedAsync(async context =>
+        {
+            var product = await context.Products.SingleAsync(product => product.Id == ids.ProductId);
+            product.StockQuantity = 0;
+            await context.SaveChangesAsync();
+        });
+
+        var emptyHtml = WebUtility.HtmlDecode(await (await client.GetAsync("/Products")).Content.ReadAsStringAsync());
+        Assert.Contains("Baixo estoque (1)", emptyHtml);
+        Assert.Contains("1 Sem estoque", emptyHtml);
+    }
+
+    [Fact]
+    public async Task MaterialsIndex_ShowsOutOfStockCallout_OnlyWhenLowStockItemIsEmpty()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+        await factory.SeedAsync(async context =>
+        {
+            var material = await context.Materials.SingleAsync(material => material.Id == ids.MaterialId);
+            material.CurrentStockGrams = 50m;
+            material.MinimumStockGrams = 200m;
+            await context.SaveChangesAsync();
+        });
+        using var client = factory.CreateTestClient();
+
+        // Low but not empty: no "Sem estoque" callout in the header.
+        var lowHtml = WebUtility.HtmlDecode(await (await client.GetAsync("/Materials")).Content.ReadAsStringAsync());
+        Assert.Contains("Baixo estoque (1)", lowHtml);
+        Assert.DoesNotContain("Sem estoque", lowHtml);
+
+        // Empty the same low-stock material: the header callout must report 1 empty item.
+        await factory.SeedAsync(async context =>
+        {
+            var material = await context.Materials.SingleAsync(material => material.Id == ids.MaterialId);
+            material.CurrentStockGrams = 0m;
+            await context.SaveChangesAsync();
+        });
+
+        var emptyHtml = WebUtility.HtmlDecode(await (await client.GetAsync("/Materials")).Content.ReadAsStringAsync());
+        Assert.Contains("Baixo estoque (1)", emptyHtml);
+        Assert.Contains("1 Sem estoque", emptyHtml);
+    }
+
+    [Fact]
     public async Task ProductsIndex_FiltersLowStockProducts_WhenStockStatusLowRequested()
     {
         using var factory = new ThreeDManagerWebFactory();

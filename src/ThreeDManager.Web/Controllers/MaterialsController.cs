@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ThreeDManager.Domain.Entities;
 using ThreeDManager.Infrastructure.Data;
+using ThreeDManager.Web.Presentation;
 using ThreeDManager.Web.ViewModels;
 
 namespace ThreeDManager.Web.Controllers;
@@ -40,6 +41,8 @@ public class MaterialsController : Controller
 
         ViewData["StockStatusFilter"] = isLowStockFilter ? "low" : null;
         ViewData["LowStockMaterialCount"] = lowStockMaterials.Count;
+        ViewData["OutOfStockMaterialCount"] = lowStockMaterials.Count(material =>
+            StockStatusPresentation.IsOutOfStock(material.CurrentStockGrams, material.MinimumStockGrams));
 
         return View(materials);
     }

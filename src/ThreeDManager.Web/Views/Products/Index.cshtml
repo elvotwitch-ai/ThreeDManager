@@ -7,6 +7,7 @@
     var latestStockMovements = ViewBag.LatestStockMovements as Dictionary<Guid, ProductStockMovement> ?? new Dictionary<Guid, ProductStockMovement>();
     var stockStatusFilter = ViewData["StockStatusFilter"] as string;
     var lowStockProductCount = ViewData["LowStockProductCount"] as int? ?? 0;
+    var outOfStockProductCount = ViewData["OutOfStockProductCount"] as int? ?? 0;
     var isLowStockFilter = stockStatusFilter == "low";
 }
 
@@ -29,6 +30,12 @@
        class="btn btn-sm @(isLowStockFilter ? "btn-danger" : "btn-outline-danger")">
         Baixo estoque (@lowStockProductCount)
     </a>
+    @if (outOfStockProductCount > 0)
+    {
+        <span class="@StockStatusPresentation.OutOfStockBadgeClass" title="Produtos em alerta com estoque zerado">
+            @outOfStockProductCount @StockStatusPresentation.OutOfStockLabel
+        </span>
+    }
 </div>
 
 @if (TempData["SuccessMessage"] is not null)
