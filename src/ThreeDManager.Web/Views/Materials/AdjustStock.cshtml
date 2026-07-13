@@ -57,10 +57,10 @@
 
             <div class="mb-3">
                 <label asp-for="QuantityGrams" class="form-label">Quantidade (g)</label>
-                <input asp-for="QuantityGrams" class="form-control" type="number" step="0.01" min="0" />
+                <input asp-for="QuantityGrams" class="form-control" type="number" step="0.01" min="0.01" />
                 <span asp-validation-for="QuantityGrams" class="text-danger"></span>
-                <div class="form-text">
-                    Para “Definir estoque exato”, informe o novo saldo total em gramas.
+                <div class="form-text" id="quantityHelp">
+                    Informe quantos gramas adicionar ao estoque (maior que zero).
                 </div>
             </div>
 
@@ -80,4 +80,29 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        // Progressive enhancement only: mirror the server-side rule (Set accepts 0,
+        // Add/Remove require a strictly positive quantity) in the input's min and help
+        // text. Server validation remains the source of truth.
+        (function () {
+            var type = document.getElementById("AdjustmentType");
+            var qty = document.getElementById("QuantityGrams");
+            var help = document.getElementById("quantityHelp");
+            if (!type || !qty || !help) { return; }
+            function sync() {
+                if (type.value === "@StockAdjustmentType.Set") {
+                    qty.min = "0";
+                    help.textContent = "Informe o novo saldo total em gramas. Pode ser 0 para zerar o estoque.";
+                } else if (type.value === "@StockAdjustmentType.Remove") {
+                    qty.min = "0.01";
+                    help.textContent = "Informe quantos gramas remover do estoque (maior que zero).";
+                } else {
+                    qty.min = "0.01";
+                    help.textContent = "Informe quantos gramas adicionar ao estoque (maior que zero).";
+                }
+            }
+            type.addEventListener("change", sync);
+            sync();
+        })();
+    </script>
 }
