@@ -2720,6 +2720,10 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("Valor total em estoque", indexHtml);
         // R$ 80,00 (PLA Preto) + R$ 50,00 (PETG Azul) = R$ 130,00.
         Assert.Contains("R$ 130,00", indexHtml);
+        // Per-row stock value column also surfaces each material's individual value.
+        Assert.Contains("Valor em estoque", indexHtml);
+        Assert.Contains("R$ 80,00", indexHtml); // PLA Preto: 80/1000 x 1000 g
+        Assert.Contains("R$ 50,00", indexHtml); // PETG Azul: 100/1000 x 500 g
     }
 
     [Fact]

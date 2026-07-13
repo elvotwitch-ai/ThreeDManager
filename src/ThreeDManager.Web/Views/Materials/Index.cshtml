@@ -73,6 +73,7 @@ else
                 <th>Custo por kg (R$)</th>
                 <th>Custo por grama</th>
                 <th>Estoque atual</th>
+                <th>Valor em estoque</th>
                 <th>Estoque mínimo</th>
                 <th>Status estoque</th>
                 <th>Movimentação recente</th>
@@ -117,6 +118,19 @@ else
                         @if (material.CurrentStockGrams.HasValue)
                         {
                             <span>@material.CurrentStockGrams.Value.ToString("N2") g</span>
+                        }
+                        else
+                        {
+                            <span class="badge text-bg-light">Não informado</span>
+                        }
+                    </td>
+                    <td>
+                        @{
+                            var inventoryValue = MaterialCostPresentation.InventoryValue(material.CostPerKg, material.CurrentStockGrams);
+                        }
+                        @if (inventoryValue.HasValue)
+                        {
+                            <span>@inventoryValue.Value.ToString("C")</span>
                         }
                         else
                         {
@@ -172,7 +186,7 @@ else
         </tbody>
         <tfoot>
             <tr class="fw-semibold border-top">
-                <td colspan="6" class="text-end">Valor total em estoque</td>
+                <td colspan="7" class="text-end">Valor total em estoque</td>
                 <td>@MaterialCostPresentation.TotalInventoryValue(Model).ToString("C")</td>
                 <td colspan="4"></td>
             </tr>
