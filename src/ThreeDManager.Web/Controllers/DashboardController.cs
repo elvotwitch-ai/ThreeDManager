@@ -209,7 +209,8 @@ public class DashboardController : Controller
                     Id = material.Id,
                     Name = material.Name,
                     CurrentStockGrams = material.CurrentStockGrams ?? 0,
-                    MinimumStockGrams = material.MinimumStockGrams ?? 0
+                    MinimumStockGrams = material.MinimumStockGrams ?? 0,
+                    InventoryValue = MaterialCostPresentation.InventoryValue(material.CostPerKg, material.CurrentStockGrams)
                 })
                 .ToList(),
 
@@ -222,7 +223,8 @@ public class DashboardController : Controller
                     Id = product.Id,
                     Name = product.Name,
                     StockQuantity = product.StockQuantity ?? 0,
-                    MinimumStockQuantity = product.MinimumStockQuantity ?? 0
+                    MinimumStockQuantity = product.MinimumStockQuantity ?? 0,
+                    StockValue = ProductCostPresentation.StockValueAtSalePrice(product.SalePrice, product.StockQuantity)
                 })
                 .ToList(),
 

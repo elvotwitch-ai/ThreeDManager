@@ -2288,6 +2288,7 @@ public class PrintJobControllerIntegrationTests
                 ["Description"] = "Produto de teste",
                 ["StockQuantity"] = "3",
                 ["MinimumStockQuantity"] = "10",
+                ["SalePrice"] = "15.00",
                 ["TargetMarginPercentage"] = "25",
                 ["DefaultPackagingCost"] = "2.50",
                 ["IsActive"] = "true",
@@ -2325,6 +2326,10 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("Ajustar estoque", dashboardHtml);
         Assert.Contains("href=\"/Products?stockStatus=low\"", dashboardHtml);
         Assert.Contains("Ver produtos em baixo estoque", dashboardHtml);
+        // The low-stock alert row now surfaces the per-item stock value at stake
+        // (SalePrice 15,00 × 3 un. = R$ 45,00), reusing ProductCostPresentation.StockValueAtSalePrice.
+        Assert.Contains("Valor em estoque", dashboardHtml);
+        Assert.Contains("R$ 45,00", dashboardHtml);
 
         using var verifyScope = factory.Services.CreateScope();
         var context = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -2781,6 +2786,10 @@ public class PrintJobControllerIntegrationTests
         Assert.Contains("PLA Preto", dashboardHtml);
         Assert.Contains("href=\"/Materials?stockStatus=low\"", dashboardHtml);
         Assert.Contains("Ver materiais em baixo estoque", dashboardHtml);
+        // The low-stock alert row now surfaces the per-item stock value at stake
+        // (CostPerKg 80,00 ÷ 1000 × 120 g = R$ 9,60), reusing MaterialCostPresentation.InventoryValue.
+        Assert.Contains("Valor em estoque", dashboardHtml);
+        Assert.Contains("R$ 9,60", dashboardHtml);
 
         using var verifyScope = factory.Services.CreateScope();
         var context = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();

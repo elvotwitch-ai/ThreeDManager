@@ -170,6 +170,8 @@ public class DashboardLowStockMaterialViewModel
     public decimal CurrentStockGrams { get; set; }
 
     public decimal MinimumStockGrams { get; set; }
+
+    public decimal? InventoryValue { get; set; }
 }
 
 public class DashboardLowStockProductViewModel
@@ -181,6 +183,8 @@ public class DashboardLowStockProductViewModel
     public int StockQuantity { get; set; }
 
     public int MinimumStockQuantity { get; set; }
+
+    public decimal? StockValue { get; set; }
 }
 
 public class DashboardPrinterQueueViewModel

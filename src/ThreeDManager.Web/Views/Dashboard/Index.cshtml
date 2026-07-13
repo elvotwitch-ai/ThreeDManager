@@ -244,6 +244,7 @@
                             <th>Material</th>
                             <th>Estoque atual</th>
                             <th>Estoque mínimo</th>
+                            <th>Valor em estoque</th>
                             <th>Status</th>
                             <th class="text-end">Ações</th>
                         </tr>
@@ -255,6 +256,16 @@
                                 <td>@material.Name</td>
                                 <td>@material.CurrentStockGrams.ToString("N2") g</td>
                                 <td>@material.MinimumStockGrams.ToString("N2") g</td>
+                                <td>
+                                    @if (material.InventoryValue.HasValue)
+                                    {
+                                        <span>@material.InventoryValue.Value.ToString("C")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge text-bg-light">Não informado</span>
+                                    }
+                                </td>
                                 <td>
                                     <span class="@StockStatusPresentation.GetBadgeClass(material.CurrentStockGrams, material.MinimumStockGrams)">@StockStatusPresentation.GetLabel(material.CurrentStockGrams, material.MinimumStockGrams)</span>
                                 </td>
@@ -312,6 +323,7 @@
                             <th>Produto</th>
                             <th>Estoque atual</th>
                             <th>Estoque mínimo</th>
+                            <th>Valor em estoque</th>
                             <th>Status</th>
                             <th class="text-end">Ações</th>
                         </tr>
@@ -323,6 +335,16 @@
                                 <td>@product.Name</td>
                                 <td>@product.StockQuantity un.</td>
                                 <td>@product.MinimumStockQuantity un.</td>
+                                <td>
+                                    @if (product.StockValue.HasValue)
+                                    {
+                                        <span>@product.StockValue.Value.ToString("C")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge text-bg-light">Não informado</span>
+                                    }
+                                </td>
                                 <td>
                                     <span class="@StockStatusPresentation.GetBadgeClass(product.StockQuantity, product.MinimumStockQuantity)">@StockStatusPresentation.GetLabel(product.StockQuantity, product.MinimumStockQuantity)</span>
                                 </td>
