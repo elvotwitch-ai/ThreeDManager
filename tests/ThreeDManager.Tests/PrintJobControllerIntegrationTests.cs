@@ -2997,6 +2997,55 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task ProductsIndex_SortsByTargetMarginDescending_WhenSortRequested()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        await factory.SeedAsync(async context =>
+        {
+            // Produto Margem Alta: TargetMarginPercentage 60 (seeded first).
+            context.Products.Add(new Product
+            {
+                Id = Guid.NewGuid(),
+                Name = "Produto Margem Alta",
+                Sku = "E2E-MARGEM-ALTA",
+                Category = "Brindes",
+                SalePrice = 20m,
+                StockQuantity = 5,
+                TargetMarginPercentage = 60m,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow.AddMinutes(-5)
+            });
+            // Produto Margem Baixa: TargetMarginPercentage 20 (seeded later => newest-first default).
+            context.Products.Add(new Product
+            {
+                Id = Guid.NewGuid(),
+                Name = "Produto Margem Baixa",
+                Sku = "E2E-MARGEM-BAIXA",
+                Category = "Brindes",
+                SalePrice = 20m,
+                StockQuantity = 5,
+                TargetMarginPercentage = 20m,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            });
+            await context.SaveChangesAsync();
+        });
+        using var client = factory.CreateTestClient();
+
+        // Default order is newest-first: Produto Margem Baixa (seeded later) appears before Produto Margem Alta.
+        var defaultResponse = await client.GetAsync("/Products");
+        var defaultHtml = WebUtility.HtmlDecode(await defaultResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, defaultResponse.StatusCode);
+        Assert.True(defaultHtml.IndexOf("Produto Margem Baixa", StringComparison.Ordinal) < defaultHtml.IndexOf("Produto Margem Alta", StringComparison.Ordinal));
+
+        // Sorting by target margin descending puts the higher-margin Produto Margem Alta (60%) ahead of Produto Margem Baixa (20%).
+        var sortedResponse = await client.GetAsync("/Products?sort=marginDesc");
+        var sortedHtml = WebUtility.HtmlDecode(await sortedResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, sortedResponse.StatusCode);
+        Assert.True(sortedHtml.IndexOf("Produto Margem Alta", StringComparison.Ordinal) < sortedHtml.IndexOf("Produto Margem Baixa", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task LowStockAlert_IsShown_OnMaterialsAndDashboard_WhenBelowMinimum()
     {
         using var factory = new ThreeDManagerWebFactory();

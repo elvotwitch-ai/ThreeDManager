@@ -66,6 +66,8 @@ public class ProductsController : Controller
             "priceAsc" => "priceAsc",
             "stockDesc" => "stockDesc",
             "stockAsc" => "stockAsc",
+            "marginDesc" => "marginDesc",
+            "marginAsc" => "marginAsc",
             _ => null
         };
     }
@@ -103,6 +105,14 @@ public class ProductsController : Controller
             "stockAsc" => products
                 .OrderByDescending(product => product.StockQuantity.HasValue)
                 .ThenBy(product => product.StockQuantity ?? 0)
+                .ToList(),
+            "marginDesc" => products
+                .OrderByDescending(product => product.TargetMarginPercentage.HasValue)
+                .ThenByDescending(product => product.TargetMarginPercentage ?? 0m)
+                .ToList(),
+            "marginAsc" => products
+                .OrderByDescending(product => product.TargetMarginPercentage.HasValue)
+                .ThenBy(product => product.TargetMarginPercentage ?? 0m)
                 .ToList(),
             _ => products
         };
