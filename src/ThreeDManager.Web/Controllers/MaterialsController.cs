@@ -64,6 +64,8 @@ public class MaterialsController : Controller
             "valueAsc" => "valueAsc",
             "costDesc" => "costDesc",
             "costAsc" => "costAsc",
+            "stockDesc" => "stockDesc",
+            "stockAsc" => "stockAsc",
             _ => null
         };
     }
@@ -93,6 +95,14 @@ public class MaterialsController : Controller
             "costAsc" => materials
                 .OrderByDescending(material => material.CostPerKg.HasValue)
                 .ThenBy(material => material.CostPerKg ?? 0m)
+                .ToList(),
+            "stockDesc" => materials
+                .OrderByDescending(material => material.CurrentStockGrams.HasValue)
+                .ThenByDescending(material => material.CurrentStockGrams ?? 0m)
+                .ToList(),
+            "stockAsc" => materials
+                .OrderByDescending(material => material.CurrentStockGrams.HasValue)
+                .ThenBy(material => material.CurrentStockGrams ?? 0m)
                 .ToList(),
             _ => materials
         };

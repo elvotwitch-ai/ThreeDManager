@@ -2819,6 +2819,41 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task MaterialsIndex_SortsByCurrentStockDescending_WhenSortRequested()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        await SeedCommonAsync(factory); // PLA Preto: CurrentStockGrams 1000 (seeded first)
+        await factory.SeedAsync(async context =>
+        {
+            context.Materials.Add(new Material
+            {
+                Id = Guid.NewGuid(),
+                Name = "PETG Azul",
+                Type = "PETG",
+                Brand = "E2E",
+                Color = "Blue",
+                CostPerKg = 100m,
+                CurrentStockGrams = 500m, // less stock than PLA Preto; seeded later => newest-first default
+                CreatedAt = DateTime.UtcNow
+            });
+            await context.SaveChangesAsync();
+        });
+        using var client = factory.CreateTestClient();
+
+        // Default order is newest-first: PETG Azul (seeded later) appears before PLA Preto.
+        var defaultResponse = await client.GetAsync("/Materials");
+        var defaultHtml = WebUtility.HtmlDecode(await defaultResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, defaultResponse.StatusCode);
+        Assert.True(defaultHtml.IndexOf("PETG Azul", StringComparison.Ordinal) < defaultHtml.IndexOf("PLA Preto", StringComparison.Ordinal));
+
+        // Sorting by current stock descending puts the higher-stock PLA Preto (1000 g) ahead of PETG Azul (500 g).
+        var sortedResponse = await client.GetAsync("/Materials?sort=stockDesc");
+        var sortedHtml = WebUtility.HtmlDecode(await sortedResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, sortedResponse.StatusCode);
+        Assert.True(sortedHtml.IndexOf("PLA Preto", StringComparison.Ordinal) < sortedHtml.IndexOf("PETG Azul", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task ProductsIndex_SortsByStockValueDescending_WhenSortRequested()
     {
         using var factory = new ThreeDManagerWebFactory();
