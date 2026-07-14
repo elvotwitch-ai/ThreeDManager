@@ -83,6 +83,8 @@ public class PrintJobsController : Controller
             "filamentAsc" => "filamentAsc",
             "materialCostDesc" => "materialCostDesc",
             "materialCostAsc" => "materialCostAsc",
+            "unitsDesc" => "unitsDesc",
+            "unitsAsc" => "unitsAsc",
             _ => null
         };
     }
@@ -109,6 +111,13 @@ public class PrintJobsController : Controller
             "materialCostAsc" => printJobs
                 .OrderByDescending(printJob => printJob.CalculatedMaterialCost.HasValue)
                 .ThenBy(printJob => printJob.CalculatedMaterialCost ?? 0m)
+                .ToList(),
+            // UnitsProduced is a non-nullable int, so no "has value" tiebreaker is needed.
+            "unitsDesc" => printJobs
+                .OrderByDescending(printJob => printJob.UnitsProduced)
+                .ToList(),
+            "unitsAsc" => printJobs
+                .OrderBy(printJob => printJob.UnitsProduced)
                 .ToList(),
             _ => printJobs
         };

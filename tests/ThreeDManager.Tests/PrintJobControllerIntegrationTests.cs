@@ -3271,6 +3271,47 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task PrintJobsIndex_SortsByUnitsProducedDescending_WhenSortRequested()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        await factory.SeedAsync(async context =>
+        {
+            // producao-lote: UnitsProduced 12 (seeded first).
+            context.PrintJobs.Add(new PrintJob
+            {
+                Id = Guid.NewGuid(),
+                SourceFileName = "producao-lote.gcode",
+                UnitsProduced = 12,
+                Status = PrintJobStatus.Imported,
+                CreatedAt = DateTime.UtcNow.AddMinutes(-5)
+            });
+            // producao-unitaria: UnitsProduced 2 (seeded later => newest-first default).
+            context.PrintJobs.Add(new PrintJob
+            {
+                Id = Guid.NewGuid(),
+                SourceFileName = "producao-unitaria.gcode",
+                UnitsProduced = 2,
+                Status = PrintJobStatus.Imported,
+                CreatedAt = DateTime.UtcNow
+            });
+            await context.SaveChangesAsync();
+        });
+        using var client = factory.CreateTestClient();
+
+        // Default order is newest-first: producao-unitaria (seeded later) appears before producao-lote.
+        var defaultResponse = await client.GetAsync("/PrintJobs");
+        var defaultHtml = WebUtility.HtmlDecode(await defaultResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, defaultResponse.StatusCode);
+        Assert.True(defaultHtml.IndexOf("producao-unitaria", StringComparison.Ordinal) < defaultHtml.IndexOf("producao-lote", StringComparison.Ordinal));
+
+        // Sorting by units produced descending puts the larger producao-lote (12 un.) ahead of producao-unitaria (2 un.).
+        var sortedResponse = await client.GetAsync("/PrintJobs?sort=unitsDesc");
+        var sortedHtml = WebUtility.HtmlDecode(await sortedResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, sortedResponse.StatusCode);
+        Assert.True(sortedHtml.IndexOf("producao-lote", StringComparison.Ordinal) < sortedHtml.IndexOf("producao-unitaria", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task LowStockAlert_IsShown_OnMaterialsAndDashboard_WhenBelowMinimum()
     {
         using var factory = new ThreeDManagerWebFactory();
