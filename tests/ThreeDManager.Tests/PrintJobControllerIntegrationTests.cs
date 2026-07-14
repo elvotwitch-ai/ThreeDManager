@@ -2858,6 +2858,53 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task ProductsIndex_SortsBySalePriceAscending_WhenSortRequested()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        await factory.SeedAsync(async context =>
+        {
+            // Produto Barato: SalePrice 30 (seeded first).
+            context.Products.Add(new Product
+            {
+                Id = Guid.NewGuid(),
+                Name = "Produto Barato",
+                Sku = "E2E-BARATO",
+                Category = "Brindes",
+                SalePrice = 30m,
+                StockQuantity = 2,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow.AddMinutes(-5)
+            });
+            // Produto Caro: SalePrice 90 (seeded later => newest-first default).
+            context.Products.Add(new Product
+            {
+                Id = Guid.NewGuid(),
+                Name = "Produto Caro",
+                Sku = "E2E-CARO",
+                Category = "Brindes",
+                SalePrice = 90m,
+                StockQuantity = 2,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            });
+            await context.SaveChangesAsync();
+        });
+        using var client = factory.CreateTestClient();
+
+        // Default order is newest-first: Produto Caro (seeded later) appears before Produto Barato.
+        var defaultResponse = await client.GetAsync("/Products");
+        var defaultHtml = WebUtility.HtmlDecode(await defaultResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, defaultResponse.StatusCode);
+        Assert.True(defaultHtml.IndexOf("Produto Caro", StringComparison.Ordinal) < defaultHtml.IndexOf("Produto Barato", StringComparison.Ordinal));
+
+        // Sorting by sale price ascending puts the cheaper Produto Barato (R$ 30,00) ahead of Produto Caro (R$ 90,00).
+        var sortedResponse = await client.GetAsync("/Products?sort=priceAsc");
+        var sortedHtml = WebUtility.HtmlDecode(await sortedResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, sortedResponse.StatusCode);
+        Assert.True(sortedHtml.IndexOf("Produto Barato", StringComparison.Ordinal) < sortedHtml.IndexOf("Produto Caro", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task LowStockAlert_IsShown_OnMaterialsAndDashboard_WhenBelowMinimum()
     {
         using var factory = new ThreeDManagerWebFactory();
