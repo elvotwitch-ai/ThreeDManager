@@ -52,6 +52,17 @@
        class="btn btn-sm @(isFailedStatusFilter ? "btn-danger" : "btn-outline-danger")">
         Falhas (@failedPrintJobCount)
     </a>
+    @if (currentSort is not null)
+    {
+        <a asp-action="Index"
+           asp-route-printerId="@printerFilterId"
+           asp-route-status="@statusFilter"
+           class="btn btn-sm btn-outline-secondary"
+           data-role="clear-sort"
+           title="Voltar à ordenação padrão (mais recentes primeiro)">
+            Limpar ordenação
+        </a>
+    }
 </div>
 
 @if (TempData["SuccessMessage"] is not null)

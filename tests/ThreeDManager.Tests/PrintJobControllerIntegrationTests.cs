@@ -3312,6 +3312,57 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task PrintJobsIndex_ShowsClearSortLink_OnlyWhenSortIsActive_AndRestoresDefaultOrder()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        await factory.SeedAsync(async context =>
+        {
+            // producao-lote: UnitsProduced 12 (seeded first).
+            context.PrintJobs.Add(new PrintJob
+            {
+                Id = Guid.NewGuid(),
+                SourceFileName = "producao-lote.gcode",
+                UnitsProduced = 12,
+                Status = PrintJobStatus.Imported,
+                CreatedAt = DateTime.UtcNow.AddMinutes(-5)
+            });
+            // producao-unitaria: UnitsProduced 2 (seeded later => newest-first default).
+            context.PrintJobs.Add(new PrintJob
+            {
+                Id = Guid.NewGuid(),
+                SourceFileName = "producao-unitaria.gcode",
+                UnitsProduced = 2,
+                Status = PrintJobStatus.Imported,
+                CreatedAt = DateTime.UtcNow
+            });
+            await context.SaveChangesAsync();
+        });
+        using var client = factory.CreateTestClient();
+
+        // With no sort active, the "Limpar ordenação" affordance is not rendered.
+        var defaultResponse = await client.GetAsync("/PrintJobs");
+        var defaultHtml = WebUtility.HtmlDecode(await defaultResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, defaultResponse.StatusCode);
+        Assert.DoesNotContain("data-role=\"clear-sort\"", defaultHtml);
+
+        // With a sort active, the clear-sort link is rendered and its target drops the sort param
+        // (so following it returns to the newest-first default order).
+        var sortedResponse = await client.GetAsync("/PrintJobs?sort=unitsDesc");
+        var sortedHtml = WebUtility.HtmlDecode(await sortedResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, sortedResponse.StatusCode);
+        Assert.Contains("data-role=\"clear-sort\"", sortedHtml);
+        Assert.Contains("Limpar ordenação", sortedHtml);
+        // The sorted view flips the order (larger units first)...
+        Assert.True(sortedHtml.IndexOf("producao-lote", StringComparison.Ordinal) < sortedHtml.IndexOf("producao-unitaria", StringComparison.Ordinal));
+
+        // ...and clearing the sort restores the newest-first default (producao-unitaria first).
+        var clearedResponse = await client.GetAsync("/PrintJobs");
+        var clearedHtml = WebUtility.HtmlDecode(await clearedResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, clearedResponse.StatusCode);
+        Assert.True(clearedHtml.IndexOf("producao-unitaria", StringComparison.Ordinal) < clearedHtml.IndexOf("producao-lote", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task LowStockAlert_IsShown_OnMaterialsAndDashboard_WhenBelowMinimum()
     {
         using var factory = new ThreeDManagerWebFactory();
