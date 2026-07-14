@@ -1461,3 +1461,12 @@
 - Validation run: repository was clean on `main` before this documentation-only batch. `git diff --check -- AGENTS.md CLAUDE.md docs` passed; no application code, schema, service, credentials, or deployment artifact changed.
 - Blockers: automatic worker and finalizer runs remain paused by deliberate operator choice. Git object maintenance remains deferred pending an explicit recovery-retention decision.
 - Next recommended task: run `git diff --check -- docs AGENTS.md CLAUDE.md`, commit/push this root-entrypoint batch, then enable only one worker automation for the first worktree/handoff smoke.
+
+## 2026-07-14 (finalizer: production-failure decision)
+
+- Timestamp: 2026-07-14 13:48:12 -03:00.
+- Summary: Finalized `claude/heuristic-euler-114b6c` by fast-forwarding `a6f3c42` onto `main`. The accepted decision record closes the Phase 1 failure-model gate: do not introduce a separate failure entity; keep current status data for rate/loss reporting, and schedule the nullable `FailureCategory` and `ReprintOfPrintJobId` additions as independent migration-backed batches. Failed-job material deduction remains an explicit operator A/B choice, not an opportunistic inventory change.
+- Files changed: integrated `docs/decisions/0001-production-failure-data-model.md`, `docs/core/ARCHITECTURE.md`, `docs/core/ROADMAP.md`, `docs/context/BACKLOG.md`, `docs/INDEX.md`, `docs/context/agent_handoffs/claude-heuristic-euler-114b6c.md`; appended this diary entry.
+- Validation run: precheck confirmed `threedmanager-db` is `Up`. Candidate base, handoff, diff, and clean worktree were inspected. Finalizer gate passed: `dotnet build ThreeDManager.slnx` completed with 0 warnings / 0 errors; `dotnet test ThreeDManager.slnx --no-build` passed 167/167. No focused runtime smoke applies because the integration changes only documentation, no route, view, controller, persisted state, or deployment artifact. `git diff --check -- docs` passed before this diary entry.
+- Blockers: failed-print stock deduction needs explicit operator selection of Option A (deduct on failure) or Option B (preserve current successful-output-only ledger semantics). No deployment was performed; a Git push is not a Windows-service release.
+- Next recommended task: obtain the failed-print stock A/B decision, then create one worktree-only migration-backed candidate for `PrintJob.FailureCategory` or `PrintJob.ReprintOfPrintJobId`.
