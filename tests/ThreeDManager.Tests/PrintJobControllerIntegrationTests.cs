@@ -3095,6 +3095,49 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task PrintersIndex_SortsByCostPerHourDescending_WhenSortRequested()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        await factory.SeedAsync(async context =>
+        {
+            // Impressora Cara: CostPerHour 12,00 (seeded first).
+            context.Printers.Add(new Printer
+            {
+                Id = Guid.NewGuid(),
+                Name = "Impressora Cara",
+                Brand = "E2E",
+                Model = "X1",
+                CostPerHour = 12m,
+                CreatedAt = DateTime.UtcNow.AddMinutes(-5)
+            });
+            // Impressora Barata: CostPerHour 3,00 (seeded later => newest-first default).
+            context.Printers.Add(new Printer
+            {
+                Id = Guid.NewGuid(),
+                Name = "Impressora Barata",
+                Brand = "E2E",
+                Model = "Mini",
+                CostPerHour = 3m,
+                CreatedAt = DateTime.UtcNow
+            });
+            await context.SaveChangesAsync();
+        });
+        using var client = factory.CreateTestClient();
+
+        // Default order is newest-first: Impressora Barata (seeded later) appears before Impressora Cara.
+        var defaultResponse = await client.GetAsync("/Printers");
+        var defaultHtml = WebUtility.HtmlDecode(await defaultResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, defaultResponse.StatusCode);
+        Assert.True(defaultHtml.IndexOf("Impressora Barata", StringComparison.Ordinal) < defaultHtml.IndexOf("Impressora Cara", StringComparison.Ordinal));
+
+        // Sorting by cost per hour descending puts the pricier Impressora Cara (R$ 12,00) ahead of Impressora Barata (R$ 3,00).
+        var sortedResponse = await client.GetAsync("/Printers?sort=costDesc");
+        var sortedHtml = WebUtility.HtmlDecode(await sortedResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, sortedResponse.StatusCode);
+        Assert.True(sortedHtml.IndexOf("Impressora Cara", StringComparison.Ordinal) < sortedHtml.IndexOf("Impressora Barata", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task LowStockAlert_IsShown_OnMaterialsAndDashboard_WhenBelowMinimum()
     {
         using var factory = new ThreeDManagerWebFactory();

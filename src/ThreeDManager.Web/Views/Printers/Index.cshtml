@@ -4,6 +4,8 @@
 @{
     ViewData["Title"] = "Impressoras";
     var printerQueue = (Dictionary<Guid, PrinterQueueSummaryViewModel>)ViewBag.PrinterQueue;
+    var currentSort = ViewData["Sort"] as string;
+    var nextCostSort = currentSort == "costDesc" ? "costAsc" : "costDesc";
 
     string FormatMinutes(int minutes)
     {
@@ -56,7 +58,22 @@ else
                 <th>Nome</th>
                 <th>Marca</th>
                 <th>Modelo</th>
-                <th>Custo por hora</th>
+                <th>
+                    <a asp-action="Index"
+                       asp-route-sort="@nextCostSort"
+                       class="text-reset text-decoration-none"
+                       title="Ordenar por custo por hora">
+                        Custo por hora
+                        @if (currentSort == "costDesc")
+                        {
+                            <span aria-hidden="true">▼</span>
+                        }
+                        else if (currentSort == "costAsc")
+                        {
+                            <span aria-hidden="true">▲</span>
+                        }
+                    </a>
+                </th>
                 <th>Fila de produção</th>
                 <th>Observações</th>
                 <th class="text-end">Ações</th>

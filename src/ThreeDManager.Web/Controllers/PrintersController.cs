@@ -15,11 +15,15 @@ public class PrintersController : Controller
         _context = context;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? sort)
     {
-        var printers = await _context.Printers
+        var allPrinters = await _context.Printers
             .OrderByDescending(printer => printer.CreatedAt)
             .ToListAsync();
+
+        var normalizedSort = NormalizeSort(sort);
+        var printers = SortPrinters(allPrinters, normalizedSort);
+        ViewData["Sort"] = normalizedSort;
 
         var queuedPrintJobs = await _context.PrintJobs
             .Where(printJob => printJob.PrinterId.HasValue)
@@ -49,6 +53,35 @@ public class PrintersController : Controller
                 });
 
         return View(printers);
+    }
+
+    private static string? NormalizeSort(string? sort)
+    {
+        return sort switch
+        {
+            "costDesc" => "costDesc",
+            "costAsc" => "costAsc",
+            _ => null
+        };
+    }
+
+    private static List<Printer> SortPrinters(List<Printer> printers, string? sort)
+    {
+        // Printers with no cost per hour always sink to the bottom, regardless of the sort
+        // direction. The default (null) sort keeps the existing newest-first ordering established
+        // by the query above.
+        return sort switch
+        {
+            "costDesc" => printers
+                .OrderByDescending(printer => printer.CostPerHour.HasValue)
+                .ThenByDescending(printer => printer.CostPerHour ?? 0m)
+                .ToList(),
+            "costAsc" => printers
+                .OrderByDescending(printer => printer.CostPerHour.HasValue)
+                .ThenBy(printer => printer.CostPerHour ?? 0m)
+                .ToList(),
+            _ => printers
+        };
     }
 
     public async Task<IActionResult> Details(Guid? id)
