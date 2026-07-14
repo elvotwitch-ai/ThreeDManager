@@ -21,7 +21,7 @@ public class PrintJobsController : Controller
         _stockService = stockService;
     }
 
-    public async Task<IActionResult> Index(Guid? printerId, string? status)
+    public async Task<IActionResult> Index(Guid? printerId, string? status, string? sort)
     {
         var printJobsQuery = _context.PrintJobs.AsQueryable();
 
@@ -40,7 +40,11 @@ public class PrintJobsController : Controller
 
         var isFailedStatusFilter = string.Equals(status, "failed", StringComparison.OrdinalIgnoreCase);
 
-        var printJobs = isFailedStatusFilter ? failedPrintJobs : allPrintJobs;
+        var selectedPrintJobs = isFailedStatusFilter ? failedPrintJobs : allPrintJobs;
+
+        var normalizedSort = NormalizeSort(sort);
+        var printJobs = SortPrintJobs(selectedPrintJobs, normalizedSort);
+        ViewData["Sort"] = normalizedSort;
 
         ViewData["StatusFilter"] = isFailedStatusFilter ? "failed" : null;
         ViewData["FailedPrintJobCount"] = failedPrintJobs.Count;
@@ -69,6 +73,35 @@ public class PrintJobsController : Controller
         }
 
         return View(printJobs);
+    }
+
+    private static string? NormalizeSort(string? sort)
+    {
+        return sort switch
+        {
+            "filamentDesc" => "filamentDesc",
+            "filamentAsc" => "filamentAsc",
+            _ => null
+        };
+    }
+
+    private static List<PrintJob> SortPrintJobs(List<PrintJob> printJobs, string? sort)
+    {
+        // Print jobs with no recorded filament usage always sink to the bottom, regardless of the
+        // sort direction. The default (null) sort keeps the existing newest-first ordering
+        // established by the query above.
+        return sort switch
+        {
+            "filamentDesc" => printJobs
+                .OrderByDescending(printJob => printJob.FilamentUsedGrams.HasValue)
+                .ThenByDescending(printJob => printJob.FilamentUsedGrams ?? 0m)
+                .ToList(),
+            "filamentAsc" => printJobs
+                .OrderByDescending(printJob => printJob.FilamentUsedGrams.HasValue)
+                .ThenBy(printJob => printJob.FilamentUsedGrams ?? 0m)
+                .ToList(),
+            _ => printJobs
+        };
     }
 
     public async Task<IActionResult> Details(Guid? id, string? returnTo, Guid? filterPrinterId)

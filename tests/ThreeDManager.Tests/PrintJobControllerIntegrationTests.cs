@@ -3138,6 +3138,47 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task PrintJobsIndex_SortsByFilamentUsedDescending_WhenSortRequested()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        await factory.SeedAsync(async context =>
+        {
+            // producao-pesada: FilamentUsedGrams 250,00 (seeded first).
+            context.PrintJobs.Add(new PrintJob
+            {
+                Id = Guid.NewGuid(),
+                SourceFileName = "producao-pesada.gcode",
+                FilamentUsedGrams = 250m,
+                Status = PrintJobStatus.Imported,
+                CreatedAt = DateTime.UtcNow.AddMinutes(-5)
+            });
+            // producao-leve: FilamentUsedGrams 30,00 (seeded later => newest-first default).
+            context.PrintJobs.Add(new PrintJob
+            {
+                Id = Guid.NewGuid(),
+                SourceFileName = "producao-leve.gcode",
+                FilamentUsedGrams = 30m,
+                Status = PrintJobStatus.Imported,
+                CreatedAt = DateTime.UtcNow
+            });
+            await context.SaveChangesAsync();
+        });
+        using var client = factory.CreateTestClient();
+
+        // Default order is newest-first: producao-leve (seeded later) appears before producao-pesada.
+        var defaultResponse = await client.GetAsync("/PrintJobs");
+        var defaultHtml = WebUtility.HtmlDecode(await defaultResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, defaultResponse.StatusCode);
+        Assert.True(defaultHtml.IndexOf("producao-leve", StringComparison.Ordinal) < defaultHtml.IndexOf("producao-pesada", StringComparison.Ordinal));
+
+        // Sorting by filament used descending puts the heavier producao-pesada (250 g) ahead of producao-leve (30 g).
+        var sortedResponse = await client.GetAsync("/PrintJobs?sort=filamentDesc");
+        var sortedHtml = WebUtility.HtmlDecode(await sortedResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, sortedResponse.StatusCode);
+        Assert.True(sortedHtml.IndexOf("producao-pesada", StringComparison.Ordinal) < sortedHtml.IndexOf("producao-leve", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task LowStockAlert_IsShown_OnMaterialsAndDashboard_WhenBelowMinimum()
     {
         using var factory = new ThreeDManagerWebFactory();

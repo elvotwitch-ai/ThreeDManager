@@ -17,6 +17,8 @@
     var statusFilter = ViewData["StatusFilter"] as string;
     var failedPrintJobCount = ViewData["FailedPrintJobCount"] as int? ?? 0;
     var isFailedStatusFilter = statusFilter == "failed";
+    var currentSort = ViewData["Sort"] as string;
+    var nextFilamentSort = currentSort == "filamentDesc" ? "filamentAsc" : "filamentDesc";
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -37,12 +39,14 @@
 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
     <a asp-action="Index"
        asp-route-printerId="@printerFilterId"
+       asp-route-sort="@currentSort"
        class="btn btn-sm @(isFailedStatusFilter ? "btn-outline-secondary" : "btn-secondary")">
         Todas
     </a>
     <a asp-action="Index"
        asp-route-printerId="@printerFilterId"
        asp-route-status="failed"
+       asp-route-sort="@currentSort"
        class="btn btn-sm @(isFailedStatusFilter ? "btn-danger" : "btn-outline-danger")">
         Falhas (@failedPrintJobCount)
     </a>
@@ -74,7 +78,24 @@ else
                 <th>Material</th>
                 <th>Impressora</th>
                 <th>Arquivo</th>
-                <th>Filamento</th>
+                <th>
+                    <a asp-action="Index"
+                       asp-route-printerId="@printerFilterId"
+                       asp-route-status="@statusFilter"
+                       asp-route-sort="@nextFilamentSort"
+                       class="text-reset text-decoration-none"
+                       title="Ordenar por filamento utilizado">
+                        Filamento
+                        @if (currentSort == "filamentDesc")
+                        {
+                            <span aria-hidden="true">▼</span>
+                        }
+                        else if (currentSort == "filamentAsc")
+                        {
+                            <span aria-hidden="true">▲</span>
+                        }
+                    </a>
+                </th>
                 <th>Tempo estimado</th>
                 <th>Unidades</th>
                 <th>Custo calculado do material</th>
