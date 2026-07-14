@@ -46,6 +46,14 @@ public class DashboardViewModel
 
     public decimal TotalInventoryValue => MaterialInventoryValue + ProductStockValue;
 
+    public string? TopMaterialByValueName { get; set; }
+
+    public decimal? TopMaterialByValue { get; set; }
+
+    public string? TopProductByValueName { get; set; }
+
+    public decimal? TopProductByValue { get; set; }
+
     public int LowStockMaterialsCount { get; set; }
 
     public int OutOfStockMaterialsCount { get; set; }

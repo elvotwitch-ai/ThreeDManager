@@ -55,6 +55,26 @@ public class DashboardController : Controller
         var allMaterials = await _context.Materials.ToListAsync();
         var allProducts = await _context.Products.ToListAsync();
 
+        var topMaterialByValue = allMaterials
+            .Select(material => new
+            {
+                material.Name,
+                Value = MaterialCostPresentation.InventoryValue(material.CostPerKg, material.CurrentStockGrams)
+            })
+            .Where(entry => entry.Value.HasValue)
+            .OrderByDescending(entry => entry.Value!.Value)
+            .FirstOrDefault();
+
+        var topProductByValue = allProducts
+            .Select(product => new
+            {
+                product.Name,
+                Value = ProductCostPresentation.StockValueAtSalePrice(product.SalePrice, product.StockQuantity)
+            })
+            .Where(entry => entry.Value.HasValue)
+            .OrderByDescending(entry => entry.Value!.Value)
+            .FirstOrDefault();
+
         var lowStockMaterials = await _context.Materials
             .Where(material =>
                 material.CurrentStockGrams.HasValue
@@ -199,6 +219,11 @@ public class DashboardController : Controller
 
             MaterialInventoryValue = MaterialCostPresentation.TotalInventoryValue(allMaterials),
             ProductStockValue = ProductCostPresentation.TotalStockValueAtSalePrice(allProducts),
+
+            TopMaterialByValueName = topMaterialByValue?.Name,
+            TopMaterialByValue = topMaterialByValue?.Value,
+            TopProductByValueName = topProductByValue?.Name,
+            TopProductByValue = topProductByValue?.Value,
 
             LowStockMaterialsCount = lowStockMaterials.Count,
             OutOfStockMaterialsCount = lowStockMaterials.Count(material =>

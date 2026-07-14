@@ -1886,6 +1886,16 @@ public class PrintJobControllerIntegrationTests
         Assert.Matches(
             "<a[^>]*data-inventory-value-link=\"products\"[^>]*href=\"/Products\"|<a[^>]*href=\"/Products\"[^>]*data-inventory-value-link=\"products\"",
             dashboardHtml);
+        // "Most valuable stock" summary: top material is PLA Preto (R$ 80,00 > PETG R$ 50,00),
+        // top product is Product A (R$ 200,00 > Chaveiro Azul R$ 120,00). Asserting the names in
+        // the top block proves the highest-value item was selected, not just any item.
+        Assert.Contains("Estoque mais valioso", dashboardHtml);
+        Assert.Matches(
+            "data-inventory-value-top=\"material\">\\s*Material:\\s*<strong>PLA Preto</strong>\\s*\\(R\\$\\s*80,00\\)",
+            dashboardHtml);
+        Assert.Matches(
+            "data-inventory-value-top=\"product\">\\s*Produto:\\s*<strong>Product A</strong>\\s*\\(R\\$\\s*200,00\\)",
+            dashboardHtml);
     }
 
     [Fact]

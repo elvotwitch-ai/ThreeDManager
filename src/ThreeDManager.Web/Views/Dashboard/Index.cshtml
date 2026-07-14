@@ -202,6 +202,23 @@
                 <a asp-controller="Products" asp-action="Index" data-inventory-value-link="products" class="d-block small text-muted" title="Ver produtos acabados">
                     Produtos acabados: @Model.ProductStockValue.ToString("C")
                 </a>
+                @if (Model.TopMaterialByValue.HasValue || Model.TopProductByValue.HasValue)
+                {
+                    <hr class="my-2" />
+                    <div class="small text-muted" data-inventory-value-top>Estoque mais valioso</div>
+                    @if (Model.TopMaterialByValue.HasValue)
+                    {
+                        <div class="small" data-inventory-value-top="material">
+                            Material: <strong>@Model.TopMaterialByValueName</strong> (@Model.TopMaterialByValue.Value.ToString("C"))
+                        </div>
+                    }
+                    @if (Model.TopProductByValue.HasValue)
+                    {
+                        <div class="small" data-inventory-value-top="product">
+                            Produto: <strong>@Model.TopProductByValueName</strong> (@Model.TopProductByValue.Value.ToString("C"))
+                        </div>
+                    }
+                }
             </div>
         </div>
     </div>
