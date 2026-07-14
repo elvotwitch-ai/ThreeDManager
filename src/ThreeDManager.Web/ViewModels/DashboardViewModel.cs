@@ -46,6 +46,12 @@ public class DashboardViewModel
 
     public decimal TotalInventoryValue => MaterialInventoryValue + ProductStockValue;
 
+    public int TotalPrinters { get; set; }
+
+    public int PrintersWithCostPerHourCount { get; set; }
+
+    public decimal? AverageCostPerHour { get; set; }
+
     public string? TopMaterialByValueName { get; set; }
 
     public decimal? TopMaterialByValue { get; set; }

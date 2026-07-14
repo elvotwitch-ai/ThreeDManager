@@ -55,6 +55,15 @@ public class DashboardController : Controller
         var allMaterials = await _context.Materials.ToListAsync();
         var allProducts = await _context.Products.ToListAsync();
 
+        var definedCostPerHourValues = printerCostPerHour.Values
+            .Where(costPerHour => costPerHour.HasValue)
+            .Select(costPerHour => costPerHour!.Value)
+            .ToList();
+
+        var averageCostPerHour = definedCostPerHourValues.Count > 0
+            ? Math.Round(definedCostPerHourValues.Average(), 2)
+            : (decimal?)null;
+
         var topMaterialByValue = allMaterials
             .Select(material => new
             {
@@ -219,6 +228,10 @@ public class DashboardController : Controller
 
             MaterialInventoryValue = MaterialCostPresentation.TotalInventoryValue(allMaterials),
             ProductStockValue = ProductCostPresentation.TotalStockValueAtSalePrice(allProducts),
+
+            TotalPrinters = printerCostPerHour.Count,
+            PrintersWithCostPerHourCount = definedCostPerHourValues.Count,
+            AverageCostPerHour = averageCostPerHour,
 
             TopMaterialByValueName = topMaterialByValue?.Name,
             TopMaterialByValue = topMaterialByValue?.Value,

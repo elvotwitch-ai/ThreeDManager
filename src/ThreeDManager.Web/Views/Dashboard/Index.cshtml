@@ -222,6 +222,26 @@
             </div>
         </div>
     </div>
+    <div class="col-md-4">
+        <div class="card border-secondary h-100">
+            <div class="card-body">
+                <h6 class="text-muted">Frota de impressoras</h6>
+                @if (Model.AverageCostPerHour.HasValue)
+                {
+                    <h3 data-printer-fleet="average-cost">@Model.AverageCostPerHour.Value.ToString("C")</h3>
+                    <div class="small text-muted">Custo médio por hora</div>
+                }
+                else
+                {
+                    <h3 class="text-muted">—</h3>
+                    <div class="small text-muted">Nenhuma impressora com custo/hora definido</div>
+                }
+                <a asp-controller="Printers" asp-action="Index" asp-route-sort="costDesc" data-printer-fleet="cost-defined" class="d-block small text-muted" title="Ver impressoras por custo por hora">
+                    @Model.PrintersWithCostPerHourCount de @Model.TotalPrinters impressoras com custo/hora definido
+                </a>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="card mb-4">

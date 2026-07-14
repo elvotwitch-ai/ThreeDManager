@@ -3095,6 +3095,57 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task Dashboard_ShowsPrinterFleetAverageCostPerHour_ForPrintersWithDefinedCost()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        await factory.SeedAsync(async context =>
+        {
+            // Two printers with a defined cost per hour: 10,00 and 20,00 => average 15,00.
+            context.Printers.Add(new Printer
+            {
+                Id = Guid.NewGuid(),
+                Name = "Impressora A",
+                Brand = "E2E",
+                Model = "X1",
+                CostPerHour = 10m,
+                CreatedAt = DateTime.UtcNow
+            });
+            context.Printers.Add(new Printer
+            {
+                Id = Guid.NewGuid(),
+                Name = "Impressora B",
+                Brand = "E2E",
+                Model = "X2",
+                CostPerHour = 20m,
+                CreatedAt = DateTime.UtcNow
+            });
+            // Third printer without a cost per hour must be excluded from the average
+            // but still counted in the fleet total (2 de 3).
+            context.Printers.Add(new Printer
+            {
+                Id = Guid.NewGuid(),
+                Name = "Impressora C",
+                Brand = "E2E",
+                Model = "X3",
+                CostPerHour = null,
+                CreatedAt = DateTime.UtcNow
+            });
+            await context.SaveChangesAsync();
+        });
+        using var client = factory.CreateTestClient();
+
+        var response = await client.GetAsync("/Dashboard");
+        var html = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        Assert.Contains("Frota de impressoras", html);
+        // Average of the two defined costs (10 + 20) / 2 = R$ 15,00, excluding the null-cost printer.
+        Assert.Matches("data-printer-fleet=\"average-cost\">\\s*R\\$\\s*15,00", html);
+        // 2 of the 3 printers have a defined cost per hour.
+        Assert.Matches("data-printer-fleet=\"cost-defined\"[^>]*>\\s*2 de 3 impressoras", html);
+    }
+
+    [Fact]
     public async Task PrintersIndex_SortsByCostPerHourDescending_WhenSortRequested()
     {
         using var factory = new ThreeDManagerWebFactory();
