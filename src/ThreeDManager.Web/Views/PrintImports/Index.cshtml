@@ -134,6 +134,17 @@ else
                             <span class="badge @PrintImportStatusPresentation.GetBadgeClass(import.Status)">
                                 @PrintImportStatusPresentation.GetDisplayLabel(import.Status)
                             </span>
+
+                            var parserWarningCount = PrintImportMessagePresentation.IsWarning(import.Status, import.ErrorMessage)
+                                ? PrintImportMessagePresentation.SplitMessages(import.ErrorMessage).Count
+                                : 0;
+
+                            if (parserWarningCount > 0)
+                            {
+                                <div class="small text-warning-emphasis mt-1" data-role="import-warning-note">
+                                    @(parserWarningCount == 1 ? "1 aviso do processamento." : $"{parserWarningCount} avisos do processamento.")
+                                </div>
+                            }
                         }
                     </td>
                     <td>

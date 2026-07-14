@@ -20,6 +20,9 @@
     var canProcessImport = ViewData["CanProcessImport"] is true;
     var processImportHint = ViewData["ProcessImportHint"] as string;
     var returnTo = ViewData["ReturnTo"] as string;
+    var hasParserWarnings = PrintImportMessagePresentation.IsWarning(Model.Status, Model.ErrorMessage);
+    var hasImportFailure = PrintImportMessagePresentation.IsFailure(Model.Status, Model.ErrorMessage);
+    var importMessages = PrintImportMessagePresentation.SplitMessages(Model.ErrorMessage);
 }
 
 <h1>@Model.FileName</h1>
@@ -73,17 +76,39 @@
             <dt class="col-sm-3">Importado em</dt>
             <dd class="col-sm-9">@Model.ImportedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
 
-            <dt class="col-sm-3">Erro</dt>
-            <dd class="col-sm-9">
-                @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
-                {
-                    <span class="text-danger">@Model.ErrorMessage</span>
-                }
-                else
-                {
+            @if (hasParserWarnings)
+            {
+                <dt class="col-sm-3">Avisos do processamento</dt>
+                <dd class="col-sm-9" data-role="import-warnings">
+                    <ul class="list-unstyled mb-1">
+                        @foreach (var warning in importMessages)
+                        {
+                            <li class="text-warning-emphasis">@warning</li>
+                        }
+                    </ul>
+                    <span class="text-muted small">
+                        O arquivo foi processado com sucesso. Estes campos não foram encontrados e podem ser
+                        informados manualmente ao gerar a produção.
+                    </span>
+                </dd>
+            }
+            else if (hasImportFailure)
+            {
+                <dt class="col-sm-3">Erro</dt>
+                <dd class="col-sm-9" data-role="import-error">
+                    @foreach (var failure in importMessages)
+                    {
+                        <div class="text-danger">@failure</div>
+                    }
+                </dd>
+            }
+            else
+            {
+                <dt class="col-sm-3">Erro</dt>
+                <dd class="col-sm-9">
                     <span class="text-muted">Nenhum erro registrado.</span>
-                }
-            </dd>
+                </dd>
+            }
 
             <dt class="col-sm-3">Linhas detectadas</dt>
             <dd class="col-sm-9">@totalLines</dd>

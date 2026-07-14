@@ -229,7 +229,7 @@ public class PrintImportsController : Controller
             printImport.Status = PrintImportStatus.Parsed;
 
             printImport.ErrorMessage = parsedMetadata.Warnings.Any()
-                ? string.Join(" | ", parsedMetadata.Warnings)
+                ? string.Join(PrintImportMessagePresentation.MessageSeparator, parsedMetadata.Warnings)
                 : null;
 
             await _context.SaveChangesAsync();
