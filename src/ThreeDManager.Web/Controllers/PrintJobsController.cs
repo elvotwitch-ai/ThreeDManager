@@ -81,15 +81,17 @@ public class PrintJobsController : Controller
         {
             "filamentDesc" => "filamentDesc",
             "filamentAsc" => "filamentAsc",
+            "materialCostDesc" => "materialCostDesc",
+            "materialCostAsc" => "materialCostAsc",
             _ => null
         };
     }
 
     private static List<PrintJob> SortPrintJobs(List<PrintJob> printJobs, string? sort)
     {
-        // Print jobs with no recorded filament usage always sink to the bottom, regardless of the
-        // sort direction. The default (null) sort keeps the existing newest-first ordering
-        // established by the query above.
+        // Print jobs with no recorded value for the sorted column always sink to the bottom,
+        // regardless of the sort direction. The default (null) sort keeps the existing
+        // newest-first ordering established by the query above.
         return sort switch
         {
             "filamentDesc" => printJobs
@@ -99,6 +101,14 @@ public class PrintJobsController : Controller
             "filamentAsc" => printJobs
                 .OrderByDescending(printJob => printJob.FilamentUsedGrams.HasValue)
                 .ThenBy(printJob => printJob.FilamentUsedGrams ?? 0m)
+                .ToList(),
+            "materialCostDesc" => printJobs
+                .OrderByDescending(printJob => printJob.CalculatedMaterialCost.HasValue)
+                .ThenByDescending(printJob => printJob.CalculatedMaterialCost ?? 0m)
+                .ToList(),
+            "materialCostAsc" => printJobs
+                .OrderByDescending(printJob => printJob.CalculatedMaterialCost.HasValue)
+                .ThenBy(printJob => printJob.CalculatedMaterialCost ?? 0m)
                 .ToList(),
             _ => printJobs
         };

@@ -3230,6 +3230,47 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task PrintJobsIndex_SortsByCalculatedMaterialCostDescending_WhenSortRequested()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        await factory.SeedAsync(async context =>
+        {
+            // producao-cara: CalculatedMaterialCost 40,00 (seeded first).
+            context.PrintJobs.Add(new PrintJob
+            {
+                Id = Guid.NewGuid(),
+                SourceFileName = "producao-cara.gcode",
+                CalculatedMaterialCost = 40m,
+                Status = PrintJobStatus.Imported,
+                CreatedAt = DateTime.UtcNow.AddMinutes(-5)
+            });
+            // producao-barata: CalculatedMaterialCost 5,00 (seeded later => newest-first default).
+            context.PrintJobs.Add(new PrintJob
+            {
+                Id = Guid.NewGuid(),
+                SourceFileName = "producao-barata.gcode",
+                CalculatedMaterialCost = 5m,
+                Status = PrintJobStatus.Imported,
+                CreatedAt = DateTime.UtcNow
+            });
+            await context.SaveChangesAsync();
+        });
+        using var client = factory.CreateTestClient();
+
+        // Default order is newest-first: producao-barata (seeded later) appears before producao-cara.
+        var defaultResponse = await client.GetAsync("/PrintJobs");
+        var defaultHtml = WebUtility.HtmlDecode(await defaultResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, defaultResponse.StatusCode);
+        Assert.True(defaultHtml.IndexOf("producao-barata", StringComparison.Ordinal) < defaultHtml.IndexOf("producao-cara", StringComparison.Ordinal));
+
+        // Sorting by calculated material cost descending puts the pricier producao-cara (R$ 40,00) ahead of producao-barata (R$ 5,00).
+        var sortedResponse = await client.GetAsync("/PrintJobs?sort=materialCostDesc");
+        var sortedHtml = WebUtility.HtmlDecode(await sortedResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, sortedResponse.StatusCode);
+        Assert.True(sortedHtml.IndexOf("producao-cara", StringComparison.Ordinal) < sortedHtml.IndexOf("producao-barata", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task LowStockAlert_IsShown_OnMaterialsAndDashboard_WhenBelowMinimum()
     {
         using var factory = new ThreeDManagerWebFactory();
@@ -4001,7 +4042,9 @@ public class PrintJobControllerIntegrationTests
         var indexResponse = await client.GetAsync("/PrintJobs");
         var indexHtml = WebUtility.HtmlDecode(await indexResponse.Content.ReadAsStringAsync());
         Assert.Equal(HttpStatusCode.OK, indexResponse.StatusCode);
-        Assert.Contains("<th>Custo calculado do material</th>", indexHtml);
+        // The "Custo calculado do material" column header is now a sort-toggle link (asp-route-sort),
+        // so it no longer renders as a bare <th>; the localized label text must still be present.
+        Assert.Contains("Custo calculado do material", indexHtml);
         Assert.Contains("<th>Status da produção</th>", indexHtml);
         Assert.Contains("Concluída", indexHtml);
         Assert.Contains("Cancelada", indexHtml);

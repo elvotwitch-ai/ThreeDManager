@@ -19,6 +19,7 @@
     var isFailedStatusFilter = statusFilter == "failed";
     var currentSort = ViewData["Sort"] as string;
     var nextFilamentSort = currentSort == "filamentDesc" ? "filamentAsc" : "filamentDesc";
+    var nextMaterialCostSort = currentSort == "materialCostDesc" ? "materialCostAsc" : "materialCostDesc";
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -98,7 +99,24 @@ else
                 </th>
                 <th>Tempo estimado</th>
                 <th>Unidades</th>
-                <th>Custo calculado do material</th>
+                <th>
+                    <a asp-action="Index"
+                       asp-route-printerId="@printerFilterId"
+                       asp-route-status="@statusFilter"
+                       asp-route-sort="@nextMaterialCostSort"
+                       class="text-reset text-decoration-none"
+                       title="Ordenar por custo calculado do material">
+                        Custo calculado do material
+                        @if (currentSort == "materialCostDesc")
+                        {
+                            <span aria-hidden="true">▼</span>
+                        }
+                        else if (currentSort == "materialCostAsc")
+                        {
+                            <span aria-hidden="true">▲</span>
+                        }
+                    </a>
+                </th>
                 <th>Custo de embalagem</th>
                 <th>Custo de máquina estimado</th>
                 <th>Custo total estimado da produção</th>
