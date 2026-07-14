@@ -10,6 +10,8 @@ ThreeDManager currently focuses on the production core:
 - print job registration
 - dashboard reporting
 
+Already-delivered supporting scope includes alpha authentication/hosting, material and finished-goods stock movements, manual adjustments, low-stock alerts, and read-only costing/margin projections. These are part of the operational core, not future ideas.
+
 ## Priority Levels
 
 ### P0 - Stabilize Production Data

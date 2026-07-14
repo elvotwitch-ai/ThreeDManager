@@ -10,6 +10,7 @@ Read in this order:
 7. `docs/context/BACKLOG.md`
 8. `docs/context/tasks_diary.md`
 9. `docs/errors/errors.md`
+10. `docs/operations/DEVELOPMENT_WORKFLOW.md` when creating, integrating, or cleaning a worktree
 
 Project validation:
 - `dotnet build ThreeDManager.slnx`
@@ -18,7 +19,7 @@ Project validation:
 - for behavior changes, create or modify data through the app path and verify the persisted or observable result
 - `dotnet test` when test projects exist
 - `git diff --check -- docs` for docs-only changes
-- `git status`, `git add .`, and `git commit -m "<message>"` only after build/run/app verification passes
+- `git status` and explicit-path staging only after build/run/app verification passes
 
 Critical invariants:
 - Preserve existing data when changing EF Core schema.
@@ -28,8 +29,10 @@ Critical invariants:
 - Do not describe the solution as a monolith; keep boundaries explicit across the solution projects.
 - Do not commit a feature batch until it has been built, run, and checked in the app UI or API path it changed.
 - HTTP 200 alone is not enough for behavior changes; verify the expected state change.
+- `main` is a release/integration checkout. Feature agents use a short-lived worktree; only the finalizer integrates into or pushes `main`.
 
 Task routing:
 - Feature work: inspect `docs/core/ARCHITECTURE.md`, `docs/core/ROADMAP.md`, `docs/context/SCOPE.md`, and `docs/context/BACKLOG.md`.
 - Bug fixes: inspect `docs/errors/errors.md` first.
 - Validation: use the commands above and record results in the diary.
+- Worktree/finalizer operation: read `docs/operations/DEVELOPMENT_WORKFLOW.md`.

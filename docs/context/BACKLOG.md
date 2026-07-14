@@ -15,7 +15,7 @@ Work items:
 
 ## Phase 1 - Production Core
 
-Status: active
+Status: mostly delivered
 
 Work items:
 - production dashboard
@@ -26,9 +26,11 @@ Work items:
 - production details and history views
 - failure tracking
 
+Current closeout priority: confirm whether existing status data is sufficient for failure/reprint reporting; do not add a separate failure schema without that design decision.
+
 ## Phase 2 - Costing and Pricing
 
-Status: next
+Status: active / partially delivered
 
 Work items:
 - cost per gram
@@ -38,9 +40,11 @@ Work items:
 - margin rules
 - price suggestion
 
+Remaining design-gated item: printer energy estimation requires an explicit `Printer.PowerConsumptionWatts` schema decision and a migration plan.
+
 ## Phase 3 - Inventory
 
-Status: planned
+Status: active / partially delivered
 
 Work items:
 - raw material stock
@@ -48,6 +52,8 @@ Work items:
 - reserved quantities
 - stock movement ledger
 - manual adjustments
+
+Remaining design-gated item: reservation rules must be tied to commercial orders, so do not introduce reserved-stock behavior before Phase 4 has an order model.
 
 ## Phase 4 - Commercial
 

@@ -20,7 +20,7 @@ Exit criteria:
 
 ## Phase 1 - Production Core
 
-Status: in progress / mostly delivered
+Status: mostly delivered; close remaining failure/review gaps before broadening the model
 
 Current focus:
 - products
@@ -42,7 +42,7 @@ Exit criteria:
 
 ## Phase 2 - Costing and Pricing
 
-Status: next
+Status: active / partially delivered
 
 Goals:
 - cost per gram
@@ -57,7 +57,7 @@ Exit criteria:
 
 ## Phase 3 - Inventory
 
-Status: later
+Status: active / partially delivered
 
 Goals:
 - raw material stock
@@ -71,7 +71,7 @@ Exit criteria:
 
 ## Phase 4 - Commercial
 
-Status: later
+Status: planned
 
 Goals:
 - customers

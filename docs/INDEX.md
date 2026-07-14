@@ -20,6 +20,7 @@ What each doc is for:
 - `docs/context/tasks_diary.md`: running checkpoint log.
 - `docs/errors/errors.md`: active bugs, blockers, and verification status.
 - `docs/operations/ALPHA_HOSTING.md`: alpha access credentials and safe local-server startup.
+- `docs/operations/DEVELOPMENT_WORKFLOW.md`: shared Codex/Claude worktree and finalizer protocol.
 
 Pre-commit checklist:
 1. Run `dotnet build ThreeDManager.slnx`.
