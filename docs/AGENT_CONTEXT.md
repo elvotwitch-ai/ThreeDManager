@@ -1,16 +1,17 @@
 # Agent Context
 
 Read in this order:
-1. `docs/AGENT_CONTEXT.md`
-2. `docs/INDEX.md`
-3. `docs/core/ARCHITECTURE.md`
-4. `docs/core/IMPLEMENTATION_POLICY.md`
-5. `docs/core/ROADMAP.md`
-6. `docs/context/SCOPE.md`
-7. `docs/context/BACKLOG.md`
-8. `docs/context/tasks_diary.md`
-9. `docs/errors/errors.md`
-10. `docs/operations/DEVELOPMENT_WORKFLOW.md` when creating, integrating, or cleaning a worktree
+1. `AGENTS.md`
+2. `docs/AGENT_CONTEXT.md`
+3. `docs/INDEX.md`
+4. `docs/core/ARCHITECTURE.md`
+5. `docs/core/IMPLEMENTATION_POLICY.md`
+6. `docs/core/ROADMAP.md`
+7. `docs/context/SCOPE.md`
+8. `docs/context/BACKLOG.md`
+9. `docs/context/tasks_diary.md`
+10. `docs/errors/errors.md`
+11. `docs/operations/DEVELOPMENT_WORKFLOW.md` when creating, integrating, or cleaning a worktree
 
 Project validation:
 - `dotnet build ThreeDManager.slnx`

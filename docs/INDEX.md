@@ -1,8 +1,9 @@
 # Documentation Index
 
 Start here:
-1. `docs/AGENT_CONTEXT.md`
-2. `docs/core/ARCHITECTURE.md`
+1. `AGENTS.md`
+2. `docs/AGENT_CONTEXT.md`
+3. `docs/core/ARCHITECTURE.md`
 3. `docs/core/IMPLEMENTATION_POLICY.md`
 4. `docs/core/ROADMAP.md`
 5. `docs/context/SCOPE.md`
@@ -21,6 +22,7 @@ What each doc is for:
 - `docs/errors/errors.md`: active bugs, blockers, and verification status.
 - `docs/operations/ALPHA_HOSTING.md`: alpha access credentials and safe local-server startup.
 - `docs/operations/DEVELOPMENT_WORKFLOW.md`: shared Codex/Claude worktree and finalizer protocol.
+- `AGENTS.md` / `CLAUDE.md`: root entrypoints that direct Codex and Claude to the shared contract.
 
 Pre-commit checklist:
 1. Run `dotnet build ThreeDManager.slnx`.

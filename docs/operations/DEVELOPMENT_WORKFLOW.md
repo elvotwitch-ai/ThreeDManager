@@ -17,7 +17,7 @@ Keep the live alpha host stable while Codex and Claude continue development. `ma
 1. Start from current `origin/main` in a fresh worktree. Name the branch `codex/<small-task>` or `claude/<small-task>`.
 2. Read the canonical docs and choose exactly one pending task. If another active worktree or uncommitted `main` work owns that area, stop with a checkpoint.
 3. Implement and validate the batch. Never use the primary checkout for edits.
-4. Add a handoff file under `docs/context/agent_handoffs/` named `<branch-slug>.md`, containing the commit SHA, files changed, validation evidence, deployment impact, and exact next step. Do not append `tasks_diary.md` from a feature worktree: the finalizer records the authoritative integrated checkpoint.
+4. Add a handoff file under `docs/context/agent_handoffs/` named `<branch-slug>.md`, containing `HEAD (the commit containing this handoff)`, files changed, validation evidence, deployment impact, and exact next step. Do not append `tasks_diary.md` from a feature worktree: the finalizer records the authoritative integrated checkpoint.
 5. Commit only the batch and its handoff. Do not push or deploy. Mark it ready for finalization in the handoff file.
 
 ## Finalizer protocol
@@ -44,7 +44,7 @@ Run only when `main` is clean and no other finalizer is active.
 # <branch>
 
 - Status: ready_for_finalizer
-- Candidate commit: <sha>
+- Candidate commit: HEAD (the commit containing this handoff)
 - Base inspected: <origin/main sha>
 - Scope: <one sentence>
 - Files changed: <explicit paths>

@@ -1453,3 +1453,11 @@
 - Validation run: Codex automation update returned success with `executionEnvironment=worktree`; finalizer creation returned success with `executionEnvironment=local`; both statuses are `PAUSED`. No application code or deployment artifact changed. Repository documentation diff validation is required before this follow-up record is committed.
 - Blockers: automatic runs are deliberately paused. Git object cleanup remains deferred pending an explicit recovery-retention decision.
 - Next recommended task: review and enable `threedmanager-hourly-continue` first; after it leaves one ready handoff, enable `threedmanager-finalize` for one integration pass. The first product task must be selected from the documented Phase 1 closeout / Phase 2-3 design-gated backlog, not from an undocumented cosmetic queue.
+
+## 2026-07-14 (root agent entrypoints)
+
+- Summary: Added root-level `AGENTS.md` and `CLAUDE.md` so both agent hosts discover the same worktree/finalizer contract without relying on a separately pasted prompt. The root contract routes every agent to the canonical documentation, defines worker versus finalizer authority, requires the full validation gate, and makes the primary `main` checkout release-only. Corrected the shared handoff template from an impossible pre-commit SHA requirement to `HEAD (the commit containing this handoff)`; the finalizer can resolve the concrete SHA after inspecting the candidate branch.
+- Files changed: `AGENTS.md`, `CLAUDE.md`, `docs/AGENT_CONTEXT.md`, `docs/INDEX.md`, `docs/operations/DEVELOPMENT_WORKFLOW.md`, `docs/context/tasks_diary.md`.
+- Validation run: repository was clean on `main` before this documentation-only batch. `git diff --check -- AGENTS.md CLAUDE.md docs` passed; no application code, schema, service, credentials, or deployment artifact changed.
+- Blockers: automatic worker and finalizer runs remain paused by deliberate operator choice. Git object maintenance remains deferred pending an explicit recovery-retention decision.
+- Next recommended task: run `git diff --check -- docs AGENTS.md CLAUDE.md`, commit/push this root-entrypoint batch, then enable only one worker automation for the first worktree/handoff smoke.
