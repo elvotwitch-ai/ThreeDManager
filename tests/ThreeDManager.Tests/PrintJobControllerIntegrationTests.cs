@@ -2950,6 +2950,53 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task ProductsIndex_SortsByStockQuantityDescending_WhenSortRequested()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        await factory.SeedAsync(async context =>
+        {
+            // Produto Alto Estoque: StockQuantity 10 (seeded first).
+            context.Products.Add(new Product
+            {
+                Id = Guid.NewGuid(),
+                Name = "Produto Alto Estoque",
+                Sku = "E2E-ALTO",
+                Category = "Brindes",
+                SalePrice = 20m,
+                StockQuantity = 10,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow.AddMinutes(-5)
+            });
+            // Produto Baixo Estoque: StockQuantity 3 (seeded later => newest-first default).
+            context.Products.Add(new Product
+            {
+                Id = Guid.NewGuid(),
+                Name = "Produto Baixo Estoque",
+                Sku = "E2E-BAIXO",
+                Category = "Brindes",
+                SalePrice = 20m,
+                StockQuantity = 3,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            });
+            await context.SaveChangesAsync();
+        });
+        using var client = factory.CreateTestClient();
+
+        // Default order is newest-first: Produto Baixo Estoque (seeded later) appears before Produto Alto Estoque.
+        var defaultResponse = await client.GetAsync("/Products");
+        var defaultHtml = WebUtility.HtmlDecode(await defaultResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, defaultResponse.StatusCode);
+        Assert.True(defaultHtml.IndexOf("Produto Baixo Estoque", StringComparison.Ordinal) < defaultHtml.IndexOf("Produto Alto Estoque", StringComparison.Ordinal));
+
+        // Sorting by stock quantity descending puts the higher-stock Produto Alto Estoque (10 un.) ahead of Produto Baixo Estoque (3 un.).
+        var sortedResponse = await client.GetAsync("/Products?sort=stockDesc");
+        var sortedHtml = WebUtility.HtmlDecode(await sortedResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, sortedResponse.StatusCode);
+        Assert.True(sortedHtml.IndexOf("Produto Alto Estoque", StringComparison.Ordinal) < sortedHtml.IndexOf("Produto Baixo Estoque", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task LowStockAlert_IsShown_OnMaterialsAndDashboard_WhenBelowMinimum()
     {
         using var factory = new ThreeDManagerWebFactory();

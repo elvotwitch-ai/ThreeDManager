@@ -9,6 +9,7 @@
     var currentSort = ViewData["Sort"] as string;
     var nextValueSort = currentSort == "valueDesc" ? "valueAsc" : "valueDesc";
     var nextPriceSort = currentSort == "priceDesc" ? "priceAsc" : "priceDesc";
+    var nextStockSort = currentSort == "stockDesc" ? "stockAsc" : "stockDesc";
     var lowStockProductCount = ViewData["LowStockProductCount"] as int? ?? 0;
     var outOfStockProductCount = ViewData["OutOfStockProductCount"] as int? ?? 0;
     var isLowStockFilter = stockStatusFilter == "low";
@@ -91,7 +92,23 @@ else
                             }
                         </a>
                     </th>
-                    <th>Estoque</th>
+                    <th>
+                        <a asp-action="Index"
+                           asp-route-stockStatus="@stockStatusFilter"
+                           asp-route-sort="@nextStockSort"
+                           class="text-reset text-decoration-none"
+                           title="Ordenar por estoque">
+                            Estoque
+                            @if (currentSort == "stockDesc")
+                            {
+                                <span aria-hidden="true">▼</span>
+                            }
+                            else if (currentSort == "stockAsc")
+                            {
+                                <span aria-hidden="true">▲</span>
+                            }
+                        </a>
+                    </th>
                     <th>
                         <a asp-action="Index"
                            asp-route-stockStatus="@stockStatusFilter"

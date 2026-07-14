@@ -64,6 +64,8 @@ public class ProductsController : Controller
             "valueAsc" => "valueAsc",
             "priceDesc" => "priceDesc",
             "priceAsc" => "priceAsc",
+            "stockDesc" => "stockDesc",
+            "stockAsc" => "stockAsc",
             _ => null
         };
     }
@@ -93,6 +95,14 @@ public class ProductsController : Controller
             "priceAsc" => products
                 .OrderByDescending(product => product.SalePrice.HasValue)
                 .ThenBy(product => product.SalePrice ?? 0m)
+                .ToList(),
+            "stockDesc" => products
+                .OrderByDescending(product => product.StockQuantity.HasValue)
+                .ThenByDescending(product => product.StockQuantity ?? 0)
+                .ToList(),
+            "stockAsc" => products
+                .OrderByDescending(product => product.StockQuantity.HasValue)
+                .ThenBy(product => product.StockQuantity ?? 0)
                 .ToList(),
             _ => products
         };
