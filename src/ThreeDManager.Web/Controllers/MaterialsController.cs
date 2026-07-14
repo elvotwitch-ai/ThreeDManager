@@ -62,15 +62,17 @@ public class MaterialsController : Controller
         {
             "valueDesc" => "valueDesc",
             "valueAsc" => "valueAsc",
+            "costDesc" => "costDesc",
+            "costAsc" => "costAsc",
             _ => null
         };
     }
 
     private static List<Material> SortMaterials(List<Material> materials, string? sort)
     {
-        // Materials whose value cannot be computed (missing unit cost or stock) always
-        // sink to the bottom, regardless of the sort direction. The default (null) sort
-        // keeps the existing newest-first ordering established by the query above.
+        // Materials whose sort key cannot be computed (missing stock value or unit cost)
+        // always sink to the bottom, regardless of the sort direction. The default (null)
+        // sort keeps the existing newest-first ordering established by the query above.
         static decimal? Value(Material material)
             => MaterialCostPresentation.InventoryValue(material.CostPerKg, material.CurrentStockGrams);
 
@@ -83,6 +85,14 @@ public class MaterialsController : Controller
             "valueAsc" => materials
                 .OrderByDescending(material => Value(material).HasValue)
                 .ThenBy(material => Value(material) ?? 0m)
+                .ToList(),
+            "costDesc" => materials
+                .OrderByDescending(material => material.CostPerKg.HasValue)
+                .ThenByDescending(material => material.CostPerKg ?? 0m)
+                .ToList(),
+            "costAsc" => materials
+                .OrderByDescending(material => material.CostPerKg.HasValue)
+                .ThenBy(material => material.CostPerKg ?? 0m)
                 .ToList(),
             _ => materials
         };

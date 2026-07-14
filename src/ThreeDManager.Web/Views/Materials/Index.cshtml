@@ -8,6 +8,7 @@
     var stockStatusFilter = ViewData["StockStatusFilter"] as string;
     var currentSort = ViewData["Sort"] as string;
     var nextValueSort = currentSort == "valueDesc" ? "valueAsc" : "valueDesc";
+    var nextCostSort = currentSort == "costDesc" ? "costAsc" : "costDesc";
     var lowStockMaterialCount = ViewData["LowStockMaterialCount"] as int? ?? 0;
     var outOfStockMaterialCount = ViewData["OutOfStockMaterialCount"] as int? ?? 0;
     var isLowStockFilter = stockStatusFilter == "low";
@@ -74,7 +75,23 @@ else
                 <th>Tipo</th>
                 <th>Marca</th>
                 <th>Cor</th>
-                <th>Custo por kg (R$)</th>
+                <th>
+                    <a asp-action="Index"
+                       asp-route-stockStatus="@stockStatusFilter"
+                       asp-route-sort="@nextCostSort"
+                       class="text-reset text-decoration-none"
+                       title="Ordenar por custo por kg">
+                        Custo por kg (R$)
+                        @if (currentSort == "costDesc")
+                        {
+                            <span aria-hidden="true">▼</span>
+                        }
+                        else if (currentSort == "costAsc")
+                        {
+                            <span aria-hidden="true">▲</span>
+                        }
+                    </a>
+                </th>
                 <th>Custo por grama</th>
                 <th>Estoque atual</th>
                 <th>

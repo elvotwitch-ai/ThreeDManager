@@ -2774,6 +2774,41 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task MaterialsIndex_SortsByCostPerKgAscending_WhenSortRequested()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        await SeedCommonAsync(factory); // PLA Preto: CostPerKg 80 (seeded first)
+        await factory.SeedAsync(async context =>
+        {
+            context.Materials.Add(new Material
+            {
+                Id = Guid.NewGuid(),
+                Name = "PETG Azul",
+                Type = "PETG",
+                Brand = "E2E",
+                Color = "Blue",
+                CostPerKg = 100m, // pricier than PLA Preto; seeded later => newest-first default
+                CurrentStockGrams = 500m,
+                CreatedAt = DateTime.UtcNow
+            });
+            await context.SaveChangesAsync();
+        });
+        using var client = factory.CreateTestClient();
+
+        // Default order is newest-first: PETG Azul (seeded later) appears before PLA Preto.
+        var defaultResponse = await client.GetAsync("/Materials");
+        var defaultHtml = WebUtility.HtmlDecode(await defaultResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, defaultResponse.StatusCode);
+        Assert.True(defaultHtml.IndexOf("PETG Azul", StringComparison.Ordinal) < defaultHtml.IndexOf("PLA Preto", StringComparison.Ordinal));
+
+        // Sorting by cost ascending puts the cheaper PLA Preto (R$ 80,00/kg) ahead of PETG Azul (R$ 100,00/kg).
+        var sortedResponse = await client.GetAsync("/Materials?sort=costAsc");
+        var sortedHtml = WebUtility.HtmlDecode(await sortedResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, sortedResponse.StatusCode);
+        Assert.True(sortedHtml.IndexOf("PLA Preto", StringComparison.Ordinal) < sortedHtml.IndexOf("PETG Azul", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task ProductsIndex_SortsByStockValueDescending_WhenSortRequested()
     {
         using var factory = new ThreeDManagerWebFactory();
