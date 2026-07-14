@@ -178,6 +178,9 @@
                         Margem estimada: <span class="@marginClass fw-semibold">@Model.TotalEstimatedMargin.ToString("C")</span>
                         <span class="text-muted">(@Model.ProductionsWithEstimatedMargin produções)</span>
                     </div>
+                    <div class="text-muted small" data-estimated-margin="average">
+                        Média por produção: @Model.AverageEstimatedMargin!.Value.ToString("C")
+                    </div>
                 }
                 else
                 {

@@ -4975,6 +4975,70 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task Dashboard_ShowsAverageEstimatedMarginPerProduction_FromTotalMarginAndCount()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        await factory.SeedAsync(async context =>
+        {
+            var printer = await context.Printers.FirstAsync(printer => printer.Id == ids.PrinterId);
+            printer.CostPerHour = 5.00m;
+
+            var product = await context.Products.FirstAsync(product => product.Id == ids.ProductId);
+            product.SalePrice = 20.00m;
+
+            // Two single-unit productions with a complete cost total and a linked sale price.
+            // Job A: machine 10,00 (120 min) + material 1,00 + embalagem 2,50 = 13,50 -> margem 6,50.
+            // Job B: machine  5,00 ( 60 min) + material 1,00 + embalagem 0,50 =  6,50 -> margem 13,50.
+            // Total margem 20,00 over 2 produções -> média por produção 10,00 (distinct from the total).
+            context.PrintJobs.AddRange(
+                new PrintJob
+                {
+                    Id = Guid.NewGuid(),
+                    ProductId = ids.ProductId,
+                    PrinterId = ids.PrinterId,
+                    MaterialId = ids.MaterialId,
+                    SourceFileName = "dashboard-margin-a.gcode",
+                    Status = PrintJobStatus.Completed,
+                    EstimatedTimeMinutes = 120,
+                    CalculatedMaterialCost = 1.00m,
+                    PackagingCost = 2.50m,
+                    UnitsProduced = 1,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new PrintJob
+                {
+                    Id = Guid.NewGuid(),
+                    ProductId = ids.ProductId,
+                    PrinterId = ids.PrinterId,
+                    MaterialId = ids.MaterialId,
+                    SourceFileName = "dashboard-margin-b.gcode",
+                    Status = PrintJobStatus.Completed,
+                    EstimatedTimeMinutes = 60,
+                    CalculatedMaterialCost = 1.00m,
+                    PackagingCost = 0.50m,
+                    UnitsProduced = 1,
+                    CreatedAt = DateTime.UtcNow.AddMinutes(1)
+                });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var dashboardResponse = await client.GetAsync("/Dashboard");
+        var dashboardHtml = WebUtility.HtmlDecode(await dashboardResponse.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, dashboardResponse.StatusCode);
+        // The margin block must surface the average estimated margin per production
+        // (total estimated margin ÷ productions with an estimated margin) as an observable value,
+        // distinct from the aggregate total. Isolated in-memory DB per factory -> exact values.
+        Assert.Matches(@"\(2 produções\)", dashboardHtml);
+        Assert.Matches("data-estimated-margin=\"average\"[^>]*>\\s*Média por produção:\\s*R\\$\\s*10,00", dashboardHtml);
+    }
+
+    [Fact]
     public async Task Dashboard_ShowsLocalizedStatusLabels_InRecentPrintJobsTable()
     {
         using var factory = new ThreeDManagerWebFactory();

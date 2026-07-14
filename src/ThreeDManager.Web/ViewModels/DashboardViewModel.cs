@@ -40,6 +40,10 @@ public class DashboardViewModel
 
     public int ProductionsWithEstimatedMargin { get; set; }
 
+    public decimal? AverageEstimatedMargin => ProductionsWithEstimatedMargin > 0
+        ? TotalEstimatedMargin / ProductionsWithEstimatedMargin
+        : null;
+
     public decimal MaterialInventoryValue { get; set; }
 
     public decimal ProductStockValue { get; set; }
