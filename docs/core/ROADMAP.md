@@ -31,7 +31,7 @@ Current focus:
 - dashboard
 
 Remaining technical work:
-- production failure tracking
+- production failure tracking (data model decided in `docs/decisions/0001-production-failure-data-model.md`: add nullable `FailureCategory` and `ReprintOfPrintJobId` to `PrintJob`; failed-job stock deduction still needs operator sign-off)
 - better import review flows
 - status normalization
 - capacity-oriented reporting

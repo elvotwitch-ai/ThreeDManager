@@ -26,7 +26,9 @@ Work items:
 - production details and history views
 - failure tracking
 
-Current closeout priority: confirm whether existing status data is sufficient for failure/reprint reporting; do not add a separate failure schema without that design decision.
+Closeout priority resolved by `docs/decisions/0001-production-failure-data-model.md`: existing status data is sufficient for failure-rate and loss reporting, and no separate failure schema is warranted. Root cause needs a nullable `PrintJob.FailureCategory`; reprint needs a nullable `PrintJob.ReprintOfPrintJobId` self-FK. Each is its own small migration-backed batch.
+
+Still gated on operator sign-off: a failed job records no stock movement today, so material burned by a failed print stays in stock. Choosing Option A/B in the decision record changes real inventory data and must not be taken opportunistically.
 
 ## Phase 2 - Costing and Pricing
 

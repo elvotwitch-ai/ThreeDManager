@@ -58,5 +58,8 @@ See `docs/operations/ALPHA_HOSTING.md` and `docs/ops/REMOTE_ACCESS.md` for the o
 The present data model supports the active costing/inventory work. The next changes that need an explicit design decision before implementation are:
 
 1. `Printer.PowerConsumptionWatts` plus the energy-cost model and migration.
-2. The remaining production-failure data model, if the existing status fields are insufficient for root cause, reprint, and loss reporting.
-3. Commercial order/customer entities, only after the operational production and inventory rules are accepted as stable.
+2. Commercial order/customer entities, only after the operational production and inventory rules are accepted as stable.
+
+Resolved:
+
+- The production-failure data model is decided in `docs/decisions/0001-production-failure-data-model.md`: no separate failure schema. Failure-rate and loss reporting work on today's status data; root cause and reprint each need one nullable `PrintJob` column. One sub-question stays open for the operator — whether a failed job should deduct material stock, which today it does not.

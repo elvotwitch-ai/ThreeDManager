@@ -19,6 +19,7 @@ What each doc is for:
 - `docs/context/SCOPE.md`: current scope, priorities, and out-of-scope items.
 - `docs/context/BACKLOG.md`: phased backlog with current status.
 - `docs/context/tasks_diary.md`: running checkpoint log.
+- `docs/decisions/`: numbered records for decisions that were gated before implementation.
 - `docs/errors/errors.md`: active bugs, blockers, and verification status.
 - `docs/operations/ALPHA_HOSTING.md`: alpha access credentials and safe local-server startup.
 - `docs/operations/DEVELOPMENT_WORKFLOW.md`: shared Codex/Claude worktree and finalizer protocol.
