@@ -36,6 +36,16 @@
        class="btn btn-sm @(isLowStockFilter ? "btn-danger" : "btn-outline-danger")">
         Baixo estoque (@lowStockMaterialCount)
     </a>
+    @if (currentSort is not null)
+    {
+        <a asp-action="Index"
+           asp-route-stockStatus="@stockStatusFilter"
+           class="btn btn-sm btn-outline-secondary"
+           data-role="clear-sort"
+           title="Voltar à ordenação padrão (mais recentes primeiro)">
+            Limpar ordenação
+        </a>
+    }
     @if (outOfStockMaterialCount > 0)
     {
         <span class="@StockStatusPresentation.OutOfStockBadgeClass" title="Materiais em alerta com estoque zerado">
