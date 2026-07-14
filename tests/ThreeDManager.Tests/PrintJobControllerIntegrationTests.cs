@@ -3046,6 +3046,55 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task ProductsIndex_SortsByPackagingCostDescending_WhenSortRequested()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        await factory.SeedAsync(async context =>
+        {
+            // Produto Embalagem Cara: DefaultPackagingCost 8,00 (seeded first).
+            context.Products.Add(new Product
+            {
+                Id = Guid.NewGuid(),
+                Name = "Produto Embalagem Cara",
+                Sku = "E2E-EMB-CARA",
+                Category = "Brindes",
+                SalePrice = 20m,
+                StockQuantity = 5,
+                DefaultPackagingCost = 8m,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow.AddMinutes(-5)
+            });
+            // Produto Embalagem Barata: DefaultPackagingCost 2,00 (seeded later => newest-first default).
+            context.Products.Add(new Product
+            {
+                Id = Guid.NewGuid(),
+                Name = "Produto Embalagem Barata",
+                Sku = "E2E-EMB-BARATA",
+                Category = "Brindes",
+                SalePrice = 20m,
+                StockQuantity = 5,
+                DefaultPackagingCost = 2m,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            });
+            await context.SaveChangesAsync();
+        });
+        using var client = factory.CreateTestClient();
+
+        // Default order is newest-first: Produto Embalagem Barata (seeded later) appears before Produto Embalagem Cara.
+        var defaultResponse = await client.GetAsync("/Products");
+        var defaultHtml = WebUtility.HtmlDecode(await defaultResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, defaultResponse.StatusCode);
+        Assert.True(defaultHtml.IndexOf("Produto Embalagem Barata", StringComparison.Ordinal) < defaultHtml.IndexOf("Produto Embalagem Cara", StringComparison.Ordinal));
+
+        // Sorting by packaging cost descending puts the pricier Produto Embalagem Cara (R$ 8,00) ahead of Produto Embalagem Barata (R$ 2,00).
+        var sortedResponse = await client.GetAsync("/Products?sort=packagingDesc");
+        var sortedHtml = WebUtility.HtmlDecode(await sortedResponse.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.OK, sortedResponse.StatusCode);
+        Assert.True(sortedHtml.IndexOf("Produto Embalagem Cara", StringComparison.Ordinal) < sortedHtml.IndexOf("Produto Embalagem Barata", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task LowStockAlert_IsShown_OnMaterialsAndDashboard_WhenBelowMinimum()
     {
         using var factory = new ThreeDManagerWebFactory();

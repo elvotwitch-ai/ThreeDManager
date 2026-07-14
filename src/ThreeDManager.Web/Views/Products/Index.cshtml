@@ -11,6 +11,7 @@
     var nextPriceSort = currentSort == "priceDesc" ? "priceAsc" : "priceDesc";
     var nextStockSort = currentSort == "stockDesc" ? "stockAsc" : "stockDesc";
     var nextMarginSort = currentSort == "marginDesc" ? "marginAsc" : "marginDesc";
+    var nextPackagingSort = currentSort == "packagingDesc" ? "packagingAsc" : "packagingDesc";
     var lowStockProductCount = ViewData["LowStockProductCount"] as int? ?? 0;
     var outOfStockProductCount = ViewData["OutOfStockProductCount"] as int? ?? 0;
     var isLowStockFilter = stockStatusFilter == "low";
@@ -146,7 +147,23 @@ else
                             }
                         </a>
                     </th>
-                    <th>Custo padrão de embalagem</th>
+                    <th>
+                        <a asp-action="Index"
+                           asp-route-stockStatus="@stockStatusFilter"
+                           asp-route-sort="@nextPackagingSort"
+                           class="text-reset text-decoration-none"
+                           title="Ordenar por custo padrão de embalagem">
+                            Custo padrão de embalagem
+                            @if (currentSort == "packagingDesc")
+                            {
+                                <span aria-hidden="true">▼</span>
+                            }
+                            else if (currentSort == "packagingAsc")
+                            {
+                                <span aria-hidden="true">▲</span>
+                            }
+                        </a>
+                    </th>
                     <th>Movimentação recente</th>
                     <th>Status</th>
                     <th class="text-end">Ações</th>
