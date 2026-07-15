@@ -473,6 +473,7 @@ public class PrintImportsController : Controller
     {
         var linkedPrintJob = await _context.PrintJobs
             .Where(printJob => printJob.PrintImportId == importId)
+            .OrderByDescending(printJob => printJob.CreatedAt)
             .Select(printJob => new
             {
                 printJob.Id,

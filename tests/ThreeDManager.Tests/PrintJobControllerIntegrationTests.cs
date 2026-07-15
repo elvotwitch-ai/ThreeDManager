@@ -582,6 +582,72 @@ public class PrintJobControllerIntegrationTests
     }
 
     [Fact]
+    public async Task PrintImportDetails_UsesMostRecentLinkedPrintJob_WhenMultipleJobsExist()
+    {
+        using var factory = new ThreeDManagerWebFactory();
+        var ids = await SeedCommonAsync(factory);
+
+        var importId = Guid.NewGuid();
+        var olderPrintJobId = Guid.NewGuid();
+        var newerPrintJobId = Guid.NewGuid();
+        var olderCreatedAt = DateTime.UtcNow.AddMinutes(-10);
+        var newerCreatedAt = DateTime.UtcNow.AddMinutes(-5);
+
+        await factory.SeedAsync(async context =>
+        {
+            context.PrintImports.Add(new PrintImport
+            {
+                Id = importId,
+                FileName = "multiple-linked.gcode",
+                FileType = "gcode",
+                ParsedDataJson = "{}",
+                Status = PrintImportStatus.Parsed,
+                ImportedAt = olderCreatedAt
+            });
+
+            context.PrintJobs.AddRange(
+                new PrintJob
+                {
+                    Id = olderPrintJobId,
+                    ProductId = ids.ProductId,
+                    PrinterId = ids.PrinterId,
+                    MaterialId = ids.MaterialId,
+                    PrintImportId = importId,
+                    SourceFileName = "multiple-linked.gcode",
+                    Status = PrintJobStatus.Completed,
+                    CreatedAt = olderCreatedAt
+                },
+                new PrintJob
+                {
+                    Id = newerPrintJobId,
+                    ProductId = ids.ProductId,
+                    PrinterId = ids.PrinterId,
+                    MaterialId = ids.MaterialId,
+                    PrintImportId = importId,
+                    SourceFileName = "multiple-linked.gcode",
+                    Status = PrintJobStatus.Failed,
+                    CreatedAt = newerCreatedAt
+                });
+
+            await context.SaveChangesAsync();
+        });
+
+        using var client = factory.CreateTestClient();
+
+        var detailsResponse = await client.GetAsync($"/PrintImports/Details/{importId}");
+        var detailsHtml = WebUtility.HtmlDecode(await detailsResponse.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        Assert.Contains($"/PrintJobs/Details/{newerPrintJobId}", detailsHtml);
+        Assert.DoesNotContain($"/PrintJobs/Details/{olderPrintJobId}", detailsHtml);
+
+        var createResponse = await client.GetAsync($"/PrintImports/CreatePrintJob/{importId}");
+
+        Assert.Equal(HttpStatusCode.Redirect, createResponse.StatusCode);
+        Assert.Equal($"/PrintJobs/Details/{newerPrintJobId}", createResponse.Headers.Location?.ToString());
+    }
+
+    [Fact]
     public async Task PrintImportsIndex_ShowsLocalizedLinkedProductionStatus()
     {
         using var factory = new ThreeDManagerWebFactory();
