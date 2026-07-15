@@ -42,10 +42,7 @@ public class GCodePrintFileParser : IPrintFileParser
             @"(?im)^\s*;\s*filament\s+used\s*\(g\)\s*[=:]\s*(?<value>[-+]?\d+(?:[.,]\d+)?)",
             @"(?im)^\s*;\s*filament\s+used\s*\[g\]\s*[=:]\s*(?<value>[-+]?\d+(?:[.,]\d+)?)");
 
-        metadata.FilamentUsedMeters = ExtractDecimal(rawContent,
-            @"(?im)^\s*;\s*filament.*(?:used|length).*\[?m\]?.*[=:]\s*(?<value>[-+]?\d+(?:[.,]\d+)?)",
-            @"(?im)^\s*;\s*filament\s+used\s*\(m\)\s*[=:]\s*(?<value>[-+]?\d+(?:[.,]\d+)?)",
-            @"(?im)^\s*;\s*filament\s+used\s*\[m\]\s*[=:]\s*(?<value>[-+]?\d+(?:[.,]\d+)?)");
+        metadata.FilamentUsedMeters = ExtractFilamentUsedMeters(rawContent);
 
         metadata.MaterialType = ExtractString(rawContent,
             @"(?im)^\s*;\s*material\s*[=:]\s*(?<value>[^\r\n;]+)",
@@ -118,6 +115,55 @@ public class GCodePrintFileParser : IPrintFileParser
         }
 
         return null;
+    }
+
+    // The unit is captured and converted instead of being matched loosely: slicers state the
+    // length in millimetres as often as metres, and state a volume with a unit that merely starts
+    // the same way ("[cm3]"), which is not a length at all.
+    private static decimal? ExtractFilamentUsedMeters(string rawContent)
+    {
+        // "; filament used [mm] = 1234.5", "; filament length [m] = 1.23", "; filament used (m) = 1.23"
+        var labelled = Regex.Match(rawContent,
+            @"(?im)^\s*;\s*(?:total\s+)?filament\s+(?:used|length)\s*[\[(](?<unit>mm|cm|m)[\])]\s*[=:]\s*(?<value>[-+]?\d+(?:[.,]\d+)?)");
+
+        if (labelled.Success && TryParseDecimal(labelled.Groups["value"].Value, out var length))
+        {
+            return ConvertLengthToMeters(length, labelled.Groups["unit"].Value);
+        }
+
+        // Cura suffixes the unit onto the value and lists one length per extruder:
+        // ";Filament used: 1.2345m, 0.5m".
+        var suffixed = Regex.Match(rawContent,
+            @"(?im)^\s*;\s*(?:total\s+)?filament\s+used\s*[=:]\s*(?<values>[-+]?\d+(?:[.,]\d+)?\s*(?:mm|cm|m)\b[^\r\n]*)");
+
+        if (!suffixed.Success)
+        {
+            return null;
+        }
+
+        decimal? total = null;
+
+        foreach (Match extruder in Regex.Matches(
+            suffixed.Groups["values"].Value,
+            @"(?i)(?<value>[-+]?\d+(?:[.,]\d+)?)\s*(?<unit>mm|cm|m)\b"))
+        {
+            if (TryParseDecimal(extruder.Groups["value"].Value, out var extruderLength))
+            {
+                total = (total ?? 0m) + ConvertLengthToMeters(extruderLength, extruder.Groups["unit"].Value);
+            }
+        }
+
+        return total;
+    }
+
+    private static decimal ConvertLengthToMeters(decimal value, string unit)
+    {
+        return unit.ToLowerInvariant() switch
+        {
+            "mm" => value / 1000m,
+            "cm" => value / 100m,
+            _ => value
+        };
     }
 
     private static int? ExtractEstimatedTimeMinutes(string rawContent)
