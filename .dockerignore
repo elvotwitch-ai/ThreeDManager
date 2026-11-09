@@ -1,0 +1,24 @@
+# Lista positiva: só o código necessário ao publish entra no contexto.
+**
+!Dockerfile
+!src/
+!src/**
+!.env.aeu.example
+
+**/[Bb]in/**
+**/[Oo]bj/**
+**/.git/**
+**/.env*
+.env*
+!.env.aeu.example
+**/appsettings*.json
+**/launchSettings.json
+**/*.user
+**/*.pfx
+**/*.p12
+**/*.pem
+**/*.key
+**/*.snk
+**/secrets/**
+**/keys/**
+**/auth.json
