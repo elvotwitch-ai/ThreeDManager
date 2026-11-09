@@ -2,7 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/ThreeDManager.Application/ThreeDManager.Application.csproj" />
     <Project Path="src/ThreeDManager.Domain/ThreeDManager.Domain.csproj" />
-    <Project Path="src/ThreeDManager.Infrastructure/ThreeDManager.Infrastructure.csproj" />
+    <Project Path="src/ThreeDManager.Infrastructure/ThreeDmanager.Infrastructure.csproj" />
     <Project Path="src/ThreeDManager.Web/ThreeDManager.Web.csproj" />
     <Project Path="src/ThreeDManager.Worker/ThreeDManager.Worker.csproj" />
   </Folder>
