@@ -2,7 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ThreeDManager.Application\ThreeDManager.Application.csproj" />
-    <ProjectReference Include="..\ThreeDManager.Infrastructure\ThreeDManager.Infrastructure.csproj" />
+    <ProjectReference Include="..\ThreeDManager.Infrastructure\ThreeDmanager.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
