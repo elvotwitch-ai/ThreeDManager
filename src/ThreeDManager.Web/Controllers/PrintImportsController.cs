@@ -215,36 +215,38 @@ public class PrintImportsController : Controller
             return RedirectAfterProcess(id, returnTo);
         }
 
+        ParsedPrintMetadata parsedMetadata;
         try
         {
-            var parsedMetadata = _parser.Parse(printImport.FileName, printImport.RawContent);
-
-            printImport.ParsedDataJson = JsonSerializer.Serialize(
-                parsedMetadata,
-                new JsonSerializerOptions
-                {
-                    WriteIndented = true
-                });
-
-            printImport.Status = PrintImportStatus.Parsed;
-
-            printImport.ErrorMessage = parsedMetadata.Warnings.Any()
-                ? string.Join(PrintImportMessagePresentation.MessageSeparator, parsedMetadata.Warnings)
-                : null;
-
-            await _context.SaveChangesAsync();
-
-            TempData["SuccessMessage"] = "Arquivo processado com sucesso.";
+            parsedMetadata = _parser.Parse(printImport.FileName, printImport.RawContent);
         }
-        catch (Exception exception)
+        catch (OverflowException)
         {
+            // Numeric metadata outside the parser's supported range is an invalid file,
+            // not a persistence failure. Never expose the runtime exception to the operator.
             printImport.Status = PrintImportStatus.Error;
-            printImport.ErrorMessage = exception.Message;
-
+            printImport.ParsedDataJson = null;
+            printImport.ErrorMessage = "Não foi possível ler o arquivo. Verifique o conteúdo e importe novamente.";
             await _context.SaveChangesAsync();
-
-            TempData["ErrorMessage"] = "Erro ao processar o arquivo.";
+            TempData["ErrorMessage"] = printImport.ErrorMessage;
+            return RedirectAfterProcess(id, returnTo);
         }
+
+        printImport.ParsedDataJson = JsonSerializer.Serialize(
+            parsedMetadata,
+            new JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+
+        printImport.Status = PrintImportStatus.Parsed;
+        printImport.ErrorMessage = parsedMetadata.Warnings.Any()
+            ? string.Join(PrintImportMessagePresentation.MessageSeparator, parsedMetadata.Warnings)
+            : null;
+
+        // Persistence failures belong to the global error handler, never to file validation.
+        await _context.SaveChangesAsync();
+        TempData["SuccessMessage"] = "Arquivo processado com sucesso.";
 
         return RedirectAfterProcess(id, returnTo);
     }
@@ -437,8 +439,10 @@ public class PrintImportsController : Controller
         {
             return JsonSerializer.Deserialize<ParsedPrintMetadata>(printImport.ParsedDataJson);
         }
-        catch
+        catch (JsonException)
         {
+            // Invalid stored JSON remains an operator-visible review error; unrelated
+            // runtime failures must reach the global handler instead of becoming null.
             return null;
         }
     }
